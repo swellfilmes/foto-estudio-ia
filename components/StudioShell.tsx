@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import PromptGenerator from "./PromptGenerator";
-import ApparelStudio from "./ApparelStudio";
+import EnsaioStudio from "./EnsaioStudio";
 
-type Mode = "product" | "apparel" | null;
+type Mode = "product" | "ensaio" | null;
 
 export default function StudioShell() {
   const [mode, setMode] = useState<Mode>(null);
@@ -12,18 +12,18 @@ export default function StudioShell() {
   if (mode === "product") {
     return <PromptGenerator onBack={() => setMode(null)} />;
   }
-  if (mode === "apparel") {
-    return <ApparelStudio onBack={() => setMode(null)} />;
+  if (mode === "ensaio") {
+    return <EnsaioStudio onBack={() => setMode(null)} />;
   }
 
   return (
-    <div style={{ maxWidth: 680, margin: "0 auto", padding: "60px 20px" }}>
+    <div style={{ maxWidth: 720, margin: "0 auto", padding: "60px 20px" }}>
       <div style={{ marginBottom: 40 }}>
         <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 8 }}>
           Swell Filmes
         </div>
         <h1 style={{ fontSize: 30, fontWeight: 700, color: "var(--text)", marginBottom: 8, lineHeight: 1.15 }}>
-          O que você quer fotografar hoje?
+          O que você quer criar hoje?
         </h1>
         <p style={{ fontSize: 14, color: "var(--text-muted)" }}>
           Escolha o modo. Você pode trocar depois.
@@ -32,23 +32,23 @@ export default function StudioShell() {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         <ModeCard
-          icon="📦"
-          title="Produto"
-          desc="Bebida, alimento, cosmético, artesanal, acessório."
-          bullets={["Fundo limpo · Lifestyle", "Flat lay · Macro · Ghost mannequin"]}
-          onClick={() => setMode("product")}
+          icon="📸"
+          title="Ensaio de Pessoa"
+          desc="Fotos de referência viram um ensaio nível Swell — 8 fotos em estilo cinemático."
+          bullets={["Catálogo de 8 estilos curados", "Editorial · Street · Praia · Rooftop · Corporativo · Fashion · Café · Natureza"]}
+          onClick={() => setMode("ensaio")}
         />
         <ModeCard
-          icon="👕"
-          title="Pessoas / Roupa"
-          desc="Peça de vestuário — com ou sem modelo vestindo."
-          bullets={["Estúdio · Ghost mannequin · Flat lay", "Modelo · Lifestyle · UGC · Editorial"]}
-          onClick={() => setMode("apparel")}
+          icon="📦"
+          title="Foto de Produto"
+          desc="Foto do celular vira 4 fotos com cara de estúdio, prontas pra catálogo."
+          bullets={["Bebida · Alimento · Cosmético · Artesanal · Acessório", "Fundo limpo · Lifestyle · Flat lay · Macro"]}
+          onClick={() => setMode("product")}
         />
       </div>
 
       <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 32, textAlign: "center", lineHeight: 1.6 }}>
-        Cada modo tem categorias e travas próprias — a foto de produto não é a mesma coisa que a foto de roupa vestida.
+        Cada modo tem uma direção de arte própria — as fotos saem no jeito Swell, seja pessoa ou produto.
       </p>
     </div>
   );

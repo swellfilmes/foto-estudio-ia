@@ -1,8 +1,16 @@
-# Plano de tarde — 2026-07-23 (revisão pós-almoço)
+# Plano de tarde — 2026-07-23 (revisão 3 — modelo mudou)
 
-**Objetivo do dia:** deixar o app rodando pronto pra receber usuário + começar a materializar o produto vendável.
+**Objetivo do dia:** deixar o app rodando pronto pra receber usuário + começar a comercializar.
 
-**Mudança de estratégia:** o pack não vai mais ser entregue via Notion. Vai ser entregue como uma **página do próprio app** (`swell.com.br/pack/chatgpt` e `/pack/nano-banana`), protegida por senha simples enviada pelo e-mail do Kiwify. Público-alvo (lojistas Shopee, brechós, artesãos) não usa Notion — atrito demais.
+**Modelo de negócio ATUAL:** o app **não vende prompts**, vende **resultado (fotos geradas)**.
+
+**Duas ofertas do app:**
+1. **Ensaio de Pessoa** — usuário sobe 1–3 fotos de referência, escolhe estilo (catálogo Swell), ajusta livre e recebe 8 fotos de ensaio nível Swell
+2. **Foto de Produto** — usuário sobe foto do produto, IA preenche os campos sozinha, gera 4 variações
+
+**Backend em ambos:** Magnific integrado (nossa infra, nosso crédito).
+
+**Modelo de cobrança:** assinatura mensal via Kiwify (senha única enviada por e-mail, cookie de 30 dias no app).
 
 ---
 
@@ -10,18 +18,18 @@
 
 ### Código pronto e no GitHub
 - App Next.js já no ar no Vercel (repo: `swellfilmes/foto-estudio-ia`)
-- **Modo Produto** completo (funcionava antes)
-- **Modo Pessoas / Roupa** implementado: 8 categorias × 2 estilos (apparel-engine)
-- **Gate de acesso** implementado: landing em `/` captura nome + e-mail antes de liberar `/studio`
-- Leads gravados em `data/leads.json` (local) + logs Vercel
+- **Landing (`/`)** com 2 abas: "Testar grátis" (captura de lead) e "Já sou assinante" (senha)
+- **Modo Foto de Produto** completo — funcionava antes
+- **Modo Ensaio de Pessoa** implementado hoje (novo) — 8 estilos curados + campo livre + geração de 8 fotos em paralelo via Magnific
+- **Gate duplo** no `/studio`: aceita cookie de lead (trial) OU cookie de assinante
+- APIs: `/api/analyze-person` (traços gerais) + `/api/generate-ensaio-prompt` (motor do prompt) + `/api/generate-images` atualizado (suporta múltiplas referências e aspect ratio dinâmico)
 
 ### O que falta pra vender
-1. **Páginas do pack no app** (`/pack/chatgpt` e `/pack/nano-banana`) — João (com Claude)
-2. **Configurar Kiwify** (produtos, checkout, order bump, e-mail automático) — João
-3. **Página de vendas** simples (pode ser landing só, pode ser integrada ao Kiwify) — João
-4. **Testar o Modo Pessoas com peças reais** + refinar prompts se precisar — Sócia
-5. **Gerar ativos antes/depois** com fotos reais dela — Sócia
-6. **Rodada final juntos:** escolher ativos, montar carrossel — fim do dia
+1. **Você definir o preço da assinatura** (sugestão: R$47/mês)
+2. **Configurar Kiwify** — produto de assinatura recorrente + e-mail automático com a senha
+3. **Setar variável de ambiente `SUBSCRIBER_PASSWORD` na Vercel** (senha da assinatura)
+4. **Sócia testar Modo Ensaio com peças reais** — sessões de teste com fotos dela e conhecidos, gerar ativos
+5. **Rodada final juntos:** escolher os 8–12 pares mais fortes, montar carrossel de venda
 
 ---
 
@@ -29,172 +37,121 @@
 
 | Papel | Pessoa | Foco |
 |---|---|---|
-| **Página + Vendas** | **João** (com Claude) | Páginas do pack no app, Kiwify (produtos + checkout + e-mails), página de vendas, deploy |
-| **Ensaio de pessoas / testes** | **Sócia** | Usar o Modo Pessoas do app com peças reais, gerar ativos antes/depois, validar prompts, apontar bugs |
-| **Rodada final juntos** | Ambos | Escolher os pares antes/depois mais fortes, decidir data de lançamento, alinhar outreach |
-
-**Como funciona a colaboração hoje:**
-- **Duas frentes em paralelo**, sem depender uma da outra
-- **Check-in a cada 1h30** (às 15h30, 17h, 18h30) — cada um mostra o que fez, alinha próximo bloco
-- **Fim do dia (~19h):** rodada final juntos
+| **Página + Vendas** | **João** (com Claude quando precisar) | Kiwify (assinatura + e-mail automático), definir preço, senha em produção |
+| **Testes / geração de ativos** | **Sócia** | Testar Modo Ensaio (com fotos dela ou de amigos), Modo Produto, apontar bugs |
+| **Rodada final juntos** | Ambos | Escolher ativos, montar carrossel, definir data de lançamento |
 
 ---
 
-## Frente 1 — João (página + vendas)
+## Frente 1 — João (Kiwify + configuração)
 
-Trabalha comigo (Claude) no código quando precisar, e sozinho no Kiwify.
+### Bloco 1.1 · Definir preço da assinatura — 5 min
+Sugestão pra começar:
+- **R$47/mês** — plano único, uso "sem limite" (na prática, limitado pelo custo Magnific)
+- Alternativa: R$27 primeiro mês / R$47 recorrente (isca)
 
-### Bloco 1.1 · Páginas do pack no app — ~1h30 (Claude implementa)
-Enquanto Claude codifica, você acompanha e valida direção.
+### Bloco 1.2 · Configurar Kiwify — ~1.5h
+- [ ] Criar conta no Kiwify (se não tiver)
+- [ ] Cadastrar produto **Swell Assinatura Mensal** — R$47/mês recorrente
+- [ ] **Entrega:** link direto `https://swell.com.br?p=SENHA-DEFINIDA` (o `?p=` faz auto-login no site)
+- [ ] Configurar e-mail automático pós-compra com o link + senha
+- [ ] Configurar e-mail de cancelamento (informar que perderá acesso)
+- [ ] Configurar garantia 7 dias
+- [ ] Testar checkout em navegador anônimo
 
-Escopo:
-- [ ] Rota `/pack/chatgpt` com todo o conteúdo do pack ChatGPT
-- [ ] Rota `/pack/nano-banana` com todo o conteúdo do pack Nano Banana
-- [ ] Cada prompt em bloco de código com botão **"Copiar prompt"** gigante
-- [ ] 6 tipos de foto em seções colapsáveis (toggles)
-- [ ] Callouts coloridos (comece aqui laranja, erro comum vermelho, dica azul)
-- [ ] Rodapé do Pack ChatGPT com CTA de upsell pro Pack NB
-- [ ] Gate por senha: cliente entra via link `swell.com.br/pack/chatgpt?p=SENHA` (senha diferente por pack)
-- [ ] Design consistente com o resto do app (cores da marca, tipografia)
+**Critério de "pronto":** consegue comprar (modo teste), recebe e-mail com link, clica no link e cai autenticado no `/studio`.
 
-**Critério de "pronto":** conseguir abrir ambas as páginas com a senha, os prompts copiam com um clique, e a UI é consistente com o estúdio.
+### Bloco 1.3 · Setar `SUBSCRIBER_PASSWORD` na Vercel — 5 min
+- [ ] Vercel → projeto `app` → Settings → Environment Variables
+- [ ] Adicionar `SUBSCRIBER_PASSWORD` = `sua-senha-forte-2026` (mesma senha que vai no e-mail Kiwify)
+- [ ] Redeploy (Vercel refaz em ~1min)
 
-### Bloco 1.2 · Configurar Kiwify — ~1.5h (você sozinho)
-Base: `fase3-lancamento/checkout.md`
+**Critério de "pronto":** o gate em `/` "Já sou assinante" aceita essa senha.
 
-- [ ] Criar conta no Kiwify (se não tiver ainda)
-- [ ] Cadastrar produto **Pack ChatGPT** — R$27 de lançamento (de R$37)
-  - Entrega: link direto `swell.com.br/pack/chatgpt?p=SENHA-CHATGPT`
-- [ ] Cadastrar produto **Pack Nano Banana** — R$67 de lançamento (de R$97)
-  - Entrega: link direto `swell.com.br/pack/nano-banana?p=SENHA-NB`
-- [ ] Ativar **order bump** no checkout do Pack ChatGPT: "Adicionar Pack NB por mais R$47"
-- [ ] Ativar **OTO** (One Time Offer) pós-compra — texto no MD checkout.md
-- [ ] Configurar e-mail automático pós-compra usando o template do MD (com o link + senha do pack)
-- [ ] Configurar garantia 7 dias em ambos
-- [ ] Testar checkout em navegador anônimo (Kiwify tem modo teste)
-
-**Critério de "pronto":** dois links de checkout funcionando, order bump aparece, e-mail chega com o link do pack + senha e o cliente consegue abrir.
-
-### Bloco 1.3 · Página de vendas — ~1h (você sozinho)
+### Bloco 1.4 · Página de vendas — ~1h
 Duas opções:
-- **A (mais simples):** usar a página de checkout do Kiwify como página de vendas (Kiwify tem editor com headline, benefícios, prova social, botão comprar)
-- **B (mais controlada):** criar uma rota `/comprar` no app com página de vendas custom — mais bonito, mais alinhado à marca, mas leva mais tempo
+- **A (mais simples):** usar a página de checkout do Kiwify como página de vendas (Kiwify tem editor com headline, benefícios, botão comprar)
+- **B (mais controlada):** criar rota `/comprar` no app — recomendo pra depois, não hoje
 
-Recomendo **A** pra hoje. **B** pode ser feito depois pra otimizar conversão.
+Escolher A pra hoje.
 
-- [ ] Escolher opção A ou B
-- [ ] Se A: preencher a página do Kiwify com copy vinda do `fase3-lancamento/faq-pagina-vendas.md` + antes/depois
-- [ ] Se B: pedir pro Claude criar a rota `/comprar`
-
-**Critério de "pronto":** URL única que qualquer pessoa pode clicar e comprar.
+- [ ] Preencher a página do Kiwify com headline + benefícios + antes/depois (usar ativos do Bloco 2.2)
 
 ---
 
-## Frente 2 — Sócia (ensaio de pessoas + testes)
+## Frente 2 — Sócia (testes + geração de ativos)
 
-Trabalha sozinha usando o app. Não precisa de Claude — precisa do link do app em produção.
+Trabalha sozinha usando o app. Não precisa de Claude — precisa do link do app em produção + a senha de assinante.
 
-### Bloco 2.1 · Testar o Modo Produto — 20 min
-Warm-up: garante que ela entende o fluxo antes de partir pro modo pessoas.
+### Bloco 2.1 · Testar Modo Ensaio — ~2h
+Coração do dia. Ela precisa de:
+- 2–3 pessoas (ela mesma + conhecidos que topem)
+- 1–3 fotos de referência de cada pessoa (rosto bem visível, boa luz)
 
-- [ ] Abrir o app em produção (João passa o link após o deploy da manhã)
-- [ ] Preencher nome + e-mail na landing (qualquer e-mail teste)
-- [ ] Testar 1 produto qualquer (perfume, garrafa, sabonete — o que tiver por perto)
-- [ ] Modo Produto → gerar 4 variações
-- [ ] Anotar: análise da IA acertou os campos? Imagens ficaram boas?
+Passos por pessoa:
+- [ ] Enviar fotos de referência (1 pessoa)
+- [ ] Rodar **4 dos 8 estilos** (não precisa rodar todos)
+- [ ] Testar campo livre em pelo menos 2 (ajustar detalhes específicos)
+- [ ] Salvar as fotos geradas em pasta `assets/ensaio/`
+- [ ] Anotar por estilo:
+  - Qualidade (nota 1–5)
+  - A identidade da pessoa foi preservada?
+  - Cena/mood ficaram no estilo Swell?
+  - Bugs de UI/UX
 
-**Critério de "pronto":** 4 imagens geradas com sucesso, sem bugs.
+**Critério de "pronto":** 3 pessoas × 4 estilos × 8 fotos = **96 fotos geradas** (ou perto), com anotações.
 
-### Bloco 2.2 · Rodar 3 peças de roupa reais no Modo Pessoas — ~1h30
-Este é o coração do que ela vai fazer.
+### Bloco 2.2 · Testar Modo Produto (1 hora)
+Testa se a versão antiga ainda funciona bem depois das mudanças:
+- [ ] Rodar 3 produtos rapidamente
+- [ ] Salvar 12 fotos (3 × 4 variações)
 
-- [ ] Escolher 3 peças físicas (recomendado: 1 camiseta, 1 moletom/vestido, 1 peça com estampa forte)
-- [ ] Fotografar cada peça sozinha:
-  - Plana em cima de superfície neutra OU pendurada em cabide
-  - Luz natural (perto de janela)
-  - Peça inteira aparecendo
-- [ ] Rodar cada peça no Modo Pessoas testando **3 categorias diferentes** cada:
-  - Peça 1 (camiseta): `studio` + `model-studio` + `ghost-mannequin`
-  - Peça 2 (moletom/vestido): `model-lifestyle` + `campaign-editorial` + `flat-lay`
-  - Peça 3 (com estampa): `product-in-hand` + `ugc-selfie` + `model-studio`
-- [ ] Salvar TODAS as imagens geradas numa pasta `assets/pessoas/` no computador
-- [ ] Fazer print da tela do prompt gerado (só copiar não basta — screenshot do resultado do app)
-
-**Critério de "pronto":** 9 sessões (3 peças × 3 categorias) × 4 imagens cada = 36 imagens geradas, salvas, com screenshots.
-
-**O que anotar em cada teste (num Google Docs simples):**
-1. Categoria testada
-2. Style Strength usado (aparece na tela do prompt)
-3. As 4 imagens ficaram fiéis à peça original? (nota 1-5)
-4. Se não ficou fiel: o que a IA errou? (comprimento? cor? estampa?)
-5. Qual foi a melhor das 4?
-6. Bugs de UI/UX que apareceram no caminho (qualquer coisa estranha)
-
-### Bloco 2.3 · Rodada de refinamento (se necessário) — ~30 min
-Se algum tipo de categoria estiver saindo mal, ela avisa João. Aí ajustamos os prompts no `apparel-engine.ts`.
-
-- [ ] Se detectou categoria fraca: comunicar João (via WhatsApp/mensagem)
-- [ ] João + Claude ajustam
-- [ ] Ela regera pra validar
-- [ ] Repetir se necessário
-
-**Critério de "pronto":** todas as categorias que ela testou estão gerando resultados aceitáveis (nota ≥ 3/5).
+### Bloco 2.3 · Refinamento (se necessário)
+Se algum estilo estiver saindo mal, avisa João. Ajustamos os prompts no `lib/ensaio-styles.ts`.
 
 ---
 
 ## Frente 3 — Juntos (fim da tarde)
 
 ### Bloco 3 · Rodada final — ~1h
-Depende dos blocos 1.1, 1.2 e 2.2 estarem prontos.
-
-- [ ] Sócia mostra as melhores imagens do bloco 2.2
-- [ ] João mostra Kiwify + página do pack prontos
-- [ ] Escolher 3–5 pares mais fortes (foto original × imagem gerada) — cobrindo categorias diferentes
-- [ ] Colocar esses pares na **galeria da página do pack** (Claude adiciona rapidinho)
-- [ ] Colocar os mesmos pares no **carrossel do Instagram** (usar Canva com template do `fase3-lancamento/carrossel-instagram.md`)
-- [ ] Definir data de postagem do Carrossel 1
-
-**Critério de "pronto":** galeria da página do pack tem imagens reais, e o Carrossel 1 do Instagram tá quase pronto (só falta agendar).
+- [ ] Sócia mostra melhores ensaios
+- [ ] Escolher 3–4 casos "wow" (referência × ensaio) pra virar prova social
+- [ ] Colocar na página do Kiwify (imagens + legenda)
+- [ ] Montar Carrossel 1 no Canva (template no `fase3-lancamento/carrossel-instagram.md`)
+- [ ] Definir data de postagem
 
 ### Bloco 4 · Alinhamento final — 15 min
-- [ ] Data de lançamento definida (recomendado: 3 a 5 dias depois de hoje)
-- [ ] Divisão de outreach: quem faz cada perfil de `fase3-lancamento/outreach.md`
-- [ ] Meta da semana 1: 20 contatos individuais + 3 posts orgânicos
-- [ ] Tirar screenshots de tudo (Kiwify, página do pack, checkout) — arquivo dos "materiais entregues hoje"
-
-**Critério de "pronto":** data marcada + próxima semana planejada.
+- [ ] Data de lançamento
+- [ ] Divisão de outreach
 
 ---
 
-## Cronograma sugerido (~5h de trabalho ativo)
+## Cronograma sugerido
 
 | Horário | João | Sócia |
 |---|---|---|
-| 14:00 – 15:30 | Bloco 1.1 · Páginas do pack (com Claude) | Bloco 2.1 · Testar Modo Produto |
-| **15:30 – 15:45** | **Check-in 1** — mostra páginas prontas | ela mostra testes iniciais |
-| 15:45 – 17:00 | Bloco 1.2 · Kiwify | Bloco 2.2 · Testar 3 peças (começa) |
-| **17:00 – 17:15** | **Check-in 2** — Kiwify configurado | ela mostra 1ª peça pronta |
-| 17:15 – 18:15 | Bloco 1.3 · Página de vendas | Bloco 2.2 · Testar 3 peças (termina) |
-| **18:15 – 18:30** | **Check-in 3** — página de vendas | ela mostra 3 peças completas |
-| 18:30 – 19:00 | Aguardar / ajustes finais | Bloco 2.3 · Refinamento (se preciso) |
+| 14:00 – 14:15 | Definir preço + setar senha na Vercel | (esperar link) |
+| 14:15 – 15:30 | Bloco 1.2 · Kiwify (começa) | Bloco 2.1 · Testar Modo Ensaio (começa) |
+| **15:30 – 15:45** | **Check-in 1** — status Kiwify e testes | |
+| 15:45 – 17:00 | Bloco 1.2 · Kiwify (termina) | Bloco 2.1 · continua |
+| 17:00 – 18:00 | Bloco 1.4 · Página de vendas | Bloco 2.2 · Modo Produto |
+| **18:00 – 18:15** | **Check-in 2** — página + ensaios | |
+| 18:15 – 19:00 | Refinamento de prompts (se preciso) | Bloco 2.3 · Refinamento |
 | **19:00 – 20:00** | **Bloco 3 juntos** — rodada final | |
 | **20:00 – 20:15** | **Bloco 4 juntos** — alinhamento | |
 
 ---
 
-## Checklist final do dia (o que precisa estar de pé às 20:15)
+## Checklist final do dia
 
-- [ ] App em produção com gate + estúdio + páginas do pack funcionando
-- [ ] Ambos os packs (ChatGPT e NB) acessíveis via link + senha
-- [ ] 2 produtos cadastrados no Kiwify com checkout funcional
-- [ ] Order bump + OTO + e-mail pós-compra ativados
-- [ ] Página de vendas no ar (Kiwify ou custom)
-- [ ] Sócia testou 3 peças em 3 categorias cada (36 imagens geradas)
-- [ ] Bugs críticos do Modo Pessoas identificados e corrigidos (se houver)
-- [ ] 3–5 pares antes/depois escolhidos e na galeria
-- [ ] Carrossel do Instagram com pares reais
+- [ ] App em produção com landing nova + 2 modos (Produto e Ensaio) funcionando
+- [ ] `SUBSCRIBER_PASSWORD` setada na Vercel
+- [ ] Produto Kiwify (assinatura mensal) cadastrado e testado
+- [ ] E-mail automático da Kiwify manda link + senha corretos
+- [ ] Sócia testou ~3 pessoas em ~4 estilos cada (96+ fotos)
+- [ ] 3–4 casos "wow" escolhidos e na página do Kiwify
+- [ ] Carrossel do Instagram com estrutura pronta
 - [ ] Data de lançamento definida
-- [ ] Plano da primeira semana de outreach definido
 
 ---
 
@@ -202,11 +159,13 @@ Depende dos blocos 1.1, 1.2 e 2.2 estarem prontos.
 
 **"Kiwify pediu documentação e não liberou hoje"** → cadastro é imediato mas às vezes exigem CPF/CNPJ. Se travar, ir pro **Hotmart** como plano B.
 
-**"Modo Pessoas gera peça errada em alguma categoria"** → é esperado. Anotar quais categorias, avisar João. Ajustamos prompts do apparel-engine e ela testa de novo.
+**"Ensaio saiu com rosto diferente"** → é a limitação do modelo. Fotos de referência ruins (rosto escuro, óculos escuros, chapéu) pioram muito. Refazer com fotos melhores. Se persistir em várias, avisa João pra ajustar a trava de identidade.
 
-**"Sócia acabou os créditos Magnific"** → recarregar em https://magnific.com/billing. Enquanto isso, o app não trava — só o "Gerar fotos" não funciona.
+**"Sócia acabou os créditos Magnific"** → recarregar em https://magnific.com/billing. Um ensaio consome ~8 créditos. 96 fotos = ~96 créditos.
 
-**"Faltou tempo pra tudo"** → **prioridade absoluta:** ter as páginas do pack + Kiwify funcionando com pelo menos 1 par antes/depois. Página de vendas custom pode ser feita amanhã. Carrossel do Instagram pode ser feito amanhã.
+**"Assinante pediu reembolso"** → garantia 7 dias no Kiwify cobre. Depois disso, política caso a caso.
+
+**"Faltou tempo pra tudo"** → **prioridade absoluta:** Kiwify funcionando + 1 ensaio "wow" pra colocar na página. Outreach pode começar amanhã.
 
 ---
 
@@ -214,11 +173,12 @@ Depende dos blocos 1.1, 1.2 e 2.2 estarem prontos.
 
 - **Repo do app:** `swellfilmes/foto-estudio-ia` (GitHub)
 - **Deploy:** Vercel (projeto id `prj_zTSsSudxGDlVXP9ru0bGwDqy0cDB`)
-- **APIs em uso:** Anthropic (análise de imagem) + Magnific (geração Nano Banana)
-- **Custo de teste da sócia:** 9 sessões × 4 imagens = ~36 créditos Magnific (~1 sessão típica de trabalho)
-- **E-mail dos leads:** grava em `data/leads.json` (local) + logs Vercel. Dashboard futuro via Google Sheets (webhook, 20 min de dev)
-- **Senhas dos packs:** decidir hoje. Sugestão: `swellchatgpt2026` e `swellnb2026` — fáceis de digitar, difíceis de adivinhar
+- **APIs em uso:** Anthropic (análise) + Magnific (geração Nano Banana)
+- **Custo do teste da sócia:** ~96 imagens = ~96 créditos Magnific (~1 sessão)
+- **E-mail dos leads (trial):** grava em `data/leads.json` (local) + logs Vercel
+- **Senha do assinante:** env var `SUBSCRIBER_PASSWORD` na Vercel (dev usa fallback `swell-assinantes-2026`)
+- **Rotação de senha:** trocar a env var uma vez por mês/trimestre invalida os cookies antigos e força reassinar
 
 ---
 
-_Documento atualizado 2026-07-23 pós-almoço. Última mudança: papéis invertidos — João = página+vendas, Sócia = ensaio de pessoas._
+_Documento atualizado 2026-07-23 (revisão 3). Última mudança: modelo virou assinatura mensal, foco em vender resultado (fotos), não prompts._

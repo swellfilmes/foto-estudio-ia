@@ -2,22 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 
 const MAGNIFIC_URL = "https://api.magnific.com/v1/ai/text-to-image/nano-banana-pro-flash";
 
-// Aspect ratio por tipo de foto (modo produto + modo apparel usam a mesma tabela).
-const ASPECT_RATIO_MAP: Record<string, string> = {
-  // modo produto
+// Aspect ratio por tipo de foto de PRODUTO (modo Produto).
+// Ensaio passa aspectRatio direto no body.
+const PRODUCT_ASPECT_RATIO_MAP: Record<string, string> = {
   "fundo-limpo": "1:1",
   lifestyle: "4:5",
   segurando: "2:3",
   "flat-lay": "1:1",
   macro: "1:1",
   "ghost-mannequin": "2:3",
-  // modo apparel — sobrepõe/adiciona
-  studio: "4:5",
-  "model-studio": "4:5",
-  "model-lifestyle": "4:5",
-  "product-in-hand": "1:1",
-  "ugc-selfie": "3:4",
-  "campaign-editorial": "3:4",
 };
 
 export async function POST(req: NextRequest) {
@@ -28,14 +21,17 @@ export async function POST(req: NextRequest) {
     const {
       prompt,
       referenceImageBase64,
-      photoType = "fundo-limpo",
+      referenceImagesBase64,     // ensaio pode ter mais de 1 referência
+      photoType = "fundo-limpo", // modo produto (fallback)
+      aspectRatio: aspectOverride, // ensaio passa direto
       negativePrompt,
       styleStrength,
+      referenceText,             // customiza a mensagem da referência ("keep the person...")
     } = await req.json();
 
     if (!prompt) return NextResponse.json({ error: "Prompt obrigatório" }, { status: 400 });
 
-    const aspectRatio = ASPECT_RATIO_MAP[photoType] || "1:1";
+    const aspectRatio = aspectOverride || PRODUCT_ASPECT_RATIO_MAP[photoType] || "1:1";
 
     const body: Record<string, unknown> = {
       prompt,
@@ -50,14 +46,19 @@ export async function POST(req: NextRequest) {
       body.style_strength = styleStrength;
     }
 
-    if (referenceImageBase64) {
-      body.reference_images = [
-        {
-          image: `data:image/jpeg;base64,${referenceImageBase64}`,
-          text: "Reference product image — keep this product exactly as shown",
-          mime_type: "image/jpeg",
-        },
-      ];
+    // Suporta 1 ou N referências. Ensaio manda array; produto manda uma só.
+    const refs: string[] = Array.isArray(referenceImagesBase64) && referenceImagesBase64.length
+      ? referenceImagesBase64
+      : referenceImageBase64
+        ? [referenceImageBase64]
+        : [];
+
+    if (refs.length > 0) {
+      body.reference_images = refs.map((b64) => ({
+        image: `data:image/jpeg;base64,${b64}`,
+        text: referenceText || "Reference image — keep the subject exactly as shown",
+        mime_type: "image/jpeg",
+      }));
     }
 
     const res = await fetch(MAGNIFIC_URL, {
