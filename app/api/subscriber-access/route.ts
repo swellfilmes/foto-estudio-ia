@@ -20,6 +20,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Senha incorreta" }, { status: 401 });
     }
 
+    // Fluxo legado — mantido por 30 dias após migração pra magic link.
+    // Se você removeu a env `SUBSCRIBER_PASSWORD`, essa rota vira inútil (ok).
+    console.warn("[subscriber-access] fluxo LEGADO usado. Migrar cliente pra /api/access/request.");
+
     const res = NextResponse.json({ ok: true });
     res.cookies.set({
       name: COOKIE_NAME,

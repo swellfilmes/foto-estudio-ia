@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
+import { upsertSubscriber, getSubscriber } from "@/lib/db";
 
 const COOKIE_NAME = "swell-lead";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 dias
 const LEADS_FILE = path.join(process.cwd(), "data", "leads.json");
+const TRIAL_DAYS = 7;
 
 async function appendLead(entry: Record<string, unknown>) {
   try {
@@ -63,6 +65,24 @@ export async function POST(req: NextRequest) {
     console.log("[lead]", JSON.stringify(entry));
     await appendLead(entry);
     await forwardToWebhook(entry);
+
+    // Persistir também em `subscribers` como trial — permite magic-link nesse mesmo e-mail.
+    // Só cria trial novo se não existe registro; se já é `active` ou `canceled`, preserva.
+    try {
+      const existing = await getSubscriber(email);
+      if (!existing) {
+        await upsertSubscriber({
+          email,
+          name: name || null,
+          status: "trial",
+          source: source || "landing-trial",
+          trial_ends_at: new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000),
+        });
+      }
+    } catch (e) {
+      // DB indisponível não deve quebrar o fluxo de captura de lead.
+      console.error("[lead] falha ao registrar trial em subscribers:", e);
+    }
 
     const res = NextResponse.json({ ok: true });
     res.cookies.set({

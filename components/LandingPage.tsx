@@ -12,32 +12,23 @@ function LandingInner() {
 
   const [tab, setTab] = useState<Tab>("trial");
 
-  // Trial (captura de lead — libera navegação inicial no /studio)
+  // Trial (captura de lead)
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
 
-  // Sign-in (senha de assinante)
-  const [password, setPassword] = useState("");
+  // Sign-in por e-mail (magic link)
+  const [signinEmail, setSigninEmail] = useState("");
+  const [magicSent, setMagicSent] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     document.title = "Swell — Ensaios e fotos de produto por IA";
-  }, []);
-
-  // Auto-login se a URL trouxe ?p= (link Kiwify)
-  useEffect(() => {
-    const p = search.get("p");
-    if (p) {
-      setTab("signin");
-      setPassword(p);
-      // limpa da URL
-      const url = new URL(window.location.href);
-      url.searchParams.delete("p");
-      window.history.replaceState({}, "", url.toString());
-      submitSignin(p);
-    }
+    const erro = search.get("erro");
+    if (erro === "link-invalido") setError("Link expirado ou inválido. Peça um novo abaixo.");
+    else if (erro === "acesso-expirado") setError("Sua assinatura não está mais ativa.");
+    if (erro) setTab("signin");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -61,22 +52,27 @@ function LandingInner() {
     }
   }
 
-  async function submitSignin(pass?: string) {
+  async function submitSignin(e: React.FormEvent) {
+    e.preventDefault();
     setError(null);
-    const p = (pass ?? password).trim();
-    if (!p) { setError("Cole a senha"); return; }
+    const em = signinEmail.trim().toLowerCase();
+    if (!em || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
+      setError("Informe um e-mail válido");
+      return;
+    }
     setSubmitting(true);
     try {
-      const res = await fetch("/api/subscriber-access", {
+      const res = await fetch("/api/access/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: p }),
+        body: JSON.stringify({ email: em }),
       });
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "Erro");
-      router.push(next);
+      setMagicSent(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Senha inválida");
+      setError(err instanceof Error ? err.message : "Erro ao solicitar acesso");
+    } finally {
       setSubmitting(false);
     }
   }
@@ -148,20 +144,21 @@ function LandingInner() {
               </form>
             )}
 
-            {tab === "signin" && (
-              <form onSubmit={(e) => { e.preventDefault(); submitSignin(); }}>
+            {tab === "signin" && !magicSent && (
+              <form onSubmit={submitSignin}>
                 <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 16, lineHeight: 1.6 }}>
-                  Cole a senha que você recebeu no e-mail da assinatura.
+                  Digite o e-mail da sua assinatura. Enviamos um link seguro pra você entrar.
                 </div>
 
-                <label style={labelStyle}>Senha de assinante</label>
+                <label style={labelStyle}>E-mail da assinatura</label>
                 <input
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  type="text"
-                  autoComplete="off"
-                  placeholder="Cole aqui"
-                  style={{ ...inputStyle, fontFamily: "monospace" }}
+                  value={signinEmail}
+                  onChange={(e) => setSigninEmail(e.target.value)}
+                  type="email"
+                  autoComplete="email"
+                  placeholder="voce@exemplo.com"
+                  style={inputStyle}
+                  required
                 />
 
                 <button
@@ -169,7 +166,7 @@ function LandingInner() {
                   disabled={submitting}
                   style={{ ...primaryButton, marginTop: 18, opacity: submitting ? 0.6 : 1 }}
                 >
-                  {submitting ? "Verificando..." : "Entrar →"}
+                  {submitting ? "Enviando..." : "Enviar link de acesso →"}
                 </button>
 
                 <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)", textAlign: "center" }}>
@@ -186,6 +183,25 @@ function LandingInner() {
                   </a>
                 </div>
               </form>
+            )}
+
+            {tab === "signin" && magicSent && (
+              <div style={{ textAlign: "center", padding: "20px 4px" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>✉️</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>
+                  Verifique seu e-mail
+                </div>
+                <div style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 20 }}>
+                  Se <strong style={{ color: "var(--text)" }}>{signinEmail}</strong> tem uma assinatura ativa, você recebeu um link de acesso. O link vale por 15 minutos.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setMagicSent(false); setSigninEmail(""); }}
+                  style={{ background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer" }}
+                >
+                  Usar outro e-mail
+                </button>
+              </div>
             )}
 
             {error && (
