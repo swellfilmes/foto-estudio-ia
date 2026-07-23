@@ -76,7 +76,7 @@ function CopyButton({ text, fullWidth }: { text: string; fullWidth?: boolean }) 
   );
 }
 
-export default function PromptGenerator() {
+export default function PromptGenerator({ onBack }: { onBack?: () => void } = {}) {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [product, setProduct] = useState<ProductInfo>(defaultProduct);
   const [scene, setScene] = useState<SceneInfo>(defaultScene);
@@ -274,8 +274,16 @@ export default function PromptGenerator() {
     <div style={{ maxWidth: 680, margin: "0 auto", padding: "40px 20px" }}>
       {/* Header */}
       <div style={{ marginBottom: 40 }}>
+        {onBack && (
+          <button
+            onClick={onBack}
+            style={{ background: "transparent", border: "none", color: "var(--text-muted)", fontSize: 12, cursor: "pointer", padding: 0, marginBottom: 12 }}
+          >
+            ← Trocar modo
+          </button>
+        )}
         <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 8 }}>
-          Swell Filmes
+          Swell · Modo Produto
         </div>
         <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>
           Foto Estúdio IA

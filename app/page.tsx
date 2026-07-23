@@ -1,5 +1,5 @@
-import PromptGenerator from "@/components/PromptGenerator";
+import LandingPage from "@/components/LandingPage";
 
 export default function Home() {
-  return <PromptGenerator />;
+  return <LandingPage />;
 }
