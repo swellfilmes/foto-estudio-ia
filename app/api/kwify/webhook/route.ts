@@ -22,21 +22,30 @@ function isAuthorized(req: NextRequest): boolean {
   return diff === 0;
 }
 
-type KwifyPayload = {
+type KwifyOrder = {
   webhook_event_type?: string;
   order_status?: string;
+  order_id?: string;
+  order_ref?: string;
+  subscription_id?: string;
+  approved_date?: string;
+  refunded_at?: string | null;
   Customer?: { email?: string; full_name?: string };
   Subscription?: {
-    id?: string;
+    start_date?: string;
     next_payment?: string;
     end_date?: string;
     status?: string;
-    subscription_id?: string;
+    customer_access?: { access_until?: string; has_access?: boolean };
   };
   Product?: { product_name?: string; product_id?: string };
-  order_id?: string;
-  customer_id?: string;
 };
+
+// A Kwify envia o payload em duas formas possíveis:
+//   { order: {...} }         (formato atual, com assinatura no body/query)
+//   { ...campos direto }     (formato legado / alguns eventos)
+// Aceita as duas.
+type KwifyPayload = { order?: KwifyOrder } & KwifyOrder;
 
 function parseDate(s: string | undefined | null): Date | null {
   if (!s) return null;
@@ -60,12 +69,16 @@ export async function POST(req: NextRequest) {
   // Log completo pra você inspecionar o payload real da Kwify e ajustar mapeamentos.
   console.log("[kwify/webhook] event:", JSON.stringify(body));
 
-  const event = String(body.webhook_event_type || body.order_status || "").toLowerCase();
-  const email = body.Customer?.email?.trim().toLowerCase();
-  const name = body.Customer?.full_name?.trim() || null;
-  const kwifyCustomerId = body.customer_id || body.Subscription?.subscription_id || null;
+  // A Kwify aninha os dados dentro de `order`. Fallback pro nível raiz caso venha diferente.
+  const o: KwifyOrder = body.order ?? body;
+  const event = String(o.webhook_event_type || o.order_status || "").toLowerCase();
+  const email = o.Customer?.email?.trim().toLowerCase();
+  const name = o.Customer?.full_name?.trim() || null;
+  const kwifyCustomerId = o.subscription_id || null;
   const nextPayment =
-    parseDate(body.Subscription?.next_payment) || parseDate(body.Subscription?.end_date);
+    parseDate(o.Subscription?.next_payment) ||
+    parseDate(o.Subscription?.customer_access?.access_until) ||
+    parseDate(o.Subscription?.end_date);
 
   if (!email) {
     console.warn("[kwify/webhook] payload sem email:", event);
