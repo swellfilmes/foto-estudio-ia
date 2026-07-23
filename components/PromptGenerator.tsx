@@ -1,23 +1,20 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import {
-  ProductInfo,
-  SceneInfo,
-  GeneratedPrompt,
-  PhotoType,
-  Tool,
-  ProductCategory,
-} from "@/lib/types";
+import { ProductInfo, SceneInfo, PhotoType, ProductCategory } from "@/lib/types";
 
-const PHOTO_TYPES: { value: PhotoType; label: string; desc: string }[] = [
-  { value: "fundo-limpo", label: "Fundo limpo", desc: "E-commerce, Shopee, Mercado Livre" },
-  { value: "lifestyle", label: "Lifestyle / Em cena", desc: "Feed Instagram, anúncios" },
-  { value: "segurando", label: "Segurando / Vestindo", desc: "Mão com produto, roupa em uso" },
-  { value: "flat-lay", label: "Flat lay / De cima", desc: "Vista superior com props" },
-  { value: "macro", label: "Macro / Detalhe", desc: "Textura, material, close" },
-  { value: "ghost-mannequin", label: "Ghost mannequin", desc: "Roupa sem modelo visível" },
-];
+// ── Tipos de foto: rótulo leigo + legenda, sem jargão ────────────────────────
+const SHOT_TYPES: Record<PhotoType, { label: string; sub: string; emoji: string }> = {
+  "fundo-limpo": { label: "Fundo branco", sub: "e-commerce, catálogo", emoji: "🧼" },
+  segurando: { label: "Na mão de alguém", sub: "escala real, humano", emoji: "✋" },
+  lifestyle: { label: "Em ambiente de uso", sub: "cena, feed", emoji: "🌿" },
+  "flat-lay": { label: "Visto de cima", sub: "flat lay com props", emoji: "🍽️" },
+  macro: { label: "Detalhe / textura", sub: "close no material", emoji: "🔍" },
+  "ghost-mannequin": { label: "Sem modelo", sub: "roupa com volume", emoji: "👕" },
+};
+
+// Ordem em que sugerimos os próximos passos depois da primeira geração.
+const SUGGESTION_ORDER: PhotoType[] = ["segurando", "lifestyle", "flat-lay", "macro"];
 
 const CATEGORIES: { value: ProductCategory; label: string }[] = [
   { value: "bebida", label: "Bebida" },
@@ -30,7 +27,7 @@ const CATEGORIES: { value: ProductCategory; label: string }[] = [
 ];
 
 const defaultProduct: ProductInfo = {
-  category: "cosmetico",
+  category: "outro",
   name: "",
   color: "",
   material: "",
@@ -40,86 +37,33 @@ const defaultProduct: ProductInfo = {
   labelPosition: "",
 };
 
-const defaultScene: SceneInfo = {
-  photoType: "fundo-limpo",
-  tool: "nano-banana",
-  scene: "",
-  background: "",
-  lightMood: "",
-};
-
-function CopyButton({ text, fullWidth }: { text: string; fullWidth?: boolean }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <button
-      onClick={async () => {
-        await navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      }}
-      style={{
-        background: copied ? "#166534" : "var(--accent)",
-        color: "#fff",
-        border: "none",
-        borderRadius: 6,
-        padding: fullWidth ? "12px 16px" : "8px 16px",
-        fontSize: 13,
-        fontWeight: 600,
-        cursor: "pointer",
-        transition: "background 0.2s",
-        width: fullWidth ? "100%" : undefined,
-        marginTop: fullWidth ? 12 : undefined,
-      }}
-    >
-      {copied ? "Copiado ✓" : "Copiar prompt"}
-    </button>
-  );
+interface Batch {
+  id: number;
+  photoType: PhotoType;
+  images: string[];
+  loading: boolean;
+  error?: string;
 }
 
-export default function PromptGenerator({ onBack }: { onBack?: () => void } = {}) {
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+type Phase = "upload" | "working" | "results";
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+export default function PromptGenerator({ onApparel }: { onApparel?: () => void } = {}) {
+  const [phase, setPhase] = useState<Phase>("upload");
   const [product, setProduct] = useState<ProductInfo>(defaultProduct);
-  const [scene, setScene] = useState<SceneInfo>(defaultScene);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<GeneratedPrompt | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [analyzed, setAnalyzed] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [referenceBase64, setReferenceBase64] = useState<string | null>(null);
-  const [generatingImages, setGeneratingImages] = useState(false);
-  const [generatedImages, setGeneratedImages] = useState<string[]>([]);
-  const [imageProgress, setImageProgress] = useState<string>("Enviando para geração...");
+  const [workingStatus, setWorkingStatus] = useState("Analisando sua foto…");
+  const [batches, setBatches] = useState<Batch[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [showAdjust, setShowAdjust] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cancelRef = useRef(false);
+  const batchSeq = useRef(0);
 
-  // Suporte a colar imagem (Cmd+V / Ctrl+V)
-  useEffect(() => {
-    function handlePaste(e: ClipboardEvent) {
-      if (step !== 1) return;
-      const items = e.clipboardData?.items;
-      if (!items) return;
-      for (const item of Array.from(items)) {
-        if (item.type.startsWith("image/")) {
-          const file = item.getAsFile();
-          if (file) analyzeImage(file);
-          break;
-        }
-      }
-    }
-    window.addEventListener("paste", handlePaste);
-    return () => window.removeEventListener("paste", handlePaste);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step]);
-
-  const updateProduct = (field: keyof ProductInfo, value: string | boolean) => {
-    setProduct((p) => ({ ...p, [field]: value }));
-  };
-  const updateScene = (field: keyof SceneInfo, value: string) => {
-    setScene((s) => ({ ...s, [field]: value }));
-  };
-
-  // Redimensiona e converte para base64 via canvas (funciona com imagens grandes)
+  // Redimensiona + converte para base64 via canvas
   function resizeAndConvert(file: File): Promise<{ base64: string; mediaType: string }> {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -143,14 +87,84 @@ export default function PromptGenerator({ onBack }: { onBack?: () => void } = {}
     });
   }
 
-  async function analyzeImage(file: File) {
-    setAnalyzing(true);
-    setAnalyzed(false);
+  function updateBatch(id: number, patch: Partial<Batch>) {
+    setBatches((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch } : b)));
+  }
+
+  function newBatch(photoType: PhotoType): number {
+    const id = ++batchSeq.current;
+    setBatches((prev) => [...prev, { id, photoType, images: [], loading: true }]);
+    return id;
+  }
+
+  // Gera um lote: prompt (por tipo de foto) → N imagens no Magnific → poll
+  async function runBatch(batchId: number, photoType: PhotoType, count: number, productArg?: ProductInfo) {
+    const prod = productArg ?? product;
+    try {
+      updateBatch(batchId, { loading: true, error: undefined });
+      const scene: SceneInfo = { photoType, tool: "nano-banana", scene: "", background: "", lightMood: "" };
+
+      const pr = await fetch("/api/generate-prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ product: prod, scene }),
+      });
+      if (!pr.ok) throw new Error("Falha ao montar o prompt");
+      const pdata = await pr.json();
+      const promptEN: string = pdata.promptEN;
+      if (!promptEN) throw new Error("Prompt vazio");
+
+      const reqs = Array.from({ length: count }, () =>
+        fetch("/api/generate-images", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: promptEN, referenceImageBase64: referenceBase64, photoType }),
+        }).then((r) => r.json())
+      );
+      const tasks = await Promise.all(reqs);
+      const taskIds = tasks.map((t) => t?.task_id).filter(Boolean) as string[];
+      if (taskIds.length === 0) throw new Error("Sem créditos no Magnific ou falha na geração");
+
+      const pending = new Set(taskIds);
+      const collected: string[] = [];
+      let attempts = 0;
+      while (pending.size > 0 && attempts < 60) {
+        if (cancelRef.current) break;
+        await sleep(3000);
+        attempts++;
+        for (const id of Array.from(pending)) {
+          if (cancelRef.current) break;
+          const res = await fetch(`/api/image-status?taskId=${id}`);
+          const d = await res.json();
+          if (d?.status === "COMPLETED") {
+            collected.push(...((d?.generated as string[]) || []));
+            pending.delete(id);
+            updateBatch(batchId, { images: [...collected] });
+          } else if (d?.status === "FAILED") {
+            pending.delete(id);
+          }
+        }
+      }
+      if (collected.length === 0) throw new Error("Nenhuma imagem gerada");
+      updateBatch(batchId, { loading: false });
+    } catch (e) {
+      updateBatch(batchId, { loading: false, error: e instanceof Error ? e.message : "Erro ao gerar" });
+    }
+  }
+
+  // Ponto de entrada: sobe a foto → analisa → primeira geração automática
+  async function start(file: File) {
+    cancelRef.current = false;
     setError(null);
+    setBatches([]);
+    setProduct(defaultProduct);
     setPreviewUrl(URL.createObjectURL(file));
+    setPhase("working");
+    setWorkingStatus("Analisando sua foto…");
     try {
       const { base64, mediaType } = await resizeAndConvert(file);
       setReferenceBase64(base64);
+
       const res = await fetch("/api/analyze-product", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -158,7 +172,8 @@ export default function PromptGenerator({ onBack }: { onBack?: () => void } = {}
       });
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "Erro na análise");
-      setProduct({
+
+      const analyzed: ProductInfo = {
         category: data.category || "outro",
         name: data.name || "",
         color: data.color || "",
@@ -167,593 +182,307 @@ export default function PromptGenerator({ onBack }: { onBack?: () => void } = {}
         hasLabel: !!data.hasLabel,
         labelText: data.labelText || "",
         labelPosition: data.labelPosition || "",
-      });
-      setAnalyzed(true);
+      };
+      setProduct(analyzed);
+
+      // Primeira geração automática — padrão universal: fundo branco, 4 fotos
+      setWorkingStatus("Preparando o estúdio…");
+      setPhase("results");
+      const id = newBatch("fundo-limpo");
+      await runBatch(id, "fundo-limpo", 4, analyzed);
     } catch (e) {
-      console.error("Erro análise:", e);
-      setError("Não foi possível analisar a imagem. Preencha os campos manualmente.");
-    } finally {
-      setAnalyzing(false);
+      console.error(e);
+      setError(
+        e instanceof Error && /api|key|análise|analis/i.test(e.message)
+          ? "Não consegui analisar a foto agora. Verifique a conexão com a IA e tente de novo."
+          : "Algo deu errado ao processar a foto. Tente de novo."
+      );
+      setPhase("upload");
     }
   }
 
-  async function generateImages(prompt: string) {
-    cancelRef.current = false;
-    setGeneratingImages(true);
-    setImageProgress("Enviando para geração...");
-    setStep(4);
-    try {
-      const requests = Array.from({ length: 4 }, () =>
-        fetch("/api/generate-images", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt, referenceImageBase64: referenceBase64, photoType: scene.photoType }),
-        }).then(r => r.json())
-      );
-      const tasks = await Promise.all(requests);
-      const taskIds = tasks.map(t => t?.task_id).filter(Boolean) as string[];
-      if (taskIds.length === 0) throw new Error("Nenhuma tarefa criada — verifique os créditos Magnific");
-
-      setImageProgress(`Gerando ${taskIds.length} fotos... aguarde 30–60s`);
-
-      const images: string[] = [...generatedImages];
-      const pending = new Set(taskIds);
-      let attempts = 0;
-      while (pending.size > 0 && attempts < 60) {
-        if (cancelRef.current) break;
-        await new Promise(r => setTimeout(r, 3000));
-        attempts++;
-        for (const taskId of Array.from(pending)) {
-          if (cancelRef.current) break;
-          const res = await fetch(`/api/image-status?taskId=${taskId}`);
-          const data = await res.json();
-          if (data?.status === "COMPLETED") {
-            const urls: string[] = data?.generated || [];
-            images.push(...urls);
-            pending.delete(taskId);
-            setGeneratedImages([...images]);
-            setImageProgress(
-              pending.size > 0
-                ? `${images.length} foto(s) prontas — aguardando ${pending.size} restante(s)...`
-                : "Tudo pronto!"
-            );
-          } else if (data?.status === "FAILED") {
-            pending.delete(taskId);
-          }
+  // Colar imagem (Ctrl+V) na tela inicial
+  useEffect(() => {
+    function handlePaste(e: ClipboardEvent) {
+      if (phase !== "upload") return;
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith("image/")) {
+          const file = item.getAsFile();
+          if (file) start(file);
+          break;
         }
       }
-      if (!cancelRef.current && images.length === 0) throw new Error("Nenhuma imagem gerada");
-    } catch (e) {
-      if (!cancelRef.current) {
-        console.error("Erro geração:", e);
-        setError(e instanceof Error ? e.message : "Erro ao gerar imagens.");
-        setStep(3);
-      }
-    } finally {
-      setGeneratingImages(false);
     }
-  }
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
 
-  function resetAll() {
+  function reset() {
     cancelRef.current = true;
-    setStep(1);
-    setResult(null);
+    setPhase("upload");
     setProduct(defaultProduct);
-    setScene(defaultScene);
     setPreviewUrl(null);
     setReferenceBase64(null);
-    setAnalyzed(false);
-    setGeneratedImages([]);
+    setBatches([]);
     setError(null);
+    setShowAdjust(false);
   }
 
-  const canProceed1 = product.name.trim() && product.color.trim() && product.material.trim();
-  const canProceed2 = scene.photoType && scene.tool;
-
-  async function generate() {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/generate-prompt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ product, scene }),
-      });
-      if (!res.ok) throw new Error("Erro na geração");
-      const data = await res.json();
-      setResult(data);
-      setStep(3);
-    } catch {
-      setError("Não foi possível gerar o prompt. Verifique a chave da API.");
-    } finally {
-      setLoading(false);
-    }
+  function addSuggestion(photoType: PhotoType) {
+    const id = newBatch(photoType);
+    runBatch(id, photoType, 2); // desdobramentos: 2 variações (mais barato)
   }
 
-  return (
-    <div style={{ maxWidth: 680, margin: "0 auto", padding: "40px 20px" }}>
-      {/* Header */}
-      <div style={{ marginBottom: 40 }}>
-        {onBack && (
-          <button
-            onClick={onBack}
-            style={{ background: "transparent", border: "none", color: "var(--text-muted)", fontSize: 12, cursor: "pointer", padding: 0, marginBottom: 12 }}
-          >
-            ← Trocar modo
-          </button>
-        )}
-        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 8 }}>
-          Swell · Modo Produto
-        </div>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>
-          Foto Estúdio IA
-        </h1>
-        <p style={{ fontSize: 14, color: "var(--text-muted)" }}>
-          Foto de celular → prompt de estúdio em segundos
-        </p>
-      </div>
+  function regenerateWithAdjust() {
+    const id = newBatch("fundo-limpo");
+    runBatch(id, "fundo-limpo", 4);
+    setShowAdjust(false);
+  }
 
-      {/* Steps indicator */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 32 }}>
-        {[1, 2, 3, 4].map((s) => (
-          <div
-            key={s}
-            style={{
-              height: 3,
-              flex: 1,
-              borderRadius: 2,
-              background: step >= s ? "var(--accent)" : "var(--border)",
-              transition: "background 0.3s",
-            }}
-          />
-        ))}
-      </div>
+  const usedTypes = new Set(batches.map((b) => b.photoType));
+  const suggestions = SUGGESTION_ORDER.filter((t) => !usedTypes.has(t)).slice(0, 3);
 
-      {/* STEP 1 — Produto */}
-      {step === 1 && (
-        <div>
-          <SectionTitle step={1} title="Seu produto" />
-
-          {/* Upload de foto */}
-          <div style={{ marginBottom: 28 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 8 }}>
-              Foto do produto <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>(opcional — IA preenche os campos automaticamente)</span>
-            </label>
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                const file = e.dataTransfer.files[0];
-                if (file && file.type.startsWith("image/")) analyzeImage(file);
-              }}
-              style={{
-                border: `2px dashed ${previewUrl ? "var(--accent)" : "var(--border)"}`,
-                borderRadius: 10,
-                padding: previewUrl ? 0 : "28px 20px",
-                textAlign: "center",
-                cursor: "pointer",
-                transition: "border-color 0.2s",
-                overflow: "hidden",
-                position: "relative",
-                background: previewUrl ? "transparent" : "var(--surface2)",
-              }}
-            >
-              {previewUrl ? (
-                <div style={{ position: "relative" }}>
-                  <img
-                    src={previewUrl}
-                    alt="Produto"
-                    style={{ width: "100%", maxHeight: 220, objectFit: "cover", display: "block" }}
-                  />
-                  <div style={{
-                    position: "absolute", inset: 0,
-                    background: analyzing ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    transition: "background 0.2s",
-                  }}>
-                    {analyzing && (
-                      <div style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: 22, marginBottom: 8 }}>🔍</div>
-                        <div style={{ fontSize: 13, color: "#fff", fontWeight: 600 }}>Analisando produto...</div>
-                        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", marginTop: 4 }}>Preenchendo os campos</div>
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setPreviewUrl(null); setProduct(defaultProduct); setAnalyzed(false); }}
-                    style={{
-                      position: "absolute", top: 8, right: 8,
-                      background: "rgba(0,0,0,0.7)", border: "none", color: "#fff",
-                      borderRadius: 6, padding: "4px 8px", fontSize: 11, cursor: "pointer",
-                    }}
-                  >
-                    Trocar foto
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div style={{ fontSize: 28, marginBottom: 8 }}>📷</div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", marginBottom: 4 }}>
-                    {analyzing ? "Analisando..." : "Cole, arraste ou clique para enviar"}
-                  </div>
-                  <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                    Cmd+V · arraste · ou clique — a IA preenche os campos automaticamente
-                  </div>
-                </>
-              )}
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              style={{ display: "none" }}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) analyzeImage(file);
-              }}
-            />
-            {analyzed && !analyzing && (
-              <div style={{ marginTop: 8, fontSize: 12, color: "#4ade80", fontWeight: 600 }}>
-                ✓ Campos preenchidos — revise e ajuste se necessário
-              </div>
-            )}
+  // ── UPLOAD (tela de boas-vindas) ──────────────────────────────────────────
+  if (phase === "upload") {
+    return (
+      <div style={{ maxWidth: 620, margin: "0 auto", padding: "72px 20px" }}>
+        <div style={{ textAlign: "center", marginBottom: 36 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 12 }}>
+            Foto Estúdio IA · Swell
           </div>
+          <h1 style={{ fontSize: 32, fontWeight: 700, color: "var(--text)", marginBottom: 10, lineHeight: 1.15 }}>
+            Comece enviando uma foto
+          </h1>
+          <p style={{ fontSize: 15, color: "var(--text-muted)", lineHeight: 1.5 }}>
+            Produto, modelo ou vestuário — pode ser foto de celular.<br />
+            A gente cuida do resto e já te mostra as primeiras fotos prontas.
+          </p>
+        </div>
 
+        <div
+          onClick={() => fileInputRef.current?.click()}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith("image/")) start(file);
+          }}
+          style={{
+            border: "2px dashed var(--border)",
+            borderRadius: 16,
+            padding: "56px 24px",
+            textAlign: "center",
+            cursor: "pointer",
+            background: "var(--surface2)",
+            transition: "border-color 0.2s",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
+        >
+          <div style={{ fontSize: 44, marginBottom: 14 }}>📷</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>
+            Cole, arraste ou clique para enviar
+          </div>
+          <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
+            Ctrl+V · arraste a imagem · ou clique aqui
+          </div>
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) start(file);
+          }}
+        />
+
+        {error && (
+          <div style={{ marginTop: 20, padding: "12px 16px", background: "#2d1212", border: "1px solid #5c1a1a", borderRadius: 8, color: "#f87171", fontSize: 13, textAlign: "center" }}>
+            {error}
+          </div>
+        )}
+
+        {onApparel && (
+          <p style={{ textAlign: "center", marginTop: 28, fontSize: 12, color: "var(--text-muted)" }}>
+            É uma peça de roupa para vestir num modelo?{" "}
+            <button onClick={onApparel} style={{ background: "none", border: "none", color: "var(--accent)", cursor: "pointer", fontSize: 12, padding: 0, textDecoration: "underline" }}>
+              Modo vestuário →
+            </button>
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // ── WORKING (analisando, antes da primeira imagem) ────────────────────────
+  if (phase === "working") {
+    return (
+      <div style={{ maxWidth: 620, margin: "0 auto", padding: "80px 20px", textAlign: "center" }}>
+        {previewUrl && (
+          <img src={previewUrl} alt="Sua foto" style={{ width: 140, height: 140, objectFit: "cover", borderRadius: 12, marginBottom: 24, opacity: 0.9 }} />
+        )}
+        <div style={{ fontSize: 30, marginBottom: 12 }}>🔍</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>{workingStatus}</div>
+        <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Leva alguns segundos.</div>
+      </div>
+    );
+  }
+
+  // ── RESULTS (imagens + cards de próximo passo) ────────────────────────────
+  return (
+    <div style={{ maxWidth: 760, margin: "0 auto", padding: "40px 20px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {previewUrl && (
+            <img src={previewUrl} alt="Sua foto" style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 8 }} />
+          )}
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text)" }}>
+              {product.name || "Seu produto"}
+            </div>
+            <button onClick={() => setShowAdjust((s) => !s)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 12, padding: 0, textDecoration: "underline" }}>
+              {showAdjust ? "ocultar ajustes" : "ajustar detalhes"}
+            </button>
+          </div>
+        </div>
+        <button onClick={reset} style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "9px 16px", fontSize: 13, cursor: "pointer" }}>
+          Nova foto
+        </button>
+      </div>
+
+      {/* Painel de ajuste opcional (correção da análise) */}
+      {showAdjust && (
+        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 20, marginBottom: 28 }}>
           <Field label="Categoria">
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {CATEGORIES.map((c) => (
-                <Chip
-                  key={c.value}
-                  selected={product.category === c.value}
-                  onClick={() => updateProduct("category", c.value)}
-                  label={c.label}
-                />
+                <Chip key={c.value} selected={product.category === c.value} onClick={() => setProduct((p) => ({ ...p, category: c.value }))} label={c.label} />
               ))}
             </div>
           </Field>
-
-          <Field label="Descreva o produto" hint="Ex: garrafa de azeite 250ml, vidro verde escuro">
-            <Input
-              value={product.name}
-              onChange={(v) => updateProduct("name", v)}
-              placeholder="Tipo + descrição básica"
-            />
+          <Field label="Produto">
+            <Input value={product.name} onChange={(v) => setProduct((p) => ({ ...p, name: v }))} placeholder="Tipo + descrição" />
           </Field>
-
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            <Field label="Cor" hint="Seja específico: não 'azul', mas 'azul marinho quase preto'">
-              <Input
-                value={product.color}
-                onChange={(v) => updateProduct("color", v)}
-                placeholder="Ex: terracota queimado"
-              />
+            <Field label="Cor">
+              <Input value={product.color} onChange={(v) => setProduct((p) => ({ ...p, color: v }))} placeholder="Tom exato" />
             </Field>
             <Field label="Material">
-              <Input
-                value={product.material}
-                onChange={(v) => updateProduct("material", v)}
-                placeholder="Ex: vidro fosco, algodão, cerâmica"
-              />
+              <Input value={product.material} onChange={(v) => setProduct((p) => ({ ...p, material: v }))} placeholder="Ex: vidro fosco" />
             </Field>
           </div>
-
-          <Field label="Tamanho aproximado" hint="Opcional mas ajuda">
-            <Input
-              value={product.size}
-              onChange={(v) => updateProduct("size", v)}
-              placeholder="Ex: 250ml, cabe numa mão, 35cm de largura"
-            />
-          </Field>
-
-          <Field label="Tem rótulo, logo ou estampa?">
-            <div style={{ display: "flex", gap: 8 }}>
-              <Chip selected={product.hasLabel} onClick={() => updateProduct("hasLabel", true)} label="Sim" />
-              <Chip selected={!product.hasLabel} onClick={() => updateProduct("hasLabel", false)} label="Não" />
-            </div>
-          </Field>
-
-          {product.hasLabel && (
-            <>
-              <Field label="Texto/logo do rótulo" hint="O que está escrito ou desenhado">
-                <Input
-                  value={product.labelText}
-                  onChange={(v) => updateProduct("labelText", v)}
-                  placeholder="Ex: 'Mel do Vale' escrito à mão, logo oval dourado"
-                />
-              </Field>
-              <Field label="Onde fica o rótulo">
-                <Input
-                  value={product.labelPosition}
-                  onChange={(v) => updateProduct("labelPosition", v)}
-                  placeholder="Ex: frente, centralizado, terço superior da garrafa"
-                />
-              </Field>
-            </>
-          )}
-
-          <NavButton disabled={!canProceed1} onClick={() => setStep(2)}>
-            Próximo →
-          </NavButton>
-        </div>
-      )}
-
-      {/* STEP 2 — Foto */}
-      {step === 2 && (
-        <div>
-          <SectionTitle step={2} title="Tipo de foto" />
-
-          <Field label="Qual tipo de foto você quer?">
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {PHOTO_TYPES.map((pt) => (
-                <PhotoTypeOption
-                  key={pt.value}
-                  selected={scene.photoType === pt.value}
-                  onClick={() => updateScene("photoType", pt.value)}
-                  label={pt.label}
-                  desc={pt.desc}
-                />
-              ))}
-            </div>
-          </Field>
-
-          <Field label="Qual ferramenta vai usar?">
-            <div style={{ display: "flex", gap: 8 }}>
-              <ToolOption
-                selected={scene.tool === "chatgpt"}
-                onClick={() => updateScene("tool", "chatgpt")}
-                label="ChatGPT"
-                desc="Gratuito · ótimo para cena e lifestyle"
-              />
-              <ToolOption
-                selected={scene.tool === "nano-banana"}
-                onClick={() => updateScene("tool", "nano-banana")}
-                label="Nano Banana"
-                desc="Magnific · fidelidade superior de rótulo"
-              />
-            </div>
-          </Field>
-
-          <Field label="Descreva a cena (opcional)" hint="Onde está o produto, quais objetos ao redor">
-            <textarea
-              value={scene.scene}
-              onChange={(e) => updateScene("scene", e.target.value)}
-              placeholder="Ex: mesa de mármore branco, toalha de linho dobrada à esquerda, gotículas de água na superfície, luz de manhã pela janela"
-              rows={3}
-              style={{
-                width: "100%",
-                background: "var(--surface2)",
-                border: "1px solid var(--border)",
-                borderRadius: 8,
-                padding: "10px 12px",
-                color: "var(--text)",
-                fontSize: 14,
-                resize: "vertical",
-                outline: "none",
-                fontFamily: "inherit",
-                boxSizing: "border-box",
-              }}
-            />
-          </Field>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            <Field label="Fundo / Background">
-              <Input
-                value={scene.background}
-                onChange={(v) => updateScene("background", v)}
-                placeholder="Ex: branco, cinza claro, madeira"
-              />
-            </Field>
-            <Field label="Clima / Atmosfera">
-              <Input
-                value={scene.lightMood}
-                onChange={(v) => updateScene("lightMood", v)}
-                placeholder="Ex: clean, aconchegante, minimalista"
-              />
-            </Field>
-          </div>
-
-          <div style={{ display: "flex", gap: 12, marginTop: 32 }}>
-            <button
-              onClick={() => { setStep(1); setError(null); }}
-              style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "12px 20px", fontSize: 14, cursor: "pointer" }}
-            >
-              ← Voltar
-            </button>
-            <NavButton disabled={!canProceed2 || loading} onClick={generate} style={{ flex: 1 }}>
-              {loading ? "Gerando..." : "Gerar prompt →"}
-            </NavButton>
-          </div>
-
-          {error && (
-            <div style={{ marginTop: 16, padding: "12px 16px", background: "#2d1212", border: "1px solid #5c1a1a", borderRadius: 8, color: "#f87171", fontSize: 13 }}>
-              {error}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* STEP 3 — Resultado */}
-      {step === 3 && result && (
-        <div>
-          <SectionTitle step={3} title="Prompt pronto" />
-
-          {/* Prompt — colapsado com fade, botão copiar em destaque */}
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: 20, marginBottom: 20 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--accent)" }}>
-                {scene.tool === "chatgpt" ? "Prompt gerado" : "Prompt gerado"}
-              </span>
-            </div>
-            <div style={{ position: "relative" }}>
-              <p style={{
-                fontSize: 13, lineHeight: 1.7, color: "var(--text)", whiteSpace: "pre-wrap",
-                fontFamily: "monospace", maxHeight: 80, overflow: "hidden",
-                maskImage: "linear-gradient(to bottom, black 40%, transparent 100%)",
-                WebkitMaskImage: "linear-gradient(to bottom, black 40%, transparent 100%)",
-              }}>
-                {result.promptEN}
-              </p>
-            </div>
-            <CopyButton text={result.promptEN} fullWidth />
-          </div>
-
-          {/* Warnings */}
-          {result.warnings && result.warnings.length > 0 && (
-            <div style={{ background: "#1c1500", border: "1px solid #5c3d00", borderRadius: 10, padding: 16, marginBottom: 20 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#f59e0b", marginBottom: 8 }}>
-                Atenção
-              </div>
-              {result.warnings.map((w, i) => (
-                <p key={i} style={{ fontSize: 13, color: "#fcd34d", marginBottom: i < result.warnings.length - 1 ? 6 : 0 }}>
-                  • {w}
-                </p>
-              ))}
-            </div>
-          )}
-
-          {/* Instruções — só para ChatGPT (usuário que vai usar manualmente) */}
-          {scene.tool === "chatgpt" && (
-            <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: 20, marginBottom: 20 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 12 }}>
-                Como usar no ChatGPT
-              </div>
-              <p style={{ fontSize: 13, lineHeight: 1.8, color: "var(--text)", whiteSpace: "pre-wrap" }}>
-                {result.instructionsPT}
-              </p>
-              {result.toolTips && (
-                <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 12, lineHeight: 1.7, borderTop: "1px solid var(--border)", paddingTop: 12 }}>
-                  {result.toolTips}
-                </p>
-              )}
-            </div>
-          )}
-
-          {error && (
-            <div style={{ marginBottom: 16, padding: "12px 16px", background: "#2d1212", border: "1px solid #5c1a1a", borderRadius: 8, color: "#f87171", fontSize: 13 }}>
-              {error}
-            </div>
-          )}
-
-          {/* Ação principal: Nano Banana gera automaticamente */}
-          {scene.tool === "nano-banana" ? (
-            <button
-              onClick={() => generateImages(result.promptEN)}
-              style={{
-                width: "100%", background: "var(--accent)",
-                border: "none", color: "#fff", borderRadius: 8, padding: "15px",
-                fontSize: 15, cursor: "pointer", fontWeight: 700, marginBottom: 10,
-              }}
-            >
-              Gerar fotos agora →
-            </button>
-          ) : (
-            <div style={{ fontSize: 12, color: "var(--text-muted)", textAlign: "center", marginBottom: 16, padding: "10px", background: "var(--surface2)", borderRadius: 8 }}>
-              Copiou o prompt? Cole no ChatGPT junto com a foto do produto.
-            </div>
-          )}
-
-          <button
-            onClick={resetAll}
-            style={{ width: "100%", background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "12px", fontSize: 14, cursor: "pointer" }}
-          >
-            Novo produto
+          <button onClick={regenerateWithAdjust} style={{ marginTop: 8, background: "var(--accent)", border: "none", color: "#fff", borderRadius: 8, padding: "11px 20px", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+            Aplicar e gerar de novo
           </button>
         </div>
       )}
 
-      {/* STEP 4 — Imagens geradas */}
-      {step === 4 && (
-        <div>
-          <SectionTitle step={4} title="Imagens geradas" />
+      {/* Lotes de imagens */}
+      {batches.map((batch) => (
+        <div key={batch.id} style={{ marginBottom: 32 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+            <span style={{ fontSize: 15 }}>{SHOT_TYPES[batch.photoType].emoji}</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{SHOT_TYPES[batch.photoType].label}</span>
+            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>· {SHOT_TYPES[batch.photoType].sub}</span>
+          </div>
 
-          {generatingImages && (
-            <div style={{ textAlign: "center", padding: "40px 20px" }}>
-              <div style={{ fontSize: 36, marginBottom: 16 }}>🍌</div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>
-                Gerando suas fotos...
-              </div>
-              <div style={{ fontSize: 13, color: "var(--text-muted)" }}>{imageProgress}</div>
-              {generatedImages.length > 0 && (
-                <div style={{ marginTop: 24, fontSize: 12, color: "#4ade80" }}>
-                  {generatedImages.length} imagem(ns) prontas enquanto aguarda as demais
-                </div>
-              )}
+          {batch.error ? (
+            <div style={{ padding: "12px 16px", background: "#2d1212", border: "1px solid #5c1a1a", borderRadius: 8, color: "#f87171", fontSize: 13, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>{batch.error}</span>
+              <button onClick={() => runBatch(batch.id, batch.photoType, batch.photoType === "fundo-limpo" ? 4 : 2)} style={{ background: "none", border: "1px solid #5c1a1a", color: "#f87171", borderRadius: 6, padding: "5px 10px", fontSize: 12, cursor: "pointer" }}>
+                Tentar de novo
+              </button>
             </div>
-          )}
-
-          {generatedImages.length > 0 && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
-              {generatedImages.map((url, i) => (
-                <div key={i} style={{ borderRadius: 8, overflow: "hidden", position: "relative", background: "var(--surface2)" }}>
-                  <img src={url} alt={`Gerada ${i + 1}`} style={{ width: "100%", display: "block" }} />
-                  <a
-                    href={url}
-                    download={`foto-estudio-${i + 1}.jpg`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      position: "absolute", bottom: 8, right: 8,
-                      background: "rgba(0,0,0,0.75)", color: "#fff",
-                      borderRadius: 6, padding: "5px 10px", fontSize: 11,
-                      fontWeight: 600, textDecoration: "none",
-                    }}
-                  >
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 12 }}>
+              {batch.images.map((url, i) => (
+                <div key={i} style={{ borderRadius: 10, overflow: "hidden", position: "relative", background: "var(--surface2)" }}>
+                  <img src={url} alt={`${SHOT_TYPES[batch.photoType].label} ${i + 1}`} style={{ width: "100%", display: "block" }} />
+                  <a href={url} download={`foto-${batch.photoType}-${i + 1}.jpg`} target="_blank" rel="noopener noreferrer" style={{ position: "absolute", bottom: 8, right: 8, background: "rgba(0,0,0,0.75)", color: "#fff", borderRadius: 6, padding: "5px 10px", fontSize: 11, fontWeight: 600, textDecoration: "none" }}>
                     Baixar
                   </a>
                 </div>
               ))}
+              {batch.loading && (
+                <div style={{ gridColumn: "1 / -1", padding: "28px", textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
+                  🍌 Gerando{batch.images.length > 0 ? ` — ${batch.images.length} prontas` : "…"} · aguarde 30–60s
+                </div>
+              )}
             </div>
           )}
+        </div>
+      ))}
 
-          {!generatingImages && (
-            <div style={{ display: "flex", gap: 10, flexDirection: "column" }}>
-              <button
-                onClick={() => result && generateImages(result.promptEN)}
-                style={{ width: "100%", background: "var(--accent)", border: "none", color: "#fff", borderRadius: 8, padding: "13px", fontSize: 14, cursor: "pointer", fontWeight: 700 }}
-              >
-                + 4 novas variações
-              </button>
-              <button
-                onClick={() => setStep(3)}
-                style={{ width: "100%", background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "12px", fontSize: 14, cursor: "pointer" }}
-              >
-                ← Ver prompt
-              </button>
-              <button
-                onClick={() => { setStep(1); setResult(null); setProduct(defaultProduct); setScene(defaultScene); setPreviewUrl(null); setAnalyzed(false); setGeneratedImages([]); }}
-                style={{ width: "100%", background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "12px", fontSize: 14, cursor: "pointer" }}
-              >
-                Novo produto
-              </button>
-            </div>
-          )}
+      {/* Cards de próximo passo */}
+      {suggestions.length > 0 && (
+        <div style={{ marginTop: 8 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", marginBottom: 4 }}>
+            Quer ver de outro jeito?
+          </div>
+          <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 16 }}>
+            Um clique — a gente usa a mesma foto. Cada opção gera 2 novas.
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12 }}>
+            {suggestions.map((type) => (
+              <SuggestionCard key={type} photoType={type} onClick={() => addSuggestion(type)} />
+            ))}
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-// ── Small components ──────────────────────────────────────────────────────────
-
-function SectionTitle({ step, title }: { step: number; title: string }) {
+// ── Card de sugestão: imagem de exemplo (com fallback) ───────────────────────
+function SuggestionCard({ photoType, onClick }: { photoType: PhotoType; onClick: () => void }) {
+  const [imgOk, setImgOk] = useState(true);
+  const meta = SHOT_TYPES[photoType];
   return (
-    <div style={{ marginBottom: 28 }}>
-      <span style={{ fontSize: 11, color: "var(--accent)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-        Passo {step} de 4
-      </span>
-      <h2 style={{ fontSize: 22, fontWeight: 700, color: "var(--text)", marginTop: 4 }}>{title}</h2>
-    </div>
+    <button
+      onClick={onClick}
+      style={{
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: 12,
+        padding: 0,
+        cursor: "pointer",
+        textAlign: "left",
+        overflow: "hidden",
+        transition: "border-color 0.15s",
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
+    >
+      <div style={{ aspectRatio: "4 / 3", background: "var(--surface2)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+        {imgOk ? (
+          <img
+            src={`/exemplos/${photoType}.jpg`}
+            alt={meta.label}
+            onError={() => setImgOk(false)}
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+          />
+        ) : (
+          <div style={{ fontSize: 40, opacity: 0.7 }}>{meta.emoji}</div>
+        )}
+      </div>
+      <div style={{ padding: "12px 14px" }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", marginBottom: 2 }}>{meta.label}</div>
+        <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{meta.sub}</div>
+      </div>
+    </button>
   );
 }
 
-function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+// ── Componentes de formulário (usados só no painel de ajuste) ────────────────
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ marginBottom: 20 }}>
-      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: hint ? 2 : 8 }}>
-        {label}
-      </label>
-      {hint && <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 8 }}>{hint}</p>}
+    <div style={{ marginBottom: 16 }}>
+      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 8 }}>{label}</label>
       {children}
     </div>
   );
@@ -765,17 +494,7 @@ function Input({ value, onChange, placeholder }: { value: string; onChange: (v: 
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      style={{
-        width: "100%",
-        background: "var(--surface2)",
-        border: "1px solid var(--border)",
-        borderRadius: 8,
-        padding: "10px 12px",
-        color: "var(--text)",
-        fontSize: 14,
-        outline: "none",
-        boxSizing: "border-box",
-      }}
+      style={{ width: "100%", background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", color: "var(--text)", fontSize: 14, outline: "none", boxSizing: "border-box" }}
     />
   );
 }
@@ -785,99 +504,13 @@ function Chip({ selected, onClick, label }: { selected: boolean; onClick: () => 
     <button
       onClick={onClick}
       style={{
-        padding: "7px 14px",
-        borderRadius: 6,
-        fontSize: 13,
-        fontWeight: selected ? 600 : 400,
-        cursor: "pointer",
+        padding: "7px 14px", borderRadius: 6, fontSize: 13, fontWeight: selected ? 600 : 400, cursor: "pointer",
         border: `1px solid ${selected ? "var(--accent)" : "var(--border)"}`,
         background: selected ? "rgba(200,121,65,0.15)" : "var(--surface2)",
-        color: selected ? "var(--accent)" : "var(--text-muted)",
-        transition: "all 0.15s",
+        color: selected ? "var(--accent)" : "var(--text-muted)", transition: "all 0.15s",
       }}
     >
       {label}
-    </button>
-  );
-}
-
-function PhotoTypeOption({ selected, onClick, label, desc }: { selected: boolean; onClick: () => void; label: string; desc: string }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        padding: "12px 16px",
-        borderRadius: 8,
-        cursor: "pointer",
-        border: `1px solid ${selected ? "var(--accent)" : "var(--border)"}`,
-        background: selected ? "rgba(200,121,65,0.1)" : "var(--surface2)",
-        textAlign: "left",
-        transition: "all 0.15s",
-      }}
-    >
-      <div
-        style={{
-          width: 14,
-          height: 14,
-          borderRadius: "50%",
-          border: `2px solid ${selected ? "var(--accent)" : "var(--border)"}`,
-          background: selected ? "var(--accent)" : "transparent",
-          flexShrink: 0,
-          transition: "all 0.15s",
-        }}
-      />
-      <div>
-        <div style={{ fontSize: 14, fontWeight: 600, color: selected ? "var(--text)" : "var(--text-muted)" }}>{label}</div>
-        <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 1 }}>{desc}</div>
-      </div>
-    </button>
-  );
-}
-
-function ToolOption({ selected, onClick, label, desc }: { selected: boolean; onClick: () => void; label: string; desc: string }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        flex: 1,
-        padding: "14px 16px",
-        borderRadius: 8,
-        cursor: "pointer",
-        border: `1px solid ${selected ? "var(--accent)" : "var(--border)"}`,
-        background: selected ? "rgba(200,121,65,0.1)" : "var(--surface2)",
-        textAlign: "center",
-        transition: "all 0.15s",
-      }}
-    >
-      <div style={{ fontSize: 14, fontWeight: 700, color: selected ? "var(--accent)" : "var(--text-muted)", marginBottom: 3 }}>{label}</div>
-      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{desc}</div>
-    </button>
-  );
-}
-
-function NavButton({ children, disabled, onClick, style }: { children: React.ReactNode; disabled?: boolean; onClick: () => void; style?: React.CSSProperties }) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        background: disabled ? "var(--surface2)" : "var(--accent)",
-        color: disabled ? "var(--text-muted)" : "#fff",
-        border: "none",
-        borderRadius: 8,
-        padding: "13px 24px",
-        fontSize: 14,
-        fontWeight: 700,
-        cursor: disabled ? "not-allowed" : "pointer",
-        transition: "background 0.2s",
-        marginTop: 8,
-        ...style,
-      }}
-    >
-      {children}
     </button>
   );
 }
