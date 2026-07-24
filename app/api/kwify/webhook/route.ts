@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { markCanceled, upsertSubscriber } from "@/lib/db";
+import { markCanceled, upsertSubscriber, getSubscriber } from "@/lib/db";
+import { sendWelcomeSubscriber } from "@/lib/email";
 
 // Kwify assina o webhook via query param `?signature=<token>` (configurado no painel).
 // Aceita header como fallback.
@@ -92,6 +93,15 @@ export async function POST(req: NextRequest) {
     event.includes("renewed") ||
     event.includes("completed")
   ) {
+    // Detecta se já era assinante ativo → é renovação, não reenviar boas-vindas.
+    let wasActive = false;
+    try {
+      const prev = await getSubscriber(email);
+      wasActive = prev?.status === "active";
+    } catch (e) {
+      console.error("[kwify/webhook] falha ao checar assinante existente:", e);
+    }
+
     await upsertSubscriber({
       email,
       name,
@@ -100,6 +110,17 @@ export async function POST(req: NextRequest) {
       kwify_customer_id: kwifyCustomerId,
       subscription_ends_at: nextPayment, // opcional; útil pra dashboards
     });
+
+    // E-mail de boas-vindas apenas na primeira ativação (não em renovações).
+    // Falha de e-mail não deve derrubar o webhook (a Kwify reenviaria).
+    if (!wasActive) {
+      try {
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
+        await sendWelcomeSubscriber({ email, name, siteUrl });
+      } catch (e) {
+        console.error("[kwify/webhook] falha ao enviar boas-vindas:", e);
+      }
+    }
     return NextResponse.json({ ok: true, action: "activated" });
   }
 
