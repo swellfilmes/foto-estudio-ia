@@ -2,41 +2,68 @@
 @import "./styles/swell-ds.css";
 
 /* ============================================================
-   Ponte de compatibilidade — Maré
-   Os componentes atuais usam variáveis legadas (--bg, --accent…)
-   com style inline. Aqui elas apontam para os tokens do design
-   system "Maré", então o app inteiro adota o novo visual
-   (papel + ember, fontes novas) sem reescrever o markup.
-   A recomposição fiel ao protótipo vem por cima, tela a tela.
+   Swell Studio — tema escuro "Maré" (fiel ao protótipo da Isa)
+   Base near-black #0A0908 + acento Ember. Título em Archivo 900.
+   Tokens extras da marca reusados nas telas recompostas.
    ============================================================ */
 :root {
-  --bg:           var(--color-sand);
-  --surface:      var(--color-sand-elevated);
-  --surface2:     var(--color-sand-sunk);
-  --border:       var(--color-hairline);
-  --text:         var(--color-ink);
-  --text-muted:   var(--color-stone);
-  --accent:       var(--color-ember);
-  --accent-light: var(--color-ember-hover);
+  /* fonte de título do protótipo (Archivo, não Manrope) */
+  --font-archivo: 'Archivo', 'Manrope', system-ui, sans-serif;
+
+  /* superfícies e texto do polo escuro (valores literais do protótipo) */
+  --sw-bg:            #0A0908;
+  --sw-bg-grad:       radial-gradient(ellipse 90% 60% at 50% 30%, #16110C 0%, #0A0908 60%);
+  --sw-surface:       rgba(22, 18, 15, 0.6);
+  --sw-surface-solid: #16140F;
+  --sw-text:          #F4EFE6;
+  --sw-text-70:       rgba(244, 239, 230, 0.7);
+  --sw-text-55:       rgba(244, 239, 230, 0.55);
+  --sw-text-45:       rgba(244, 239, 230, 0.45);
+  --sw-text-35:       rgba(244, 239, 230, 0.35);
+  --sw-line:          rgba(244, 239, 230, 0.1);
+  --sw-line-soft:     rgba(244, 239, 230, 0.07);
+
+  /* acento Ember + botão gradiente do protótipo */
+  --sw-ember:         #E0742F;
+  --sw-ember-bright:  #EE8440;
+  --sw-ember-deep:    #D96A24;
+  --sw-ember-grad:    linear-gradient(180deg, #EE8440 0%, #D96A24 100%);
+  --sw-ember-glow:    0 12px 40px rgba(224, 116, 47, 0.25);
+
+  /* ponte das vars legadas -> polo escuro (telas ainda não recompostas) */
+  --bg:           var(--sw-bg);
+  --surface:      var(--sw-surface-solid);
+  --surface2:     #201C17;
+  --border:       var(--sw-line);
+  --text:         var(--sw-text);
+  --text-muted:   var(--sw-text-55);
+  --accent:       var(--sw-ember);
+  --accent-light: var(--sw-ember-bright);
 }
 
 body {
-  background: var(--bg-default);
-  color: var(--text-primary);
+  background: var(--sw-bg);
+  color: var(--sw-text);
   font-family: var(--font-body);
   font-size: var(--text-body);
   line-height: var(--leading-body);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  overflow-x: hidden;
 }
 
-/* Títulos adotam o display Manrope automaticamente (Maré) */
-h1, h2, h3 {
-  font-family: var(--font-display);
-  letter-spacing: var(--tracking-heading);
-}
+/* Títulos display em Archivo (assinatura do protótipo) */
+h1, h2, h3 { font-family: var(--font-archivo); letter-spacing: -0.02em; }
 
-::selection { background: var(--color-ember); color: #fff; }
+/* Animações reusadas do protótipo */
+@keyframes sw-riseIn { from { opacity: 0; transform: translateY(16px); filter: blur(10px); } to { opacity: 1; transform: none; filter: blur(0); } }
+@keyframes sw-shimmer { 0% { background-position: -600px 0; } 100% { background-position: 600px 0; } }
+@keyframes sw-scan { 0% { top: -12%; } 100% { top: 108%; } }
+@keyframes sw-softPulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+@keyframes sw-breathe { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.12); opacity: 0.9; } }
+@media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; } }
+
+::selection { background: var(--sw-ember); color: var(--sw-bg); }
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-hairline); border-radius: var(--radius-sm); }
+::-webkit-scrollbar-thumb { background: rgba(244, 239, 230, 0.12); border-radius: 4px; }
