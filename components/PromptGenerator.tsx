@@ -80,6 +80,41 @@ type Phase = "upload" | "working" | "studio";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// ── Tokens visuais do protótipo "Maré" (polo escuro) ─────────────────────────
+const SW = {
+  ember: "#E0742F",
+  text: "#F4EFE6",
+  text70: "rgba(244,239,230,0.7)",
+  text55: "rgba(244,239,230,0.55)",
+  text45: "rgba(244,239,230,0.45)",
+  text40: "rgba(244,239,230,0.4)",
+  line: "rgba(244,239,230,0.1)",
+  surface: "rgba(22,18,15,0.6)",
+};
+const FONT = {
+  archivo: "'Archivo', 'Manrope', system-ui, sans-serif",
+  body: "'Hanken Grotesk', system-ui, sans-serif",
+  mono: "'IBM Plex Mono', monospace",
+};
+const EMBER_BTN: React.CSSProperties = {
+  background: "linear-gradient(180deg, #EE8440 0%, #D96A24 100%)",
+  border: "none", color: "#0A0908", borderRadius: 12,
+  fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: FONT.body,
+  boxShadow: "0 12px 36px rgba(224,116,47,0.25)",
+};
+function TrustBadges() {
+  const items = ["PRODUTO FIEL AO ORIGINAL", "SEUS ARQUIVOS SÃO PRIVADOS", "RESULTADO EM MINUTOS"];
+  return (
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "clamp(24px,4vw,52px)", flexWrap: "wrap", marginTop: 40 }}>
+      {items.map((t) => (
+        <div key={t} style={{ display: "flex", alignItems: "center", gap: 9, fontFamily: FONT.mono, fontSize: 9, letterSpacing: "0.18em", color: SW.text45 }}>
+          <span style={{ width: 5, height: 5, borderRadius: "50%", background: SW.ember, display: "inline-block" }} />{t}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } = {}) {
   const [phase, setPhase] = useState<Phase>("upload");
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -316,85 +351,90 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
   // ── UPLOAD (tela de boas-vindas) ──────────────────────────────────────────
   if (phase === "upload") {
     return (
-      <div style={{ maxWidth: 620, margin: "0 auto", padding: "72px 20px" }}>
-        <div style={{ textAlign: "center", marginBottom: 36 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 12 }}>
-            Foto Estúdio IA · Swell
-          </div>
-          <h1 style={{ fontSize: 32, fontWeight: 700, color: "var(--text)", marginBottom: 10, lineHeight: 1.15 }}>
-            Comece enviando fotos do seu produto
-          </h1>
-          <p style={{ fontSize: 15, color: "var(--text-muted)", lineHeight: 1.5 }}>
-            Pode ser foto de celular. De 3 a 5 fotos em ângulos diferentes<br />
-            deixam o resultado mais fiel — mas dá pra começar com uma.
-          </p>
-        </div>
+      <main style={{ width: "100%", maxWidth: 1180, margin: "0 auto", padding: "clamp(40px,7vh,90px) clamp(20px,4vw,48px) 80px", boxSizing: "border-box", animation: "sw-riseIn 800ms cubic-bezier(0.22,1,0.36,1) both" }}>
+        <div style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: "0.24em", color: SW.ember, marginBottom: 22 }}>01 · NOVO ENSAIO</div>
+        <h1 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(44px,5.6vw,76px)", lineHeight: 0.95, letterSpacing: "-0.035em", margin: "0 0 20px" }}>
+          Seu produto.<br /><span style={{ color: SW.text40 }}>Pronto para vender.</span>
+        </h1>
+        <p style={{ fontSize: 16, lineHeight: 1.65, color: SW.text55, margin: "0 0 44px", maxWidth: "52ch" }}>
+          Envie fotos do celular. A gente preserva cada detalhe e cria o ensaio por você.
+        </p>
 
         <div
           onClick={() => fileInputRef.current?.click()}
           onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault();
-            addFiles(Array.from(e.dataTransfer.files));
-          }}
+          onDrop={(e) => { e.preventDefault(); addFiles(Array.from(e.dataTransfer.files)); }}
           style={{
-            border: "2px dashed var(--border)",
-            borderRadius: 16,
-            padding: "56px 24px",
-            textAlign: "center",
-            cursor: "pointer",
-            background: "var(--surface2)",
-            transition: "border-color 0.2s",
+            display: "flex", alignItems: "center", gap: "clamp(20px,3vw,36px)", flexWrap: "wrap",
+            borderRadius: 24, padding: "clamp(28px,4vw,46px)", cursor: "pointer",
+            background: SW.surface, backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+            border: `1px solid ${SW.line}`, boxShadow: "0 30px 90px rgba(0,0,0,0.4)", transition: "border-color 300ms, transform 300ms cubic-bezier(0.22,1,0.36,1)",
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(224,116,47,0.5)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = SW.line; e.currentTarget.style.transform = "none"; }}
         >
-          <div style={{ fontSize: 44, marginBottom: 14 }}>📷</div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>
-            Cole, arraste ou clique para enviar
+          <div style={{ width: 58, height: 58, borderRadius: 16, background: "rgba(224,116,47,0.12)", border: "1px solid rgba(224,116,47,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 24, color: SW.ember }}>↑</div>
+          <div style={{ flex: 1, minWidth: 260 }}>
+            <div style={{ fontSize: 21, fontWeight: 700, marginBottom: 7 }}>Comece pelas fotos do produto</div>
+            <div style={{ fontSize: 14, color: SW.text55, lineHeight: 1.55 }}>Para manter rótulo, textura e formato fiéis, envie de 3 a {MAX_PHOTOS} ângulos.</div>
+            <div style={{ display: "flex", gap: 22, flexWrap: "wrap", marginTop: 20, fontFamily: FONT.mono, fontSize: 9, letterSpacing: "0.16em", color: SW.text40 }}>
+              <span>JPG, PNG OU HEIC</span><span>CELULAR SERVE</span><span>CTRL+V FUNCIONA</span>
+            </div>
           </div>
-          <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
-            Ctrl+V · arraste as imagens · ou clique aqui — até {MAX_PHOTOS} fotos
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 12 }}>
+            <span style={{ ...EMBER_BTN, padding: "14px 26px" }}>Escolher fotos</span>
+            {onEnsaio && (
+              <button onClick={(e) => { e.stopPropagation(); onEnsaio(); }} style={{ background: "none", border: "none", color: SW.text55, fontSize: 13, cursor: "pointer", padding: 0, fontFamily: FONT.body }}>
+                Ensaio de Pessoa ↗
+              </button>
+            )}
           </div>
         </div>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          style={{ display: "none" }}
-          onChange={(e) => {
-            if (e.target.files) addFiles(Array.from(e.target.files));
-            e.target.value = "";
-          }}
-        />
+        <input ref={fileInputRef} type="file" accept="image/*" multiple style={{ display: "none" }}
+          onChange={(e) => { if (e.target.files) addFiles(Array.from(e.target.files)); e.target.value = ""; }} />
 
         {error && (
-          <div style={{ marginTop: 20, padding: "12px 16px", background: "#2d1212", border: "1px solid #5c1a1a", borderRadius: 8, color: "#f87171", fontSize: 13, textAlign: "center" }}>
+          <div style={{ marginTop: 22, padding: "12px 16px", borderRadius: 12, border: "1px solid rgba(224,116,47,0.4)", background: "rgba(224,116,47,0.08)", color: SW.ember, fontSize: 13, textAlign: "center" }}>
             {error}
           </div>
         )}
 
-        {onEnsaio && (
-          <p style={{ textAlign: "center", marginTop: 28, fontSize: 12, color: "var(--text-muted)" }}>
-            Quer fotos suas, não de produto?{" "}
-            <button onClick={onEnsaio} style={{ background: "none", border: "none", color: "var(--accent)", cursor: "pointer", fontSize: 12, padding: 0, textDecoration: "underline" }}>
-              Ensaio de Pessoa →
-            </button>
-          </p>
-        )}
-      </div>
+        <TrustBadges />
+      </main>
     );
   }
 
   // ── WORKING (analisando a primeira foto) ──────────────────────────────────
   if (phase === "working") {
+    const first = photos[0]?.url;
     return (
-      <div style={{ maxWidth: 620, margin: "0 auto", padding: "80px 20px", textAlign: "center" }}>
-        <div style={{ fontSize: 30, marginBottom: 12 }}>🔍</div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>Analisando sua foto…</div>
-        <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Leva alguns segundos.</div>
-      </div>
+      <main style={{ width: "100%", maxWidth: 1180, margin: "0 auto", padding: "clamp(40px,7vh,90px) clamp(20px,4vw,48px) 80px", boxSizing: "border-box", animation: "sw-riseIn 700ms cubic-bezier(0.22,1,0.36,1) both" }}>
+        <div style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: "0.24em", color: SW.ember, marginBottom: 22 }}>01 · NOVO ENSAIO</div>
+        <h1 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(44px,5.6vw,76px)", lineHeight: 0.95, letterSpacing: "-0.035em", margin: "0 0 20px" }}>
+          Seu produto.<br /><span style={{ color: SW.text40 }}>Pronto para vender.</span>
+        </h1>
+        <p style={{ fontSize: 16, lineHeight: 1.65, color: SW.text55, margin: "0 0 44px", maxWidth: "52ch" }}>
+          Envie fotos do celular. A gente preserva cada detalhe e cria o ensaio por você.
+        </p>
+        <div style={{ display: "flex", alignItems: "center", gap: "clamp(24px,3vw,44px)", flexWrap: "wrap", borderRadius: 24, padding: "clamp(24px,3vw,40px)", background: SW.surface, backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: `1px solid ${SW.line}`, boxShadow: "0 30px 90px rgba(0,0,0,0.4)" }}>
+          <div style={{ position: "relative", width: "min(280px,100%)", aspectRatio: "1 / 1", borderRadius: 18, background: "#14110F", border: `1px solid ${SW.line}`, flexShrink: 0, overflow: "hidden" }}>
+            {first && <div style={{ position: "absolute", inset: 24, backgroundImage: `url(${first})`, backgroundSize: "cover", backgroundPosition: "center", borderRadius: 10 }} />}
+            <div style={{ position: "absolute", left: 0, right: 0, height: "30%", background: "linear-gradient(180deg, rgba(224,116,47,0) 0%, rgba(224,116,47,0.18) 50%, rgba(224,116,47,0) 100%)", animation: "sw-scan 2.2s cubic-bezier(0.45,0,0.55,1) infinite" }} />
+            {[["top","left"],["top","right"],["bottom","left"],["bottom","right"]].map(([v,h],i)=>(
+              <div key={i} style={{ position:"absolute", [v]:14, [h]:14, width:22, height:22, [`border${v[0].toUpperCase()+v.slice(1)}`]:"2px solid rgba(244,239,230,0.7)", [`border${h[0].toUpperCase()+h.slice(1)}`]:"2px solid rgba(244,239,230,0.7)" } as React.CSSProperties} />
+            ))}
+          </div>
+          <div style={{ flex: 1, minWidth: 280 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, border: "1px solid rgba(224,116,47,0.4)", borderRadius: 999, padding: "7px 15px", marginBottom: 20 }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: SW.ember, display: "inline-block", animation: "sw-softPulse 1.6s ease-in-out infinite" }} />
+              <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.2em", color: SW.ember }}>ANALISANDO</span>
+            </div>
+            <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: "clamp(24px,2.8vw,32px)", letterSpacing: "-0.02em", marginBottom: 10 }}>Entendendo seu produto…</div>
+            <div style={{ fontSize: 14, color: SW.text55, lineHeight: 1.6 }}>Reconhecendo cor, material, rótulo e forma para preservar cada detalhe no ensaio.</div>
+          </div>
+        </div>
+        <TrustBadges />
+      </main>
     );
   }
 
