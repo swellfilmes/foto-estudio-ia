@@ -440,21 +440,23 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
 
   // ── STUDIO (fotos + opções + resultados) ──────────────────────────────────
   return (
-    <div style={{ maxWidth: 760, margin: "0 auto", padding: "40px 20px" }}>
+    <div style={{ width: "100%", maxWidth: 1000, margin: "0 auto", padding: "clamp(32px,5vh,60px) clamp(20px,4vw,48px) 100px", boxSizing: "border-box", animation: "sw-riseIn 700ms cubic-bezier(0.22,1,0.36,1) both" }}>
       {/* Cabeçalho: produto identificado */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20, gap: 12 }}>
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 4 }}>
-            Identificamos
+      <div style={{ display: "flex", alignItems: "center", gap: 20, padding: "clamp(18px,2.5vw,24px)", borderRadius: 20, background: SW.surface, border: `1px solid ${SW.line}`, marginBottom: 28, flexWrap: "wrap" }}>
+        {photos[0]?.url && (
+          <div style={{ width: 76, height: 76, borderRadius: 14, backgroundImage: `url(${photos[0].url})`, backgroundSize: "cover", backgroundPosition: "center", border: `1px solid ${SW.line}`, flexShrink: 0 }} />
+        )}
+        <div style={{ flex: 1, minWidth: 220 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 7, border: `1px solid ${SW.line}`, borderRadius: 999, padding: "5px 13px", marginBottom: 10 }}>
+            <span style={{ color: SW.ember, fontSize: 11 }}>✓</span>
+            <span style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: "0.2em", color: SW.text70 }}>PRODUTO IDENTIFICADO</span>
           </div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", lineHeight: 1.35, maxWidth: 520 }}>
-            {product.name || "Seu produto"}
-          </div>
-          <button onClick={() => setShowAdjust((s) => !s)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 12, padding: 0, textDecoration: "underline", marginTop: 4 }}>
-            {showAdjust ? "ocultar ajustes" : "ajustar detalhes"}
+          <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 22, letterSpacing: "-0.02em", lineHeight: 1.2 }}>{product.name || "Seu produto"}</div>
+          <button onClick={() => setShowAdjust((s) => !s)} style={{ background: "none", border: "none", color: SW.text45, cursor: "pointer", fontSize: 12, padding: 0, marginTop: 8, fontFamily: FONT.body }}>
+            {showAdjust ? "ocultar ajustes ↑" : "ajustar detalhes ↓"}
           </button>
         </div>
-        <button onClick={reset} style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "9px 16px", fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>
+        <button onClick={reset} style={{ background: "rgba(244,239,230,0.05)", border: `1px solid ${SW.line}`, color: SW.text70, borderRadius: 12, padding: "11px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", fontFamily: FONT.body }}>
           Nova foto
         </button>
       </div>
@@ -504,7 +506,7 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
 
       {/* Painel de ajuste opcional */}
       {showAdjust && (
-        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 20, marginBottom: 24 }}>
+        <div style={{ background: SW.surface, border: `1px solid ${SW.line}`, borderRadius: 16, padding: 22, marginBottom: 24 }}>
           <Field label="Categoria">
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {CATEGORIES.map((c) => (
@@ -527,11 +529,12 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
       )}
 
       {/* Escolha do tipo de foto */}
-      <div style={{ marginBottom: 8 }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", marginBottom: 4 }}>
-          Que tipo de foto você quer?
+      <div style={{ marginBottom: 18 }}>
+        <div style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: "0.22em", color: SW.ember, marginBottom: 10 }}>PRÓXIMO MELHOR PASSO</div>
+        <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: "clamp(24px,2.8vw,34px)", letterSpacing: "-0.025em", marginBottom: 6 }}>
+          O que você quer criar agora?
         </div>
-        <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 16 }}>
+        <div style={{ fontSize: 13, color: SW.text55 }}>
           Cada opção gera {VARIATIONS_PER_CLICK} fotos usando suas imagens como referência.
         </div>
       </div>
@@ -540,33 +543,34 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
       <button
         onClick={() => setWithModel((w) => !w)}
         style={{
-          display: "flex", alignItems: "center", gap: 10,
-          background: withModel ? "rgba(200,121,65,0.12)" : "var(--surface)",
-          border: `1px solid ${withModel ? "var(--accent)" : "var(--border)"}`,
-          borderRadius: 10, padding: "12px 16px", cursor: "pointer", marginBottom: 16, width: "100%",
+          display: "flex", alignItems: "center", gap: 12,
+          background: withModel ? "rgba(224,116,47,0.1)" : SW.surface,
+          border: `1px solid ${withModel ? "rgba(224,116,47,0.5)" : SW.line}`,
+          borderRadius: 14, padding: "14px 18px", cursor: "pointer", marginBottom: 18, width: "100%",
+          fontFamily: FONT.body, transition: "all 300ms",
         }}
       >
         <div style={{
-          width: 34, height: 20, borderRadius: 999, position: "relative", flexShrink: 0,
-          background: withModel ? "var(--accent)" : "var(--border)", transition: "background 0.2s",
+          width: 36, height: 21, borderRadius: 999, position: "relative", flexShrink: 0,
+          background: withModel ? SW.ember : "rgba(244,239,230,0.15)", transition: "background 0.3s",
         }}>
           <div style={{
-            position: "absolute", top: 2, left: withModel ? 16 : 2, width: 16, height: 16,
-            borderRadius: "50%", background: "#fff", transition: "left 0.2s",
+            position: "absolute", top: 2, left: withModel ? 17 : 2, width: 17, height: 17,
+            borderRadius: "50%", background: "#F4EFE6", transition: "left 0.3s cubic-bezier(0.22,1,0.36,1)",
           }} />
         </div>
         <div style={{ textAlign: "left" }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: withModel ? "var(--accent)" : "var(--text)" }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: withModel ? SW.ember : SW.text }}>
             Colocar com um modelo?
           </div>
-          <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
+          <div style={{ fontSize: 12, color: SW.text55 }}>
             Uma pessoa segurando, usando ou apresentando o produto
           </div>
         </div>
       </button>
 
       {/* Cards de opção — clicar SELECIONA; gerar só no botão de confirmar */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 12, marginBottom: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 14, marginBottom: 16 }}>
         {styles.map((s) => (
           <StyleCard
             key={s.key}
@@ -799,19 +803,21 @@ function StyleCard({ style, selected, onClick }: { style: StyleOption; selected?
     <button
       onClick={onClick}
       style={{
-        background: selected ? "rgba(200,121,65,0.1)" : "var(--surface)",
-        border: `2px solid ${selected ? "var(--accent)" : "var(--border)"}`,
-        borderRadius: 12,
+        background: SW.surface,
+        border: `1px solid ${selected ? "rgba(224,116,47,0.6)" : SW.line}`,
+        borderRadius: 16,
         padding: 0,
         cursor: "pointer",
         textAlign: "left",
         overflow: "hidden",
-        transition: "border-color 0.15s",
+        fontFamily: FONT.body,
+        boxShadow: selected ? "0 20px 60px rgba(224,116,47,0.15)" : "none",
+        transition: "transform 300ms cubic-bezier(0.22,1,0.36,1), border-color 300ms",
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; }}
-      onMouseLeave={(e) => { if (!selected) e.currentTarget.style.borderColor = "var(--border)"; }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(224,116,47,0.6)"; e.currentTarget.style.transform = "translateY(-3px)"; }}
+      onMouseLeave={(e) => { if (!selected) e.currentTarget.style.borderColor = SW.line; e.currentTarget.style.transform = "none"; }}
     >
-      <div style={{ aspectRatio: "4 / 3", background: "var(--surface2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ aspectRatio: "16 / 10", background: "#1B1714", position: "relative" }}>
         {imgOk ? (
           <img
             src={`/exemplos/${style.key}.jpg`}
@@ -820,12 +826,18 @@ function StyleCard({ style, selected, onClick }: { style: StyleOption; selected?
             style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
           />
         ) : (
-          <div style={{ fontSize: 36, opacity: 0.7 }}>{style.emoji}</div>
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 34, opacity: 0.6 }}>{style.emoji}</div>
+        )}
+        {selected && (
+          <div style={{ position: "absolute", right: 10, top: 10, width: 24, height: 24, borderRadius: "50%", background: SW.ember, display: "flex", alignItems: "center", justifyContent: "center", color: "#0A0908", fontSize: 13, fontWeight: 800 }}>✓</div>
         )}
       </div>
-      <div style={{ padding: "10px 12px" }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", marginBottom: 2 }}>{style.label}</div>
-        <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{style.sub}</div>
+      <div style={{ padding: "13px 15px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginBottom: 3 }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: SW.text }}>{style.label}</span>
+          <span style={{ fontSize: 11, color: SW.ember, whiteSpace: "nowrap" }}>gerar →</span>
+        </div>
+        <div style={{ fontSize: 12, color: SW.text55 }}>{style.sub}</div>
       </div>
     </button>
   );
@@ -835,7 +847,7 @@ function StyleCard({ style, selected, onClick }: { style: StyleOption; selected?
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 16 }}>
-      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 8 }}>{label}</label>
+      <label style={{ display: "block", fontFamily: FONT.mono, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: SW.text45, marginBottom: 9 }}>{label}</label>
       {children}
     </div>
   );
@@ -847,7 +859,7 @@ function Input({ value, onChange, placeholder }: { value: string; onChange: (v: 
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      style={{ width: "100%", background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", color: "var(--text)", fontSize: 14, outline: "none", boxSizing: "border-box" }}
+      style={{ width: "100%", background: "rgba(244,239,230,0.04)", border: `1px solid ${SW.line}`, borderRadius: 10, padding: "12px 14px", color: SW.text, fontSize: 14, outline: "none", boxSizing: "border-box", fontFamily: FONT.body }}
     />
   );
 }
@@ -857,10 +869,10 @@ function Chip({ selected, onClick, label }: { selected: boolean; onClick: () => 
     <button
       onClick={onClick}
       style={{
-        padding: "7px 14px", borderRadius: 6, fontSize: 13, fontWeight: selected ? 600 : 400, cursor: "pointer",
-        border: `1px solid ${selected ? "var(--accent)" : "var(--border)"}`,
-        background: selected ? "rgba(200,121,65,0.15)" : "var(--surface2)",
-        color: selected ? "var(--accent)" : "var(--text-muted)", transition: "all 0.15s",
+        padding: "8px 15px", borderRadius: 999, fontSize: 13, fontWeight: selected ? 600 : 500, cursor: "pointer",
+        border: `1px solid ${selected ? "rgba(224,116,47,0.5)" : SW.line}`,
+        background: selected ? "rgba(224,116,47,0.12)" : "rgba(244,239,230,0.03)",
+        color: selected ? SW.ember : SW.text55, transition: "all 0.2s", fontFamily: FONT.body,
       }}
     >
       {label}
