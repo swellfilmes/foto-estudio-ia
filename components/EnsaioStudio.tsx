@@ -24,6 +24,23 @@ const defaultPerson: PersonInfo = {
   distinguishingContext: "",
 };
 
+// ── Tokens visuais "Maré" (polo escuro) ──────────────────────────────────────
+const SW = {
+  ember: "#E0742F",
+  text: "#F4EFE6",
+  text70: "rgba(244,239,230,0.7)",
+  text55: "rgba(244,239,230,0.55)",
+  text45: "rgba(244,239,230,0.45)",
+  line: "rgba(244,239,230,0.1)",
+  surface: "rgba(22,18,15,0.6)",
+};
+const FONT = {
+  archivo: "'Archivo', 'Manrope', system-ui, sans-serif",
+  body: "'Hanken Grotesk', system-ui, sans-serif",
+  mono: "'IBM Plex Mono', monospace",
+};
+const EMBER_GRAD = "linear-gradient(180deg, #EE8440 0%, #D96A24 100%)";
+
 export default function EnsaioStudio({ onBack }: { onBack?: () => void } = {}) {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [refs, setRefs] = useState<RefImage[]>([]);
@@ -242,32 +259,32 @@ export default function EnsaioStudio({ onBack }: { onBack?: () => void } = {}) {
   const selectedStyle: EnsaioStyle | null = styleId ? ENSAIO_STYLES.find((s) => s.id === styleId) || null : null;
 
   return (
-    <div style={{ maxWidth: 780, margin: "0 auto", padding: "40px 20px" }}>
+    <div style={{ width: "100%", maxWidth: 900, margin: "0 auto", padding: "clamp(32px,5vh,60px) clamp(20px,4vw,48px) 100px", boxSizing: "border-box", animation: "sw-riseIn 700ms cubic-bezier(0.22,1,0.36,1) both" }}>
       {/* Header */}
-      <div style={{ marginBottom: 40 }}>
+      <div style={{ marginBottom: 36 }}>
         {onBack && (
           <button
             onClick={onBack}
-            style={{ background: "transparent", border: "none", color: "var(--text-muted)", fontSize: 12, cursor: "pointer", padding: 0, marginBottom: 12 }}
+            style={{ background: "transparent", border: "none", color: SW.text45, fontSize: 12, cursor: "pointer", padding: 0, marginBottom: 16, fontFamily: FONT.body }}
           >
             ← Trocar modo
           </button>
         )}
-        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 8 }}>
-          Swell · Ensaio de Pessoa
+        <div style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: "0.24em", color: SW.ember, marginBottom: 16 }}>
+          SWELL STUDIO · ENSAIO DE PESSOA
         </div>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>
-          Ensaio nível Swell
+        <h1 style={{ fontFamily: FONT.archivo, fontSize: "clamp(40px,5vw,64px)", fontWeight: 900, letterSpacing: "-0.035em", lineHeight: 0.95, color: SW.text, margin: "0 0 14px" }}>
+          Ensaio nível Swell<span style={{ color: SW.ember }}>.</span>
         </h1>
-        <p style={{ fontSize: 14, color: "var(--text-muted)" }}>
-          Fotos de referência → catálogo de estilos → 8 fotos do seu ensaio em minutos
+        <p style={{ fontSize: 15, color: SW.text55, lineHeight: 1.6, maxWidth: "52ch" }}>
+          Fotos de referência → catálogo de estilos → 8 fotos do seu ensaio em minutos.
         </p>
       </div>
 
       {/* Steps */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 32 }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 36 }}>
         {[1, 2, 3, 4].map((s) => (
-          <div key={s} style={{ height: 3, flex: 1, borderRadius: 2, background: step >= s ? "var(--accent)" : "var(--border)", transition: "background 0.3s" }} />
+          <div key={s} style={{ height: 3, flex: 1, borderRadius: 2, background: step >= s ? SW.ember : SW.line, transition: "background 0.3s" }} />
         ))}
       </div>
 
@@ -364,30 +381,35 @@ export default function EnsaioStudio({ onBack }: { onBack?: () => void } = {}) {
           <SectionTitle step={2} title="Estilo do ensaio" />
           <P>Escolha um estilo do catálogo Swell. Cada estilo tem direção de arte, luz e wardrobe próprios.</P>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 24, marginBottom: 20 }}>
-            {ENSAIO_STYLES.map((style) => (
-              <button
-                key={style.id}
-                onClick={() => setStyleId(style.id)}
-                style={{
-                  padding: "16px 14px",
-                  borderRadius: 10,
-                  cursor: "pointer",
-                  border: `1px solid ${styleId === style.id ? "var(--accent)" : "var(--border)"}`,
-                  background: styleId === style.id ? "rgba(200,121,65,0.08)" : "var(--surface)",
-                  textAlign: "left",
-                  transition: "all 0.15s",
-                }}
-              >
-                <div style={{ fontSize: 22, marginBottom: 8 }}>{style.icon}</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: styleId === style.id ? "var(--accent)" : "var(--text)", marginBottom: 4 }}>
-                  {style.name}
-                </div>
-                <div style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
-                  {style.description}
-                </div>
-              </button>
-            ))}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 14, marginTop: 24, marginBottom: 20 }}>
+            {ENSAIO_STYLES.map((style) => {
+              const on = styleId === style.id;
+              return (
+                <button
+                  key={style.id}
+                  onClick={() => setStyleId(style.id)}
+                  style={{
+                    padding: "18px 16px",
+                    borderRadius: 16,
+                    cursor: "pointer",
+                    border: `1px solid ${on ? "rgba(224,116,47,0.6)" : SW.line}`,
+                    background: on ? "rgba(224,116,47,0.1)" : SW.surface,
+                    textAlign: "left",
+                    fontFamily: FONT.body,
+                    boxShadow: on ? "0 20px 60px rgba(224,116,47,0.15)" : "none",
+                    transition: "all 0.25s",
+                  }}
+                >
+                  <div style={{ fontSize: 24, marginBottom: 10 }}>{style.icon}</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: on ? SW.ember : SW.text, marginBottom: 4 }}>
+                    {style.name}
+                  </div>
+                  <div style={{ fontSize: 12, color: SW.text55, lineHeight: 1.5 }}>
+                    {style.description}
+                  </div>
+                </button>
+              );
+            })}
           </div>
 
           <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
@@ -548,25 +570,25 @@ export default function EnsaioStudio({ onBack }: { onBack?: () => void } = {}) {
 function SectionTitle({ step, title }: { step: number; title: string }) {
   return (
     <div style={{ marginBottom: 24 }}>
-      <span style={{ fontSize: 11, color: "var(--accent)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+      <span style={{ fontFamily: FONT.mono, fontSize: 11, color: SW.ember, fontWeight: 500, letterSpacing: "0.22em", textTransform: "uppercase" }}>
         Passo {step} de 4
       </span>
-      <h2 style={{ fontSize: 22, fontWeight: 700, color: "var(--text)", marginTop: 4 }}>{title}</h2>
+      <h2 style={{ fontFamily: FONT.archivo, fontSize: "clamp(24px,3vw,34px)", fontWeight: 800, letterSpacing: "-0.025em", color: SW.text, marginTop: 8 }}>{title}</h2>
     </div>
   );
 }
 
 function P({ children }: { children: React.ReactNode }) {
-  return <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.7, margin: "10px 0" }}>{children}</p>;
+  return <p style={{ fontSize: 14, color: SW.text55, lineHeight: 1.7, margin: "10px 0", maxWidth: "56ch" }}>{children}</p>;
 }
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 20 }}>
-      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: hint ? 2 : 8 }}>
+      <label style={{ display: "block", fontFamily: FONT.mono, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: SW.text45, marginBottom: hint ? 4 : 9 }}>
         {label}
       </label>
-      {hint && <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 8 }}>{hint}</p>}
+      {hint && <p style={{ fontSize: 12, color: SW.text55, marginBottom: 9 }}>{hint}</p>}
       {children}
     </div>
   );
@@ -578,14 +600,16 @@ function NavButton({ children, disabled, onClick, style }: { children: React.Rea
       onClick={onClick}
       disabled={disabled}
       style={{
-        background: disabled ? "var(--surface2)" : "var(--accent)",
-        color: disabled ? "var(--text-muted)" : "#fff",
+        background: disabled ? "rgba(244,239,230,0.06)" : EMBER_GRAD,
+        color: disabled ? SW.text45 : "#0A0908",
         border: "none",
-        borderRadius: 8,
-        padding: "13px 24px",
+        borderRadius: 12,
+        padding: "15px 28px",
         fontSize: 14,
         fontWeight: 700,
+        fontFamily: FONT.body,
         cursor: disabled ? "not-allowed" : "pointer",
+        boxShadow: disabled ? "none" : "0 12px 36px rgba(224,116,47,0.25)",
         marginTop: 8,
         ...style,
       }}
