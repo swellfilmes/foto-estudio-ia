@@ -1,24 +1,42 @@
 @import "tailwindcss";
+@import "./styles/swell-ds.css";
 
+/* ============================================================
+   Ponte de compatibilidade — Maré
+   Os componentes atuais usam variáveis legadas (--bg, --accent…)
+   com style inline. Aqui elas apontam para os tokens do design
+   system "Maré", então o app inteiro adota o novo visual
+   (papel + ember, fontes novas) sem reescrever o markup.
+   A recomposição fiel ao protótipo vem por cima, tela a tela.
+   ============================================================ */
 :root {
-  --bg: #0f0f0f;
-  --surface: #1a1a1a;
-  --surface2: #242424;
-  --border: #2e2e2e;
-  --text: #f0ece6;
-  --text-muted: #888;
-  --accent: #c87941;
-  --accent-light: #d98b52;
+  --bg:           var(--color-sand);
+  --surface:      var(--color-sand-elevated);
+  --surface2:     var(--color-sand-sunk);
+  --border:       var(--color-hairline);
+  --text:         var(--color-ink);
+  --text-muted:   var(--color-stone);
+  --accent:       var(--color-ember);
+  --accent-light: var(--color-ember-hover);
 }
 
 body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg-default);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-::selection { background: var(--accent); color: #fff; }
-::-webkit-scrollbar { width: 6px; }
+/* Títulos adotam o display Manrope automaticamente (Maré) */
+h1, h2, h3 {
+  font-family: var(--font-display);
+  letter-spacing: var(--tracking-heading);
+}
+
+::selection { background: var(--color-ember); color: #fff; }
+::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--color-hairline); border-radius: var(--radius-sm); }
