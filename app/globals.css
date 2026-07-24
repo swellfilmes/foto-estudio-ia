@@ -1,31 +1,55 @@
 @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
+@import "./styles/swell-ds.css";
 
 /* ============================================================
-   Swell Filmes — Maré · polo escuro (do design system oficial)
-   Abyss (preto-quente) + Ember (único acento) + superfícies de
-   areia translúcida. Cantos retos, hairlines em vez de sombras.
+   Swell Studio — tema escuro "Maré" (design system oficial)
+   Abyss (preto-quente) + Ember (acento único). Título em Archivo 900.
+   União: tokens do design system (--sw-*) + ponte pras vars legadas.
    ============================================================ */
 :root {
-  --bg: #0A0908;                            /* abyss */
-  --surface: #16140F;                       /* abyss elevated */
-  --surface2: rgba(244, 239, 230, 0.05);    /* sand véu — wells, inputs */
-  --border: rgba(239, 234, 224, 0.12);      /* hairline sobre escuro */
-  --text: #EFEAE0;                          /* foam — warm off-white */
-  --text-muted: #9A938A;                    /* foam soft */
-  --accent: #E0742F;                        /* EMBER — o acento único */
-  --accent-light: #EE8440;
-  --positive: #3F7D5A;
-  --warning: #C28A1E;
-  --critical: #B23B2E;
-
+  /* fontes */
+  --font-archivo: 'Archivo', 'Manrope', system-ui, sans-serif;
   --font-display: 'Archivo', system-ui, -apple-system, sans-serif;
-  --font-body: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+  --font-body:    'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  --font-mono:    'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  /* superfícies e texto do polo escuro (valores literais do protótipo) */
+  --sw-bg:            #0A0908;
+  --sw-bg-grad:       radial-gradient(ellipse 90% 60% at 50% 30%, #16110C 0%, #0A0908 60%);
+  --sw-surface:       rgba(22, 18, 15, 0.6);
+  --sw-surface-solid: #16140F;
+  --sw-text:          #F4EFE6;
+  --sw-text-70:       rgba(244, 239, 230, 0.7);
+  --sw-text-55:       rgba(244, 239, 230, 0.55);
+  --sw-text-45:       rgba(244, 239, 230, 0.45);
+  --sw-text-35:       rgba(244, 239, 230, 0.35);
+  --sw-line:          rgba(244, 239, 230, 0.1);
+  --sw-line-soft:     rgba(244, 239, 230, 0.07);
+
+  /* acento Ember + botão gradiente */
+  --sw-ember:         #E0742F;
+  --sw-ember-bright:  #EE8440;
+  --sw-ember-deep:    #D96A24;
+  --sw-ember-grad:    linear-gradient(180deg, #EE8440 0%, #D96A24 100%);
+  --sw-ember-glow:    0 12px 40px rgba(224, 116, 47, 0.25);
+
+  /* ponte das vars legadas -> polo escuro */
+  --bg:           var(--sw-bg);
+  --surface:      var(--sw-surface-solid);
+  --surface2:     rgba(244, 239, 230, 0.05);
+  --border:       var(--sw-line);
+  --text:         var(--sw-text);
+  --text-muted:   var(--sw-text-55);
+  --accent:       var(--sw-ember);
+  --accent-light: var(--sw-ember-bright);
+  --positive:     #3F7D5A;
+  --warning:      #C28A1E;
+  --critical:     #B23B2E;
 }
 
 /* Landing/login: formulário fixo (~470px) + painel-herói ocupando o resto (maior).
-   Igual ao protótipo. Empilha no mobile. */
+   Empilha no mobile. */
 .landing-grid {
   display: grid;
   grid-template-columns: minmax(340px, 470px) minmax(0, 1fr);
@@ -38,28 +62,35 @@
   .landing-hero { min-height: 420px !important; }
 }
 
-/* Animações do protótipo (Claude Design) */
+/* Animações — nossas (sem prefixo, usadas pelo estúdio/login/intro) + as do
+   João (sw-*, usadas pelo Ensaio recomposto). Mantém as duas famílias. */
 @keyframes riseIn { from { opacity: 0; transform: translateY(16px); filter: blur(10px); } to { opacity: 1; transform: none; filter: blur(0); } }
 @keyframes introReveal { 0% { opacity: 0; filter: blur(20px); transform: scale(1.04); } 18% { opacity: 1; filter: blur(0); transform: scale(1); } 82% { opacity: 1; filter: blur(0); transform: scale(1); } 100% { opacity: 0; filter: blur(14px); transform: scale(0.99); } }
 @keyframes shimmer { 0% { background-position: -600px 0; } 100% { background-position: 600px 0; } }
 @keyframes scan { 0% { top: -12%; } 100% { top: 108%; } }
 @keyframes softPulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
 @keyframes breathe { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.12); opacity: 0.9; } }
+@keyframes sw-riseIn { from { opacity: 0; transform: translateY(16px); filter: blur(10px); } to { opacity: 1; transform: none; filter: blur(0); } }
+@keyframes sw-shimmer { 0% { background-position: -600px 0; } 100% { background-position: 600px 0; } }
+@keyframes sw-scan { 0% { top: -12%; } 100% { top: 108%; } }
+@keyframes sw-softPulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+@keyframes sw-breathe { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.12); opacity: 0.9; } }
 @media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
 
 body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
+  font-size: var(--text-body, 16px);
+  line-height: var(--leading-body, 1.6);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
 }
 
-h1, h2, h3 {
-  font-family: var(--font-display);
-  letter-spacing: -0.02em;
-}
+h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.02em; }
 
-::selection { background: var(--accent); color: #0A0908; }
-::-webkit-scrollbar { width: 6px; }
+::selection { background: var(--sw-ember); color: var(--sw-bg); }
+::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: rgba(244, 239, 230, 0.12); border-radius: 4px; }

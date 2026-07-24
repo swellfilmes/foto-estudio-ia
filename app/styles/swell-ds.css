@@ -1,0 +1,634 @@
+/* ============================================================
+   Swell Filmes — Design System "Maré" (bundle)
+   Gerado do export do Claude Design da Isa. Não editar à mão —
+   é a fonte visual da marca. Ordem: fonts→tokens→base→components.
+   ============================================================ */
+
+/* ============================================================
+   Swell Filmes — Maré · Fonts
+   Loaded via Google Fonts CDN (no local binaries shipped).
+   Display: Manrope (geométrica, minimalista, premium — estilo Apple)
+   Body/UI: Hanken Grotesk · Meta/claquete: IBM Plex Mono
+   ============================================================ */
+
+/* Fontes carregadas via <link> no app/layout.tsx (evita conflito de
+   ordem de @import com o Tailwind). Famílias: Manrope, Hanken Grotesk,
+   IBM Plex Mono. */
+
+/* ============================================================
+   Swell Filmes — Maré · Color
+   Black + orange. One accent only: EMBER (laranja). The dark pole is
+   near-black for maximum contrast; the light pole is warm paper.
+   Minimalist, high-contrast, luxury. No second hue.
+   ============================================================ */
+
+:root {
+  /* ---- Raw: warm light pole (areia / paper) ---- */
+  --color-sand:           #F4EFE6; /* base clara padrão — warm paper */
+  --color-sand-elevated:  #FCFAF4; /* cards / superfícies */
+  --color-sand-sunk:      #ECE5D8; /* recessos, wells, faixas */
+  --color-hairline:       #E2DBCD; /* linhas finas de seção */
+  --color-hairline-soft:  #EDE7DB;
+
+  /* ---- Raw: warm ink (texto) ---- */
+  --color-ink:            #16130F; /* preto-quente, texto principal */
+  --color-ink-soft:       #5C554B; /* texto secundário */
+  --color-stone:          #8C857A; /* cinza médio quente, captions */
+
+  /* ---- Raw: near-black dark pole (o preto da marca) ---- */
+  --color-abyss:          #0A0908; /* fundo escuro — quase preto, quente */
+  --color-abyss-elevated: #16140F; /* cards sobre o escuro */
+  --color-abyss-sunk:     #040403; /* recessos no escuro */
+  --color-foam:           #EFEAE0; /* texto sobre escuro (warm off-white) */
+  --color-foam-soft:      #9A938A; /* texto secundário sobre escuro (warm gray) */
+  --color-hairline-dark:  rgba(239, 234, 224, 0.12);
+
+  /* ---- Raw: accent — EMBER (único acento) ---- */
+  --color-ember:          #E0742F; /* laranja — sol baiano / energia. O acento. */
+  --color-ember-hover:    #C75E22;
+  --color-ember-quiet:    #F2CDB2; /* ember dessaturado p/ fundos suaves */
+  --color-ember-ink:      #803A18; /* ember escuro p/ texto sobre paper */
+
+  /* ---- Raw: graphite (neutro forte — o "preto" sólido em superfícies claras) ---- */
+  --color-graphite:       #16130F; /* = ink; botão/elemento sólido preto */
+  --color-graphite-hover: #2A2620;
+
+  /* ---- Raw: cinema ---- */
+  --color-cinema-black:   #000000; /* barras letterbox */
+
+  /* ---- Raw: status (discreto, editorial) ---- */
+  --color-positive:       #3F7D5A;
+  --color-warning:        #C28A1E;
+  --color-critical:       #B23B2E;
+
+  /* ============================================================
+     Semantic aliases — use these in components.
+     ============================================================ */
+
+  /* surfaces */
+  --bg-default:        var(--color-sand);
+  --bg-elevated:       var(--color-sand-elevated);
+  --bg-sunk:           var(--color-sand-sunk);
+  --bg-inverse:        var(--color-abyss);
+  --bg-inverse-elevated: var(--color-abyss-elevated);
+  --bg-cinema:         var(--color-cinema-black);
+
+  /* text on light */
+  --text-primary:      var(--color-ink);
+  --text-secondary:    var(--color-ink-soft);
+  --text-muted:        var(--color-stone);
+  --text-accent:       var(--color-ember-ink);
+
+  /* text on dark */
+  --text-inverse:      var(--color-foam);
+  --text-inverse-muted: var(--color-foam-soft);
+
+  /* borders */
+  --border-hairline:   var(--color-hairline);
+  --border-hairline-soft: var(--color-hairline-soft);
+  --border-strong:     var(--color-ink);
+  --border-on-dark:    var(--color-hairline-dark);
+
+  /* accents — ember is the only color accent; graphite is the strong neutral */
+  --accent:            var(--color-ember);
+  --accent-hover:      var(--color-ember-hover);
+  --accent-2:          var(--color-graphite);
+  --accent-2-hover:    var(--color-graphite-hover);
+
+  /* focus ring — ember */
+  --focus-ring:        var(--color-ember);
+}
+
+/* ============================================================
+   .on-dark — scope for near-black sections. Re-points the
+   semantic surface/text/border aliases so components drop in.
+   ============================================================ */
+.on-dark {
+  --bg-default:      var(--color-abyss);
+  --bg-elevated:     var(--color-abyss-elevated);
+  --bg-sunk:         var(--color-abyss-sunk);
+  --text-primary:    var(--color-foam);
+  --text-secondary:  var(--color-foam-soft);
+  --text-muted:      var(--color-foam-soft);
+  --border-hairline: var(--color-hairline-dark);
+  --border-hairline-soft: var(--color-hairline-dark);
+  --border-strong:   var(--color-foam);
+  --text-accent:     var(--color-ember);
+  /* on dark, the strong-neutral accent inverts to foam */
+  --accent-2:        var(--color-foam);
+  --accent-2-hover:  var(--color-foam);
+
+  color: var(--text-primary);
+  background-color: var(--bg-default);
+}
+
+/* ============================================================
+   Swell Filmes — Maré · Typography
+   Display: Manrope (geométrica, minimalista, premium — estilo Apple).
+   Body/UI: Hanken Grotesk (grotesca quente, legível).
+   Meta:    IBM Plex Mono (claquete — PROJETO · ANO · CATEGORIA).
+   ============================================================ */
+
+:root {
+  /* ---- Families ---- */
+  --font-display: 'Manrope', system-ui, -apple-system, sans-serif;
+  --font-body:    'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  --font-mono:    'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  /* ---- Weights ---- */
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+  --weight-heavy:    700; /* display headings — refinado, não pesado */
+  --weight-black:    800; /* display impacto máximo (uso raro) */
+
+  /* ---- Tracking — minimal premium: justo, refinado ---- */
+  --tracking-display: -0.03em;
+  --tracking-heading: -0.02em;
+  --tracking-body:     0em;
+  --tracking-label:    0.2em;  /* claquete, caixa-alta */
+  --tracking-label-sm: 0.14em;
+
+  /* ---- Leading ---- */
+  --leading-display: 0.96;
+  --leading-heading: 1.04;
+  --leading-snug:    1.24;
+  --leading-body:    1.6;
+  --leading-label:   1.2;
+
+  /* ---- Type scale (fluid) — maior, mais ousado ---- */
+  --text-display-xl: clamp(3.75rem, 10vw, 8.5rem);
+  --text-display-l:  clamp(3rem, 6.5vw, 5.5rem);
+  --text-h1:         clamp(2.25rem, 4.6vw, 3.6rem);
+  --text-h2:         clamp(1.7rem, 3.2vw, 2.6rem);
+  --text-h3:         1.3125rem;  /* 21px */
+  --text-body-l:     1.125rem;   /* 18px */
+  --text-body:       1rem;       /* 16px */
+  --text-body-s:     0.875rem;   /* 14px */
+  --text-label:      0.75rem;    /* 12px */
+  --text-label-sm:   0.6875rem;  /* 11px */
+}
+
+/* ============================================================
+   Typographic helper classes (ship to consumers).
+   ============================================================ */
+.t-display-xl {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-display-xl);
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-display);
+}
+.t-display-l {
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-display-l);
+  letter-spacing: var(--tracking-display);
+  line-height: 1.0;
+}
+.t-h1 {
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-h1);
+  letter-spacing: var(--tracking-heading);
+  line-height: var(--leading-heading);
+}
+.t-h2 {
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-h2);
+  letter-spacing: var(--tracking-heading);
+  line-height: 1.08;
+}
+.t-h3 {
+  font-family: var(--font-body);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-h3);
+  letter-spacing: -0.01em;
+  line-height: var(--leading-snug);
+}
+.t-body-l {
+  font-family: var(--font-body);
+  font-weight: var(--weight-regular);
+  font-size: var(--text-body-l);
+  line-height: var(--leading-body);
+}
+.t-body {
+  font-family: var(--font-body);
+  font-weight: var(--weight-regular);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+}
+.t-body-s {
+  font-family: var(--font-body);
+  font-weight: var(--weight-regular);
+  font-size: var(--text-body-s);
+  line-height: 1.55;
+}
+
+/* Claquete / metadata label — PROJETO · ANO · CATEGORIA */
+.label-mono,
+.t-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  line-height: var(--leading-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   Swell Filmes — Maré · Spacing (base 4px) + layout measures
+   ============================================================ */
+
+:root {
+  --space-0:  0;
+  --space-1:  0.25rem;  /*  4px */
+  --space-2:  0.5rem;   /*  8px */
+  --space-3:  0.75rem;  /* 12px */
+  --space-4:  1rem;     /* 16px */
+  --space-5:  1.25rem;  /* 20px */
+  --space-6:  1.5rem;   /* 24px */
+  --space-8:  2rem;     /* 32px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
+  --space-20: 5rem;     /* 80px */
+  --space-24: 6rem;     /* 96px */
+  --space-32: 8rem;     /* 128px */
+
+  /* Layout measures — espaço é luxo */
+  --measure-prose: 62ch;   /* largura de leitura confortável */
+  --measure-narrow: 44ch;
+  --container-max: 1280px;
+  --container-wide: 1440px;
+  --gutter: clamp(1.25rem, 5vw, 6rem); /* @kind spacing */
+}
+
+/* ============================================================
+   Swell Filmes — Maré · Radius, elevation, aspect, blur
+   Editorial = cantos retos. Hairlines > sombras.
+   ============================================================ */
+
+:root {
+  /* ---- Radius (crisp, editorial) ---- */
+  --radius-none: 0;
+  --radius-sm:   2px;
+  --radius-md:   4px;
+  --radius-lg:   8px;   /* uso raro — apenas inputs maiores / modais */
+  --radius-pill: 999px; /* chips de filtro, tags arredondadas opcionais */
+  --radius-full: 50%;   /* avatares */
+
+  /* ---- Elevation — editorial favorece hairline; sombra é exceção ---- */
+  --elevation-none:   none;
+  --elevation-subtle: 0 1px 2px rgba(11, 26, 28, 0.06);
+  --elevation-card:   0 1px 0 rgba(11, 26, 28, 0.04), 0 8px 24px -12px rgba(11, 26, 28, 0.14);
+  --elevation-pop:    0 16px 48px -20px rgba(11, 26, 28, 0.28);
+  --elevation-cinema: 0 24px 64px -24px rgba(0, 0, 0, 0.55); /* sobre escuro */
+
+  /* ---- Aspect ratios ---- */
+  --aspect-cinemascope: 2.39 / 1; /* @kind other */
+  --aspect-wide:        16 / 9; /* @kind other */
+  --aspect-portrait:    4 / 5; /* @kind other */
+  --aspect-square:      1 / 1; /* @kind other */
+
+  /* ---- Blur (uso parcimonioso — overlays de vídeo) ---- */
+  --blur-sm: 6px; /* @kind other */
+  --blur-md: 16px; /* @kind other */
+
+  /* ---- Hairline width ---- */
+  --hairline: 1px;
+}
+
+/* ============================================================
+   Swell Filmes — Maré · Motion
+   Fades filmicos, cortes secos. Nada piscante, sem bounce.
+   ============================================================ */
+
+:root {
+  --duration-cut:       0ms; /* @kind other */
+  --duration-fast:      150ms; /* @kind other */
+  --duration-fade:      300ms; /* @kind other */
+  --duration-fade-slow: 600ms; /* @kind other */
+
+  --ease-film:  cubic-bezier(0.22, 1, 0.36, 1); /* @kind other */
+  --ease-inout: cubic-bezier(0.65, 0, 0.35, 1); /* @kind other */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1); /* @kind other */
+
+  --transition-base: 200ms var(--ease-film); /* @kind other */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms; /* @kind other */
+    --duration-fade: 0ms; /* @kind other */
+    --duration-fade-slow: 0ms; /* @kind other */
+  }
+}
+
+/* ============================================================
+   Swell Filmes — Maré · Base + brand helpers
+   Global resets light enough to not fight host pages, plus the
+   signature brand utilities (letterbox, claquete rule, swell rule).
+   ============================================================ */
+
+.swell-root,
+body.swell {
+  background-color: var(--bg-default);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Letterbox cinemascope — moldura assinatura */
+.letterbox {
+  position: relative;
+  aspect-ratio: var(--aspect-cinemascope);
+  background: var(--bg-cinema);
+  overflow: hidden;
+}
+.letterbox > img,
+.letterbox > video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Hairline divisor estilo revista */
+.hairline-rule {
+  border: 0;
+  border-top: var(--hairline) solid var(--border-hairline);
+  margin: 0;
+}
+
+/* Marcador de seção estilo claquete: 01 — QUEM SOMOS */
+.section-mark {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.section-mark .num { color: var(--accent); }
+
+/* Swell rule — fio com o motivo da onda (usa o asset SVG da marca) */
+.swell-rule {
+  height: 14px;
+  background: var(--swell-line, none);
+  background-repeat: repeat-x;
+  background-position: left center;
+  opacity: 0.9;
+}
+
+/* Texto com acento ember controlado (<5% da tela) */
+.text-accent { color: var(--text-accent); }
+.text-strong { color: var(--accent-2); }
+
+::selection {
+  background: var(--color-ember);
+  color: #fff;
+}
+
+/* ============================================================
+   Swell Filmes — Maré · Component styles
+   Classes consumed by the React primitives. Hover/focus/press
+   live here; JSX stays thin. All color via tokens.
+   ============================================================ */
+
+/* ---------------- Button ---------------- */
+.swl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: var(--font-body);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-body-s);
+  letter-spacing: 0.01em;
+  line-height: 1;
+  padding: 0 var(--space-5);
+  height: 44px;
+  border: var(--hairline) solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background var(--duration-fast) var(--ease-film),
+              color var(--duration-fast) var(--ease-film),
+              border-color var(--duration-fast) var(--ease-film),
+              transform var(--duration-fast) var(--ease-film);
+  -webkit-appearance: none;
+}
+.swl-btn:active { transform: translateY(1px); }
+.swl-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.swl-btn--primary { background: var(--accent); color:#fff; border-color: transparent; }
+.swl-btn--primary:hover { background: var(--accent-hover); }
+
+.swl-btn--secondary {
+  background: transparent; color: var(--text-primary); border-color: var(--border-strong);
+}
+.swl-btn--secondary:hover { background: var(--text-primary); color: var(--bg-default); }
+
+.swl-btn--ghost { background: transparent; color: var(--text-primary); border-color: transparent; }
+.swl-btn--ghost:hover { background: var(--bg-sunk); }
+
+.swl-btn--accent2 { background: var(--accent-2); color: var(--color-sand); border-color: transparent; }
+.swl-btn--accent2:hover { background: var(--accent-2-hover); }
+
+.swl-btn--sm { height: 34px; font-size: var(--text-label); padding: 0 var(--space-3); }
+.swl-btn--lg { height: 54px; font-size: var(--text-body); padding: 0 var(--space-8); }
+
+.swl-btn[disabled], .swl-btn[aria-disabled="true"] {
+  opacity: 0.4; cursor: not-allowed; pointer-events: none;
+}
+.swl-btn--block { display: flex; width: 100%; }
+
+/* ---------------- IconButton ---------------- */
+.swl-iconbtn {
+  display: inline-grid;
+  place-items: center;
+  width: 44px; height: 44px;
+  border: var(--hairline) solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-film), color var(--duration-fast) var(--ease-film);
+}
+.swl-iconbtn:hover { background: var(--bg-sunk); }
+.swl-iconbtn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.swl-iconbtn--bordered { border-color: var(--border-hairline); }
+.swl-iconbtn--sm { width: 34px; height: 34px; }
+
+/* ---------------- Tag (claquete / pill) ---------------- */
+.swl-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-label-sm);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label-sm);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: 5px var(--space-3);
+  border: var(--hairline) solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  background: transparent;
+}
+.swl-tag--solid { background: var(--bg-sunk); border-color: transparent; }
+.swl-tag--accent { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+.swl-tag--pill { border-radius: var(--radius-pill); }
+.swl-tag .swl-tag__dot { width:6px; height:6px; border-radius:50%; background: currentColor; }
+
+/* ---------------- Badge (status dot+label) ---------------- */
+.swl-badge {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  font-family: var(--font-body); font-weight: var(--weight-semibold);
+  font-size: var(--text-label); letter-spacing: 0.02em;
+  color: var(--text-secondary);
+}
+.swl-badge__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); flex: none; }
+.swl-badge--positive .swl-badge__dot { background: var(--color-positive); }
+.swl-badge--warning  .swl-badge__dot { background: var(--color-warning); }
+.swl-badge--critical .swl-badge__dot { background: var(--color-critical); }
+.swl-badge--ember    .swl-badge__dot { background: var(--accent); }
+
+/* ---------------- Avatar ---------------- */
+.swl-avatar {
+  display: inline-grid; place-items: center;
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--color-ink); color: var(--color-foam);
+  font-family: var(--font-mono); font-weight: 500; font-size: var(--text-body-s);
+  letter-spacing: 0.04em; text-transform: uppercase; overflow: hidden; flex: none;
+  border: var(--hairline) solid var(--border-hairline);
+}
+.swl-avatar img { width:100%; height:100%; object-fit: cover; }
+.swl-avatar--sm { width: 32px; height: 32px; font-size: var(--text-label); }
+.swl-avatar--lg { width: 64px; height: 64px; font-size: var(--text-body-l); }
+.swl-avatar--square { border-radius: var(--radius-sm); }
+
+/* ---------------- Card ---------------- */
+.swl-card {
+  background: var(--bg-elevated);
+  border: var(--hairline) solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.swl-card--flat { background: transparent; }
+.swl-card--shadow { border-color: transparent; box-shadow: var(--elevation-card); }
+.swl-card__media { position: relative; background: var(--color-abyss); overflow: hidden; }
+.swl-card__media img, .swl-card__media video { width:100%; height:100%; object-fit: cover; display:block; }
+.swl-card__body { padding: var(--space-5) var(--space-5) var(--space-6); display:flex; flex-direction:column; gap: var(--space-2); }
+.swl-card__title { font-family: var(--font-display); font-weight: 700; font-size: var(--text-h3); letter-spacing: -0.02em; line-height: 1.05; color: var(--text-primary); }
+
+/* ---------------- SectionMark (claquete) ---------------- */
+.swl-sectionmark {
+  display: inline-flex; align-items: baseline; gap: var(--space-3);
+  font-family: var(--font-mono); font-size: var(--text-label); font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-muted);
+}
+.swl-sectionmark__num { color: var(--accent); }
+
+/* ---------------- Letterbox (media signature) ---------------- */
+.swl-letterbox { position: relative; background: var(--color-abyss); overflow: hidden; }
+.swl-letterbox img, .swl-letterbox video { width:100%; height:100%; object-fit: cover; display:block; }
+.swl-letterbox--bars::before, .swl-letterbox--bars::after {
+  content:""; position:absolute; left:0; right:0; height: 8%; background: var(--color-cinema-black); z-index:2; pointer-events:none;
+}
+.swl-letterbox--bars::before { top:0; } .swl-letterbox--bars::after { bottom:0; }
+.swl-letterbox__caption {
+  position:absolute; left: var(--space-5); bottom: var(--space-4); z-index:3;
+  font-family: var(--font-mono); font-size: var(--text-label-sm); letter-spacing: var(--tracking-label-sm);
+  text-transform: uppercase; color: var(--color-foam-soft);
+}
+
+/* ---------------- Field / Input / Select ---------------- */
+.swl-field { display:flex; flex-direction:column; gap: var(--space-2); }
+.swl-field__label {
+  font-family: var(--font-mono); font-size: var(--text-label-sm); font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label-sm); text-transform: uppercase; color: var(--text-muted);
+}
+.swl-field__hint { font-size: var(--text-body-s); color: var(--text-muted); }
+.swl-field__hint--error { color: var(--color-critical); }
+
+.swl-input, .swl-select, .swl-textarea {
+  font-family: var(--font-body); font-size: var(--text-body); color: var(--text-primary);
+  background: var(--bg-elevated);
+  border: var(--hairline) solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-3); height: 44px; width: 100%;
+  transition: border-color var(--duration-fast) var(--ease-film), box-shadow var(--duration-fast) var(--ease-film);
+  -webkit-appearance: none; appearance: none;
+}
+.swl-textarea { height: auto; padding: var(--space-3); min-height: 96px; line-height: var(--leading-body); resize: vertical; }
+.swl-input::placeholder, .swl-textarea::placeholder { color: var(--text-muted); }
+.swl-input:focus, .swl-select:focus, .swl-textarea:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.swl-input[aria-invalid="true"] { border-color: var(--color-critical); }
+.swl-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238A8378' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right var(--space-3) center; padding-right: var(--space-8);
+}
+
+/* ---------------- Checkbox ---------------- */
+.swl-check { display:inline-flex; align-items:center; gap: var(--space-3); cursor:pointer; font-size: var(--text-body); color: var(--text-primary); }
+.swl-check input { position:absolute; opacity:0; width:0; height:0; }
+.swl-check__box {
+  width: 20px; height: 20px; border: 1.5px solid var(--border-strong); border-radius: var(--radius-sm);
+  display:grid; place-items:center; background: var(--bg-elevated); flex:none;
+  transition: background var(--duration-fast) var(--ease-film), border-color var(--duration-fast) var(--ease-film);
+}
+.swl-check__box svg { opacity:0; stroke: #fff; }
+.swl-check input:checked + .swl-check__box { background: var(--accent); border-color: var(--accent); }
+.swl-check input:checked + .swl-check__box svg { opacity:1; }
+.swl-check input:focus-visible + .swl-check__box { outline:2px solid var(--focus-ring); outline-offset:2px; }
+
+/* ---------------- Switch ---------------- */
+.swl-switch { display:inline-flex; align-items:center; gap: var(--space-3); cursor:pointer; font-size: var(--text-body); color: var(--text-primary); }
+.swl-switch input { position:absolute; opacity:0; width:0; height:0; }
+.swl-switch__track {
+  width: 42px; height: 24px; border-radius: var(--radius-pill); background: var(--color-stone);
+  position:relative; transition: background var(--duration-fast) var(--ease-film); flex:none;
+}
+.swl-switch__thumb {
+  position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff;
+  transition: transform var(--duration-fast) var(--ease-film);
+}
+.swl-switch input:checked + .swl-switch__track { background: var(--accent); }
+.swl-switch input:checked + .swl-switch__track .swl-switch__thumb { transform: translateX(18px); }
+.swl-switch input:focus-visible + .swl-switch__track { outline:2px solid var(--focus-ring); outline-offset:2px; }
+
+/* ---------------- Tabs ---------------- */
+.swl-tabs { display:flex; gap: var(--space-6); border-bottom: var(--hairline) solid var(--border-hairline); }
+.swl-tab {
+  font-family: var(--font-body); font-weight: var(--weight-semibold); font-size: var(--text-body-s);
+  color: var(--text-muted); background:none; border:none; cursor:pointer;
+  padding: var(--space-3) 0; position:relative; letter-spacing: 0.01em;
+  transition: color var(--duration-fast) var(--ease-film);
+}
+.swl-tab:hover { color: var(--text-secondary); }
+.swl-tab--active { color: var(--text-primary); }
+.swl-tab--active::after {
+  content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px; background: var(--accent);
+}
+

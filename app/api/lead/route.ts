@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 import { upsertSubscriber, getSubscriber } from "@/lib/db";
+import { sendTrialWelcome } from "@/lib/email";
 
 const COOKIE_NAME = "swell-lead";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 dias
@@ -78,6 +79,15 @@ export async function POST(req: NextRequest) {
           source: source || "landing-trial",
           trial_ends_at: new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000),
         });
+
+        // Confirmação do teste grátis — só pra lead novo. E-mail é best-effort:
+        // uma falha aqui não pode quebrar a liberação do teste.
+        try {
+          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
+          await sendTrialWelcome({ email, name: name || null, siteUrl });
+        } catch (e) {
+          console.error("[lead] falha ao enviar boas-vindas do teste:", e);
+        }
       }
     } catch (e) {
       // DB indisponível não deve quebrar o fluxo de captura de lead.

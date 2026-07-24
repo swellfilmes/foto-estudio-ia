@@ -51,7 +51,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "E-mail inválido" }, { status: 400 });
   }
 
-  const sub = await getSubscriber(email);
+  let sub;
+  try {
+    sub = await getSubscriber(email);
+  } catch (e) {
+    console.error("[access/request] erro ao consultar assinante:", e);
+    return NextResponse.json(
+      { error: "Serviço de acesso indisponível no momento. Tente de novo em instantes." },
+      { status: 503 }
+    );
+  }
 
   // Resposta uniforme mesmo quando não existe/expirado: evita enumeração de e-mails.
   // Mas só disparamos e-mail se tiver acesso válido.
