@@ -121,15 +121,16 @@ const CATEGORIES: Record<string, CategoryDef> = {
     style: "real", person: false, st: 24,
   },
   influencia: {
-    type: "Candid front-facing smartphone photo",
-    delta: "Only generate the person, setting, lighting and background around it.",
+    type: "Authentic UGC customer smartphone selfie",
+    delta: "Only generate the person, hand, setting, lighting and background around it.",
     block:
-      "A real Brazilian person VISIBLE from the waist up, in a real domestic setting (bedroom or lived-in kitchen), at arm's length with a slight tilt and natural lens distortion. Natural window light, no flash. Genuine unposed expression. The viewer must believe a real customer took this photo.",
+      "Must look like a REAL PHOTO A CUSTOMER TOOK — credible for TikTok Shop, Instagram and marketplace — NOT a produced ad. A young Brazilian person with a casual look, front-facing selfie at arm's length with slight lens distortion, in a cozy everyday home setting fitting the product's vibe. Soft domestic or natural window light, no studio look. Simple pose, spontaneous genuine expression, small natural photographic imperfections (slight motion, uneven light, real skin). PRODUCT IS THE PROTAGONIST even with a person present: show it whole or nearly whole, large enough to recognize clearly, held near the face or chest to draw attention, in a natural position of use or presentation. The hand holds the product plausibly — correct finger placement, believable scale and contact, real shadows, NEVER fingers covering the label, face or key details, never a floating or pasted-on look. Keep the product's shape, colors, face/design, proportions, glossy finish and any ring/clasp exactly as in the reference.",
     compositions: [
-      "Casual show: the person holds the product relaxed at chest height, calm genuine expression toward the camera — like a quick photo for a friend, NOT an influencer ad pose, NOT pointing at the product.",
-      "Caught in use: the person is actually using the product in the scene, eyes on the product, completely unaware of the camera — a moment someone else photographed.",
+      "Selfie holding it up by the face: front-facing phone selfie, the person smiling softly, holding the product right beside their cheek so it reads big and clear, cozy bedroom or living-room background softly blurred, warm lamp + window light.",
+      "Chest-height show to camera: waist-up selfie, the product held forward at chest level facing the lens, fingers only at the edges so nothing important is covered, casual outfit, everyday kitchen or desk setting behind.",
+      "Mirror selfie: phone visible in a mirror reflection, the product held up in the free hand near the face, full casual outfit visible, real home clutter softly out of focus, natural imperfections in the glass.",
     ],
-    style: "real", person: true, negativeExtra: NEG_HANDS, st: 50, review: true,
+    style: "real", person: true, negativeExtra: NEG_HANDS + ", fingers covering the product, product too small, floating product, pasted-on look, studio lighting, glossy advertising look", st: 48, review: true,
   },
   "estudio-modelo": {
     type: "Editorial studio photograph",
