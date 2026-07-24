@@ -6,7 +6,7 @@ import EnsaioStudio from "./EnsaioStudio";
 
 const EMBER = "#E0742F";
 const INTRO_MSGS = ["Olá.", "Bem-vindo ao Estúdio Swell.", "Comece pela foto do seu produto."];
-const PER = 1300; // duração de cada mensagem
+const PER = 2300; // duração de cada mensagem (mais lenta, respira melhor)
 
 // Abertura cinematográfica ao entrar no estúdio (do protótipo Claude Design).
 function Intro({ onDone }: { onDone: () => void }) {
@@ -36,7 +36,7 @@ function Intro({ onDone }: { onDone: () => void }) {
       }}
     >
       <div style={{ position: "absolute", width: 420, height: 420, borderRadius: "50%", background: "radial-gradient(circle, rgba(224,116,47,0.10) 0%, rgba(224,116,47,0) 65%)", animation: "breathe 4s ease-in-out infinite" }} />
-      <div key={step} style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 900, letterSpacing: "-0.035em", fontSize: "clamp(32px, 5vw, 60px)", color: "#F4EFE6", textAlign: "center", padding: "0 24px", animation: "introReveal 1300ms cubic-bezier(0.22,1,0.36,1) both" }}>
+      <div key={step} style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 900, letterSpacing: "-0.035em", fontSize: "clamp(32px, 5vw, 60px)", color: "#F4EFE6", textAlign: "center", padding: "0 24px", animation: `introReveal ${PER}ms cubic-bezier(0.22,1,0.36,1) both` }}>
         {body}{msg.endsWith(".") && <span style={{ color: EMBER }}>.</span>}
       </div>
       <button
