@@ -15,7 +15,11 @@ export interface SceneAssembly {
 
 // [1. TRAVA] — sempre primeiro, antes de qualquer criativo
 const TRAVA =
-  "Follow the reference image closely. Do not recreate, alter, or replace the product. Keep its colors, design, shape, materials, finish and label/print exactly as shown in the reference photo.";
+  "Follow the reference images closely for the PRODUCT ONLY. Do not recreate, alter, or replace the product — keep its exact colors, design, shape, materials, finish and label/print as shown across the reference photos (use every reference angle to understand the product in full).";
+
+// [1b. CENA NOVA] — a referência trava só o produto; o cenário é sempre construído do zero
+const NEW_ENV =
+  "IMPORTANT: build a COMPLETELY NEW environment around the product. The reference photos define ONLY the product itself — never reproduce, imitate or keep the background, surface, table, floor or setting from the reference photos. The scene, backdrop and every surrounding element must be freshly generated for this shot.";
 
 // Blocos de ESTILO (verbatim — regra 6: parafrasear = deriva visual)
 const STYLE_REAL =
@@ -61,32 +65,47 @@ const CATEGORIES: Record<string, CategoryDef> = {
     type: "Studio packshot",
     delta: "Only generate the backdrop, surface, lighting and shadows around it.",
     block:
-      "Product photography on a seamless studio backdrop with a gentle gradient — never a flat dead background. The product front-facing, centered, with breathing room around it, standing on a real surface (light marble, pale wood or textured paper). Soft even studio lighting, key from camera-left at 45 degrees, one gentle natural shadow beneath the product. 85mm lens, shallow depth of field.",
-    style: "real", person: false, st: 25,
+      "Clean premium studio product photography on a seamless backdrop with a gentle gradient — never a flat dead background. Soft, sculpted studio lighting with intention.",
+    compositions: [
+      "Front three-quarter view, eye-level, product standing on light marble with a soft floor reflection, key light from camera-left at 45 degrees plus a subtle rim, seamless warm-grey gradient behind. 85mm, shallow depth of field.",
+      "Slightly elevated top-down angle (about 30 degrees), product on textured pale paper, one soft directional shadow raking to the right, minimal negative space above for breathing room. 50mm.",
+      "Low hero angle looking slightly up, product on a raised stone plinth against a darker moody gradient, dramatic single key with controlled falloff and a bright specular edge. 100mm.",
+    ],
+    style: "real", person: false, st: 22,
   },
   mostruario: {
     type: "Editorial retail display photograph",
-    delta: "Only generate the display, props, lighting and background around it.",
+    delta: "Only generate the display, hands/use, props, lighting and background around it.",
     block:
-      "The product on a store display shelf or stand, arranged with 2-3 specific props from its own universe, composed with depth like a live storefront. Directional display lighting from above at 30 degrees, soft but defined shadow edges. 35mm lens.",
-    style: "real", person: false, st: 25,
+      "The product shown as it lives in real use — a display or in-use moment that makes a shopper want it. Directional, characterful lighting.",
+    compositions: [
+      "In-use hero: a hand (natural skin texture, from the wrist) holding or operating the product mid-gesture, the product razor sharp and large in frame, a softly blurred real environment behind fitting the product. 50mm.",
+      "Live storefront display: the product on a designed retail shelf or stand with 2-3 specific props from its own universe, depth and reflections like a boutique window, directional light from above at 30 degrees. 35mm.",
+      "Flat-lay from directly overhead: the product arranged with a curated set of matching props on a surface that fits its world, balanced editorial composition, soft even top light. 35mm.",
+    ],
+    style: "real", person: false, st: 30,
   },
   comercial: {
-    type: "Candid lifestyle photograph",
-    delta: "Only generate the scene, environment, lighting and background around it.",
+    type: "Bold advertising campaign photograph",
+    delta: "Only generate the campaign world, environment, action, lighting and background around it.",
     block:
-      "The product in a real everyday setting appropriate to its category, surrounded by specific named objects (a lived-in table, real utensils, a window in the background), caught mid-use — being set down, opened or used. Warm natural window light matching the time of day, long soft shadows. 35mm lens with subtle film grain, natural framing. The moment feels caught, not staged — NOT advertising, NOT stock photo.",
-    style: "real", person: false, st: 35,
+      "A striking ADVERTISING CAMPAIGN image — not a quiet lifestyle snapshot. Build a bold, purpose-built campaign WORLD that fits THIS specific product's universe, inferred from the product described above (for example: an action camera or sports gear → a dynamic outdoor adventure/extreme-sport scene with motion, spray, dust or speed; a gourmet food or drink → a rich artisanal or celebratory table with atmosphere; a cosmetic or fragrance → a sensorial, editorial spa-like or fashion set; a tech gadget → a sleek modern lifestyle environment). Cinematic advertising lighting with intention and mood, strong art direction, generous negative space for a headline. The product is the unmistakable hero of the campaign.",
+    compositions: [
+      "Wide cinematic campaign frame: the product hero in its bold campaign world with real depth and atmosphere (motion, elements, weather or ambience fitting the product), dramatic directional light, headline space to one side. 35mm.",
+      "Dynamic close campaign angle: tighter on the product mid-action within the campaign world, energy and movement around it (splash, dust, light streaks or steam as fits), strong rim light. 50mm.",
+      "Poster hero: the product large and central against a committed campaign environment, symmetrical confident art direction, cinematic key and haze, premium mood. 85mm.",
+    ],
+    style: "real", person: false, st: 42,
   },
   cg: {
     type: "High-end 3D product visualization",
     delta: "Only generate the environment, lighting and reflections around it.",
     block:
-      "Precise specular reflections, controlled highlights, rich physically-based materials. 85mm perspective.",
+      "Precise specular reflections, controlled highlights, rich physically-based materials.",
     compositions: [
-      "Monochrome sculptural set: podium, floor and background all in one single color family sampled from the product itself, strong geometric shadow play from one hard light, the product as the only contrasting element.",
-      "Raw-material backdrop: the product resting on a dramatic oversized surface of its own ingredient or material (cocoa, fabric weave, stone, citrus peel — whichever matches the product), macro scale contrast between texture and product.",
-      "Suspended moment: the product floating center-frame with a few related elements frozen mid-air around it in a slow-motion feel, deep gradient background, dual cool rim lights.",
+      "Eye-level monochrome sculptural set: podium, floor and background in one single color family sampled from the product itself, strong geometric shadow play from one hard light, the product the only contrasting element. 85mm.",
+      "Overhead on a raw-material backdrop: the product resting on a dramatic oversized surface of its own ingredient or material (cocoa, fabric weave, stone, citrus peel — whatever matches), macro scale contrast. 50mm top-down.",
+      "Low-angle suspended moment: the product floating center-frame with a few related elements frozen mid-air in slow-motion feel, deep gradient background, dual cool rim lights. 100mm.",
     ],
     style: "render", person: false, st: 40,
   },
@@ -94,8 +113,12 @@ const CATEGORIES: Record<string, CategoryDef> = {
     type: "Macro editorial photograph",
     delta: "Only generate the lighting and the out-of-focus surroundings.",
     block:
-      "Extreme close-up of one area of the product (label, seam or surface texture), raking side light revealing the relief of the texture, the detail razor sharp and the rest dissolving into shallow focus. 100mm macro lens.",
-    style: "real", person: false, st: 25,
+      "Extreme close-up revealing the craft of the product — texture, label, seam or material. The detail razor sharp, the rest dissolving into shallow focus. 100mm macro lens.",
+    compositions: [
+      "Neutral macro: the product detail against a clean, out-of-focus neutral studio backdrop, raking side light revealing the relief of the texture, no distracting props.",
+      "In-context macro: the same tight detail but nested in a softly blurred environment that fits the product's world, warm directional light, a hint of a matching prop bokeh behind.",
+    ],
+    style: "real", person: false, st: 24,
   },
   influencia: {
     type: "Candid front-facing smartphone photo",
@@ -112,35 +135,36 @@ const CATEGORIES: Record<string, CategoryDef> = {
     type: "Editorial studio photograph",
     delta: "Only generate the model, backdrop, lighting and shadows around it.",
     block:
-      "A Brazilian model framed from the waist up on a seamless gradient backdrop, the product as the protagonist. Soft editorial key from camera-right at 45 degrees, subtle rim light, soft floor shadow. Confident restrained pose, editorial gaze — premium is restraint, not a smiling stock pose. Styling in neutral basics so the product is the only strong color. 85mm, shallow depth of field focusing the product.",
+      "A Brazilian model on a seamless gradient backdrop with real photographic direction, the product as the protagonist. Soft editorial key from camera-right at 45 degrees, subtle rim light, soft floor shadow. Confident restrained pose, editorial gaze — premium is restraint, not a smiling stock pose. Styling in neutral basics so the product is the only strong color.",
     compositions: [
-      "Three-quarter turn, gaze off camera into the distance, the product held loosely at waist height catching the key light — the model is elegant context, not a presenter.",
-      "Quiet focus: the model looking DOWN at the product in her hands, absorbed, profile-leaning composition, the product at the brightest point of the frame.",
-      "Seated on an apple box, relaxed editorial posture, the product resting on her knee or beside her hand, eyes away from camera.",
+      "FULL-BODY editorial: the model head-to-toe with generous headroom, three-quarter turn, gaze off camera, the product held loosely at waist height catching the key light — architectural fashion-campaign framing. 50mm.",
+      "TORSO-AND-HEAD crop (waist up): tight editorial framing, the model looking DOWN at the product in her hands, absorbed, product at the brightest point of the frame. 85mm shallow depth of field.",
+      "Half-body seated on an apple box, relaxed editorial posture, the product resting on her knee or beside her hand, eyes away from camera, side light sculpting the face. 85mm.",
     ],
-    style: "real", person: true, negativeExtra: NEG_HANDS, st: 30,
+    style: "real", person: true, negativeExtra: NEG_HANDS, st: 32,
   },
   "comercial-modelo": {
-    type: "Candid lifestyle campaign photograph",
-    delta: "Only generate the model, scene, lighting and background around it.",
+    type: "Bold advertising campaign photograph with a model",
+    delta: "Only generate the model, campaign world, action, lighting and background around it.",
     block:
-      "A real everyday setting (street café, urban sidewalk or a home living room) with specific named details, warm natural light appropriate to the setting and time of day. 35mm lens, natural framing — the moment feels caught, not staged, NOT advertising, NOT stock photo.",
+      "A real ADVERTISING CAMPAIGN with a model — NOT a selfie, NOT UGC, NOT a casual phone photo. Cinematic art direction: a model interacting with the product inside a bold campaign WORLD that fits the product's universe (inferred from the product described above), professional campaign lighting with mood and intention, generous space for a headline. Polished, aspirational, magazine-ad quality.",
     compositions: [
-      "Living the scene: the model mid-action using the product naturally, completely unaware of the camera, gaze on what she is doing, foreground elements slightly out of focus adding depth.",
-      "Product hero with human presence: the product in sharp focus on the table/surface in the foreground, the model softly blurred in the background living the scene — her presence tells the story, the product owns the frame.",
+      "Wide campaign frame: the model in motion using or presenting the product within a committed campaign environment fitting the product, cinematic directional light and atmosphere, the product clearly readable as the hero. 35mm.",
+      "Editorial medium shot: the model three-quarter, product held with intention at chest height, strong rim separating her from a dramatic campaign backdrop, confident non-smiling editorial gaze. 85mm.",
     ],
-    style: "real", person: true, negativeExtra: NEG_HANDS, st: 35,
+    style: "real", person: true, negativeExtra: NEG_HANDS, st: 40,
   },
   "mostruario-modelo": {
     type: "Editorial product presentation photograph",
-    delta: "Only generate the model, backdrop, lighting and shadows around it.",
+    delta: "Only generate the model, use, backdrop, lighting and shadows around it.",
     block:
-      "A model framed from the waist up on a solid color backdrop with a gentle gradient, the product in the central third of the frame and in sharp focus. Clean frontal-top catalog lighting, one soft shadow. 50mm lens.",
+      "The product shown IN USE by a model — someone actually wearing, holding-in-use or demonstrating it — so a shopper sees how it works and wants it. Clean catalog-grade lighting, the product always the sharp hero.",
     compositions: [
-      "Still catalog presentation: the product held steady toward the lens at chest height, the model's expression neutral and composed, face slightly soft in focus so the product stays the hero.",
-      "Offering gesture: the product held out on an open palm at frame center, the model looking at the product (not the camera), calm museum-like restraint.",
+      "In-use demonstration: the model actively using the product as intended (wearing it, operating it, applying it), mid-gesture, product sharp and central, clean solid-color backdrop with a gentle gradient. 50mm.",
+      "Offering gesture: the product held out on an open palm at frame center, the model looking at the product (not the camera), calm museum-like restraint, soft catalog light. 85mm.",
+      "Close use-detail: tight on the model's hands using the product against a softly blurred solid backdrop, the mechanism or fit clearly visible. 100mm.",
     ],
-    style: "real", person: true, negativeExtra: NEG_HANDS, st: 30,
+    style: "real", person: true, negativeExtra: NEG_HANDS, st: 32,
   },
 };
 
@@ -193,6 +217,7 @@ export function assembleScene(categoryKey: string, product: ProductInfo, variant
   const promptEN = [
     `${c.type}.`,
     TRAVA,
+    NEW_ENV,
     c.delta,
     measureLine(product),
     brandLine(brand),

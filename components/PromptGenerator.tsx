@@ -349,9 +349,9 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
     }
   }
 
-  function createFirst() {
+  // Vai pra tela de geração SEM gastar crédito — nada é gerado até escolher um estilo.
+  function goToGeneration() {
     setStage("results");
-    generateStyle(STYLES_PRODUCT[0], undefined, undefined, true);
   }
 
   function retryBatch(batch: Batch) {
@@ -395,8 +395,6 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
 
   const styles = withModel ? STYLES_WITH_MODEL : STYLES_PRODUCT;
   const needMorePhotos = photos.length > 0 && photos.length < SUGGESTED_MIN_PHOTOS;
-  const baseBatch = batches.find((b) => b.isBase);
-  const otherBatches = batches.filter((b) => !b.isBase);
   const queueCount = batches.filter((b) => b.loading).length;
   const creditsUsed = batches.length * VARIATIONS_PER_CLICK;
   const progressPct = (b?: { startedAt: number }) =>
@@ -665,13 +663,13 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
                   {modelToggle}
 
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 14, flexWrap: "wrap", marginTop: 26 }}>
-                    <button onClick={createFirst} style={{ background: "none", border: "none", color: foam(0.5), fontSize: 14, cursor: "pointer", padding: 0, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+                    <button onClick={goToGeneration} style={{ background: "none", border: "none", color: foam(0.5), fontSize: 14, cursor: "pointer", padding: 0, fontFamily: "'Hanken Grotesk', sans-serif" }}>
                       Pular por enquanto
                     </button>
                     <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
-                      <span style={{ ...mono(9, 0.18), color: foam(0.4) }}>PRIMEIRO RESULTADO · {VARIATIONS_PER_CLICK} CRÉDITOS</span>
-                      <button onClick={createFirst} style={{ ...gradientBtn, padding: "15px 28px", fontSize: 14, display: "flex", alignItems: "center", gap: 10 }}>
-                        Criar primeira foto<ArrowRight size={15} />
+                      <span style={{ ...mono(9, 0.18), color: foam(0.4) }}>NENHUM CRÉDITO AINDA · VOCÊ ESCOLHE O QUE GERAR</span>
+                      <button onClick={goToGeneration} style={{ ...gradientBtn, padding: "15px 28px", fontSize: 14, display: "flex", alignItems: "center", gap: 10 }}>
+                        Escolher os estilos<ArrowRight size={15} />
                       </button>
                     </div>
                   </div>
@@ -686,53 +684,41 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
             <>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap", marginBottom: 20 }}>
                 <div>
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: 7, border: `1px solid ${baseBatch?.loading ? ember(0.4) : foam(0.2)}`, borderRadius: 999, padding: "6px 14px", marginBottom: 16 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: EMBER, display: "inline-block", animation: baseBatch?.loading ? "softPulse 1.6s ease-in-out infinite" : "none" }} />
-                    <span style={{ ...mono(9, 0.2), color: baseBatch?.loading ? EMBER : foam(0.7) }}>
-                      {baseBatch?.loading ? "GERANDO SUA BASE" : baseBatch?.error ? "ALGO DEU ERRADO" : "PRODUTO FIEL"}
-                    </span>
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 7, border: `1px solid ${foam(0.2)}`, borderRadius: 999, padding: "6px 14px", marginBottom: 16 }}>
+                    <Check size={11} color={EMBER} />
+                    <span style={{ ...mono(9, 0.2), color: foam(0.7) }}>PRODUTO TRAVADO · {photos.length} REFERÊNCIA{photos.length > 1 ? "S" : ""}</span>
                   </div>
                   <div style={{ ...display, fontWeight: 800, fontSize: "clamp(28px, 3.4vw, 44px)", letterSpacing: "-0.03em", lineHeight: 1 }}>
                     {product.name || "Seu produto"}
                   </div>
                   <p style={{ fontSize: 14, color: foam(0.55), margin: "10px 0 0" }}>
-                    {baseBatch?.loading ? "Sua foto de e-commerce está sendo criada — os próximos passos já ficam liberados." : "Base de e-commerce pronta. Agora desdobra do jeito que você quiser."}
+                    Nenhum crédito gasto ainda. Escolha um estilo abaixo — cada geração usa suas fotos só pra travar o produto e cria um cenário novo.
                   </p>
                 </div>
                 <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                   <button onClick={() => setQueueOpen(true)} style={{ display: "flex", alignItems: "center", gap: 8, background: foam(0.05), border: `1px solid ${foam(0.14)}`, color: FOAM, borderRadius: 12, padding: "12px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>
                     <Layers size={14} />Ver a fila<span style={{ ...mono(10), color: EMBER }}>{queueCount}</span>
                   </button>
-                  {baseBatch && !baseBatch.loading && baseBatch.images[0] && (
-                    <a href={baseBatch.images[0]} download="base-ecommerce.jpg" target="_blank" rel="noopener noreferrer"
-                      style={{ display: "flex", alignItems: "center", gap: 8, background: foam(0.05), border: `1px solid ${foam(0.14)}`, color: FOAM, borderRadius: 12, padding: "12px 20px", fontSize: 13, fontWeight: 600, textDecoration: "none", fontFamily: "'Hanken Grotesk', sans-serif" }}>
-                      <Download size={14} />Baixar
-                    </a>
-                  )}
                 </div>
               </div>
 
-              {/* Hero da base */}
-              <div style={{ position: "relative", borderRadius: 24, overflow: "hidden", border: `1px solid ${foam(0.09)}`, marginBottom: 48, aspectRatio: "16 / 9", background: "#14110F", boxShadow: "0 30px 90px rgba(0,0,0,0.4)" }}>
-                {baseBatch?.images[0] && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={baseBatch.images[0]} alt="Base e-commerce" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                )}
-                {baseBatch?.loading && (
-                  <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, background: `linear-gradient(100deg, ${foam(0.03)} 40%, ${foam(0.08)} 50%, ${foam(0.03)} 60%)`, backgroundSize: "1200px 100%", animation: "shimmer 2.2s linear infinite" }}>
-                    <div style={{ width: 48, height: 48, borderRadius: "50%", background: ember(0.12), display: "flex", alignItems: "center", justifyContent: "center", animation: "breathe 2.4s ease-in-out infinite" }}>
-                      <Film size={19} color={EMBER} />
-                    </div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: foam(0.75) }}>{PROGRESS_MSGS[msgIdx % PROGRESS_MSGS.length]}</div>
-                    <div style={{ position: "absolute", left: 0, bottom: 0, height: 2, background: EMBER, width: progressPct(baseBatch), transition: "width 900ms cubic-bezier(0.22,1,0.36,1)" }} />
+              {/* Mosaico das fotos de referência (nada é gerado — zero crédito) */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 12, marginBottom: 20 }}>
+                {photos.map((p, i) => (
+                  <div key={i} style={{ position: "relative", aspectRatio: "1 / 1", borderRadius: 16, overflow: "hidden", border: `1px solid ${foam(0.1)}`, background: "#14110F" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={p.url} alt={`Referência ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                    <span style={{ position: "absolute", left: 8, bottom: 8, ...mono(8, 0.14), color: foam(0.75), background: "rgba(10,9,8,0.6)", borderRadius: 6, padding: "3px 7px" }}>REF {String(i + 1).padStart(2, "0")}</span>
                   </div>
+                ))}
+                {photos.length < MAX_PHOTOS && (
+                  <button onClick={() => addInputRef.current?.click()} title="Adicionar mais fotos"
+                    style={{ aspectRatio: "1 / 1", borderRadius: 16, border: `1px dashed ${foam(0.25)}`, background: foam(0.03), color: foam(0.55), cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5, ...mono(8, 0.12) }}>
+                    <Plus size={18} />ADICIONAR
+                  </button>
                 )}
-                {baseBatch?.error && (
-                  <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, padding: 20, textAlign: "center" }}>
-                    <div style={{ fontSize: 14, color: "#E8836F" }}>{baseBatch.error}</div>
-                    <button onClick={() => retryBatch(baseBatch)} style={{ ...gradientBtn, padding: "12px 22px", fontSize: 13 }}>Tentar de novo</button>
-                  </div>
-                )}
+                <input ref={addInputRef} type="file" accept="image/*" multiple style={{ display: "none" }}
+                  onChange={(e) => { if (e.target.files) addFiles(Array.from(e.target.files)); e.target.value = ""; }} />
               </div>
 
               {/* Próximo melhor passo */}
@@ -833,10 +819,10 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
               )}
 
               {/* Gerações desta sessão */}
-              {otherBatches.length > 0 && (
+              {batches.length > 0 && (
                 <div style={{ ...mono(11, 0.24), color: foam(0.45), margin: "40px 0 20px" }}>GERAÇÕES DESTA SESSÃO</div>
               )}
-              {otherBatches.map((batch) => (
+              {batches.map((batch) => (
                 <BatchBlock key={batch.id} batch={batch} msgIdx={msgIdx} progressPct={progressPct}
                   onRetry={() => retryBatch(batch)} onYes={() => updateBatch(batch.id, { feedback: "yes" })}
                   onNo={() => updateBatch(batch.id, { feedback: "no" })}

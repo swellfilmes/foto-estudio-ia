@@ -54,11 +54,12 @@ export async function POST(req: NextRequest) {
         : [];
 
     if (refs.length > 0) {
+      const total = refs.length;
       body.reference_images = refs.map((b64: string, i: number) => ({
         image: `data:image/jpeg;base64,${b64}`,
-        text: referenceText || (i === 0
-          ? "Reference product image — keep this product exactly as shown"
-          : "Additional angle of the same product — same shape, color, label and materials"),
+        text: referenceText || (total > 1
+          ? `Product reference ${i + 1} of ${total} — same physical product from another angle. Use ALL references only to reproduce the product's exact shape, color, label and materials. IGNORE the background/scene of every reference; the new scene is defined by the prompt, not by these photos.`
+          : "Use this image only to reproduce the product's exact shape, color, label and materials. IGNORE its background/scene entirely; the new scene is defined by the prompt."),
         mime_type: "image/jpeg",
       }));
     }
