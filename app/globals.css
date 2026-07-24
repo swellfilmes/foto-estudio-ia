@@ -24,6 +24,20 @@
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
 }
 
+/* Landing/login: formulário fixo (~470px) + painel-herói ocupando o resto (maior).
+   Igual ao protótipo. Empilha no mobile. */
+.landing-grid {
+  display: grid;
+  grid-template-columns: minmax(340px, 470px) minmax(0, 1fr);
+  gap: clamp(24px, 3vw, 56px);
+  padding: 24px clamp(20px, 3vw, 44px);
+  box-sizing: border-box;
+}
+@media (max-width: 900px) {
+  .landing-grid { grid-template-columns: 1fr; }
+  .landing-hero { min-height: 420px !important; }
+}
+
 /* Animações do protótipo (Claude Design) */
 @keyframes riseIn { from { opacity: 0; transform: translateY(16px); filter: blur(10px); } to { opacity: 1; transform: none; filter: blur(0); } }
 @keyframes shimmer { 0% { background-position: -600px 0; } 100% { background-position: 600px 0; } }

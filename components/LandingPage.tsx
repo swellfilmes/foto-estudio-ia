@@ -108,7 +108,7 @@ function LandingInner() {
 
   return (
     <div style={{ minHeight: "100vh", fontFamily: "'Hanken Grotesk', sans-serif" }}>
-      <main style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 380px), 1fr))", gap: "clamp(24px, 3vw, 56px)", padding: "24px clamp(20px, 3vw, 44px)", boxSizing: "border-box", maxWidth: 1280, margin: "0 auto", animation: "riseIn 800ms cubic-bezier(0.22,1,0.36,1) both" }}>
+      <main className="landing-grid" style={{ animation: "riseIn 800ms cubic-bezier(0.22,1,0.36,1) both" }}>
 
         {/* Coluna esquerda: logo + formulário + rodapé */}
         <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "16px 0", minHeight: "calc(100vh - 48px)", boxSizing: "border-box", maxWidth: 470 }}>
@@ -213,8 +213,8 @@ function LandingInner() {
           </div>
         </div>
 
-        {/* Coluna direita: painel-herói */}
-        <div style={{ position: "relative", borderRadius: 28, overflow: "hidden", background: "radial-gradient(ellipse 80% 70% at 70% 60%, #201A12 0%, #12100C 55%, #0D0B09 100%)", border: `1px solid ${foam(0.07)}`, padding: "clamp(28px, 3.6vw, 52px)", display: "flex", flexDirection: "column", minHeight: "min(calc(100vh - 48px), 780px)", boxSizing: "border-box" }}>
+        {/* Coluna direita: painel-herói (coluna maior, igual ao protótipo) */}
+        <div className="landing-hero" style={{ position: "relative", borderRadius: 28, overflow: "hidden", background: "radial-gradient(ellipse 80% 70% at 70% 60%, #201A12 0%, #12100C 55%, #0D0B09 100%)", border: `1px solid ${foam(0.07)}`, padding: "clamp(28px, 3.6vw, 52px)", display: "flex", flexDirection: "column", minHeight: "calc(100vh - 48px)", boxSizing: "border-box" }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8, border: `1px solid ${ember(0.4)}`, borderRadius: 999, padding: "7px 15px", alignSelf: "flex-start" }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: EMBER, display: "inline-block" }} />
             <span style={{ ...mono(10, 0.2), color: EMBER }}>FEITO NA SWELL</span>
@@ -231,7 +231,7 @@ function LandingInner() {
             <div style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%) rotate(180deg)", writingMode: "vertical-rl", ...mono(9, 0.24), color: foam(0.3) }}>
               SEU PRODUTO / CAMPANHA 01
             </div>
-            <div style={{ position: "absolute", right: "clamp(12px, 6%, 80px)", top: "50%", transform: "translateY(-46%)", width: "min(52vh, 440px, 80%)", aspectRatio: "1 / 1", borderRadius: "50%", overflow: "hidden", backgroundColor: "#1B1714", boxShadow: `0 0 140px ${ember(0.16)}, 0 40px 120px rgba(0,0,0,0.5)`, border: `1px solid ${foam(0.08)}` }}>
+            <div style={{ position: "absolute", right: "clamp(12px, 6%, 80px)", top: "50%", transform: "translateY(-46%)", width: "min(58vh, 520px, 88%)", aspectRatio: "1 / 1", borderRadius: "50%", overflow: "hidden", backgroundColor: "#1B1714", boxShadow: `0 0 140px ${ember(0.16)}, 0 40px 120px rgba(0,0,0,0.5)`, border: `1px solid ${foam(0.08)}` }}>
               {heroOk ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src="/exemplos/comercial.jpg" alt="" onError={() => setHeroOk(false)} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
