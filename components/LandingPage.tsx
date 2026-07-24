@@ -5,6 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 type Tab = "signin" | "trial";
 
+// Lê a resposta com tolerância a corpo vazio / não-JSON (ex: 500/503 sem body).
+async function readJson(res: Response): Promise<Record<string, unknown>> {
+  const text = await res.text();
+  if (!text) return {};
+  try { return JSON.parse(text); } catch { return {}; }
+}
+
 function LandingInner() {
   const router = useRouter();
   const search = useSearchParams();
@@ -43,8 +50,13 @@ function LandingInner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: name.trim(), email: email.trim(), source: "landing-trial" }),
       });
-      const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || "Erro");
+      const data = await readJson(res);
+      if (!res.ok || data.error) {
+        const msg = typeof data.error === "string" && data.error
+          ? data.error
+          : "Serviço indisponível no momento. Tente de novo em instantes.";
+        throw new Error(msg);
+      }
       router.push(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível liberar o teste");
@@ -67,8 +79,13 @@ function LandingInner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: em }),
       });
-      const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || "Erro");
+      const data = await readJson(res);
+      if (!res.ok || data.error) {
+        const msg = typeof data.error === "string" && data.error
+          ? data.error
+          : "Serviço indisponível no momento. Tente de novo em instantes.";
+        throw new Error(msg);
+      }
       setMagicSent(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao solicitar acesso");
