@@ -215,17 +215,26 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
   }
 
   // Gera um lote — SÓ é chamada por botão de confirmação explícito.
-  // Sem pedido do cliente: prompt 100% montado em código (blocos verbatim, sem Claude).
-  // Com pedido: usa o prompt já ajustado e confirmado. Negative + Style Strength sempre.
+  // Sem pedido do cliente: prompts 100% montados em código (blocos verbatim, sem Claude),
+  // e CADA variação usa uma composição diferente do leque da categoria.
+  // Com pedido: usa o prompt já ajustado e confirmado (igual nas variações).
   async function generateStyle(style: StyleOption, note?: string, prebuiltPrompt?: string) {
     const id = ++batchSeq.current;
     const asm = assembleScene(style.key, product);
     setBatches((prev) => [...prev, { id, style, images: [], loading: true, note, review: asm.needsReview }]);
     try {
-      const promptEN = prebuiltPrompt ?? (note?.trim() ? (await buildPromptRaw(style, note)).promptEN : asm.promptEN);
+      let prompts: string[];
+      if (prebuiltPrompt) {
+        prompts = Array(VARIATIONS_PER_CLICK).fill(prebuiltPrompt);
+      } else if (note?.trim()) {
+        const built = (await buildPromptRaw(style, note)).promptEN;
+        prompts = Array(VARIATIONS_PER_CLICK).fill(built);
+      } else {
+        prompts = Array.from({ length: VARIATIONS_PER_CLICK }, (_, i) => assembleScene(style.key, product, i).promptEN);
+      }
 
       const refs = photosRef.current.map((p) => p.base64);
-      const reqs = Array.from({ length: VARIATIONS_PER_CLICK }, () =>
+      const reqs = prompts.map((promptEN) =>
         fetch("/api/generate-images", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

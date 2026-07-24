@@ -21,7 +21,7 @@ const TRAVA =
 const STYLE_REAL =
   "Photorealistic commercial photography. Real material texture with visible surface detail and natural imperfections. Physically accurate lighting with defined direction and soft natural shadows. Subtle sensor grain. Realistic depth of field.";
 const STYLE_REAL_PERSON =
-  "Natural skin texture with visible pores and micro imperfections, no retouching look. Real hair texture. Expression as a micro-moment (mid-laugh, glancing sideways), not a stock-photo pose.";
+  "Natural skin texture with visible pores and micro imperfections, no retouching look. Real hair texture. Expression as a quiet natural micro-moment (calm focus, glancing away, absorbed in what they are doing) — never a posed stock smile, never laughing at the camera.";
 const STYLE_RENDER =
   "High-end 3D product render, octane/redshift quality. Physically-based materials with accurate surface response, soft subsurface scattering where the material is translucent, accurate cloth or surface simulation. Studio HDRI lighting, soft gradient background, gentle contact shadow and subtle reflection under the product.";
 
@@ -48,6 +48,7 @@ interface CategoryDef {
   type: string;            // [TIPO DE FOTO]
   delta: string;           // [2. DELTA] o que a IA gera — explícito
   block: string;           // [4. MUNDO] bloco verbatim da categoria
+  compositions?: string[]; // leque de composições fixas — cada variação usa uma diferente
   style: "real" | "render";
   person: boolean;
   negativeExtra?: string;
@@ -81,7 +82,12 @@ const CATEGORIES: Record<string, CategoryDef> = {
     type: "High-end 3D product visualization",
     delta: "Only generate the environment, lighting and reflections around it.",
     block:
-      "The product floating or on a minimal geometric pedestal, gradient background in a deep tone, dual cool rim lights plus a soft frontal key, precise specular reflections. 85mm perspective.",
+      "Precise specular reflections, controlled highlights, rich physically-based materials. 85mm perspective.",
+    compositions: [
+      "Monochrome sculptural set: podium, floor and background all in one single color family sampled from the product itself, strong geometric shadow play from one hard light, the product as the only contrasting element.",
+      "Raw-material backdrop: the product resting on a dramatic oversized surface of its own ingredient or material (cocoa, fabric weave, stone, citrus peel — whichever matches the product), macro scale contrast between texture and product.",
+      "Suspended moment: the product floating center-frame with a few related elements frozen mid-air around it in a slow-motion feel, deep gradient background, dual cool rim lights.",
+    ],
     style: "render", person: false, st: 40,
   },
   detalhe: {
@@ -95,28 +101,45 @@ const CATEGORIES: Record<string, CategoryDef> = {
     type: "Candid front-facing smartphone photo",
     delta: "Only generate the person, setting, lighting and background around it.",
     block:
-      "A real Brazilian person VISIBLE from the waist up, showing the product to the camera like recommending it to friends, at arm's length with a slight tilt and natural lens distortion, in a real domestic setting (bedroom or lived-in kitchen). Natural window light, no flash. Genuine unposed expression. The viewer must believe a real customer took this photo.",
+      "A real Brazilian person VISIBLE from the waist up, in a real domestic setting (bedroom or lived-in kitchen), at arm's length with a slight tilt and natural lens distortion. Natural window light, no flash. Genuine unposed expression. The viewer must believe a real customer took this photo.",
+    compositions: [
+      "Casual show: the person holds the product relaxed at chest height, calm genuine expression toward the camera — like a quick photo for a friend, NOT an influencer ad pose, NOT pointing at the product.",
+      "Caught in use: the person is actually using the product in the scene, eyes on the product, completely unaware of the camera — a moment someone else photographed.",
+    ],
     style: "real", person: true, negativeExtra: NEG_HANDS, st: 50, review: true,
   },
   "estudio-modelo": {
     type: "Editorial studio photograph",
     delta: "Only generate the model, backdrop, lighting and shadows around it.",
     block:
-      "A Brazilian model framed from the waist up on a seamless gradient backdrop, holding the product near the face in a three-quarter turn, the product as the protagonist. Soft editorial key from camera-right at 45 degrees, subtle rim light, soft floor shadow. Confident restrained pose, editorial gaze — premium is restraint, not a smiling stock pose. Styling in neutral basics so the product is the only strong color. 85mm, shallow depth of field focusing the product.",
+      "A Brazilian model framed from the waist up on a seamless gradient backdrop, the product as the protagonist. Soft editorial key from camera-right at 45 degrees, subtle rim light, soft floor shadow. Confident restrained pose, editorial gaze — premium is restraint, not a smiling stock pose. Styling in neutral basics so the product is the only strong color. 85mm, shallow depth of field focusing the product.",
+    compositions: [
+      "Three-quarter turn, gaze off camera into the distance, the product held loosely at waist height catching the key light — the model is elegant context, not a presenter.",
+      "Quiet focus: the model looking DOWN at the product in her hands, absorbed, profile-leaning composition, the product at the brightest point of the frame.",
+      "Seated on an apple box, relaxed editorial posture, the product resting on her knee or beside her hand, eyes away from camera.",
+    ],
     style: "real", person: true, negativeExtra: NEG_HANDS, st: 30,
   },
   "comercial-modelo": {
     type: "Candid lifestyle campaign photograph",
     delta: "Only generate the model, scene, lighting and background around it.",
     block:
-      "A model interacting with the product in a real everyday setting (street café, urban sidewalk or a home living room), caught mid-laugh or mid-step looking off camera, the product clearly visible in use. Warm natural light appropriate to the setting and time of day, real environment with specific named details, background slightly out of focus. 35mm lens, natural framing — the moment feels caught, not staged.",
+      "A real everyday setting (street café, urban sidewalk or a home living room) with specific named details, warm natural light appropriate to the setting and time of day. 35mm lens, natural framing — the moment feels caught, not staged, NOT advertising, NOT stock photo.",
+    compositions: [
+      "Living the scene: the model mid-action using the product naturally, completely unaware of the camera, gaze on what she is doing, foreground elements slightly out of focus adding depth.",
+      "Product hero with human presence: the product in sharp focus on the table/surface in the foreground, the model softly blurred in the background living the scene — her presence tells the story, the product owns the frame.",
+    ],
     style: "real", person: true, negativeExtra: NEG_HANDS, st: 35,
   },
   "mostruario-modelo": {
     type: "Editorial product presentation photograph",
     delta: "Only generate the model, backdrop, lighting and shadows around it.",
     block:
-      "A model framed from the waist up presenting the product to the camera in a still, live-catalog pose, on a solid color backdrop with a gentle gradient, the product held in the central third of the frame and in sharp focus. Clean frontal-top catalog lighting, one soft shadow. 50mm lens.",
+      "A model framed from the waist up on a solid color backdrop with a gentle gradient, the product in the central third of the frame and in sharp focus. Clean frontal-top catalog lighting, one soft shadow. 50mm lens.",
+    compositions: [
+      "Still catalog presentation: the product held steady toward the lens at chest height, the model's expression neutral and composed, face slightly soft in focus so the product stays the hero.",
+      "Offering gesture: the product held out on an open palm at frame center, the model looking at the product (not the camera), calm museum-like restraint.",
+    ],
     style: "real", person: true, negativeExtra: NEG_HANDS, st: 30,
   },
 };
@@ -135,14 +158,19 @@ function measureLine(p: ProductInfo): string {
   return parts.join(" ");
 }
 
-// Estrutura-mestre: [TIPO] → [TRAVA] → [DELTA] → [MEDIDA] → [MUNDO] → [ANTI] → [EXCLUSÕES] → [FECHO]
-export function assembleScene(categoryKey: string, product: ProductInfo): SceneAssembly {
+// Estrutura-mestre: [TIPO] → [TRAVA] → [DELTA] → [MEDIDA] → [MUNDO] → [COMPOSIÇÃO] → [ANTI] → [EXCLUSÕES] → [FECHO]
+// `variant` escolhe a composição do leque — variações do mesmo clique saem com
+// composições diferentes (mata a monotonia sem perder o verbatim).
+export function assembleScene(categoryKey: string, product: ProductInfo, variant = 0): SceneAssembly {
   const c = CATEGORIES[categoryKey];
   if (!c) throw new Error(`Categoria desconhecida: ${categoryKey}`);
 
   const styleBlock =
     c.style === "render" ? STYLE_RENDER : STYLE_REAL + (c.person ? " " + STYLE_REAL_PERSON : "");
   const anti = c.style === "render" ? ANTI_RENDER : ANTI_REAL;
+  const composition = c.compositions?.length
+    ? c.compositions[variant % c.compositions.length]
+    : "";
 
   const promptEN = [
     `${c.type}.`,
@@ -150,11 +178,12 @@ export function assembleScene(categoryKey: string, product: ProductInfo): SceneA
     c.delta,
     measureLine(product),
     c.block,
+    composition,
     styleBlock,
     anti,
     EXCLUSOES,
     FECHO,
-  ].join(" ");
+  ].filter(Boolean).join(" ");
 
   const negative = [c.style === "render" ? NEG_RENDER : NEG_REAL, c.negativeExtra]
     .filter(Boolean)
