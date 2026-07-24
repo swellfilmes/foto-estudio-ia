@@ -1,20 +1,39 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ProductInfo, SceneInfo, PhotoType, ProductCategory } from "@/lib/types";
+import { ProductInfo, PhotoType, ProductCategory } from "@/lib/types";
+import { assembleScene } from "@/lib/scene-blocks";
 
-// ── Tipos de foto: rótulo leigo + legenda, sem jargão ────────────────────────
-const SHOT_TYPES: Record<PhotoType, { label: string; sub: string; emoji: string }> = {
-  "fundo-limpo": { label: "Fundo branco", sub: "e-commerce, catálogo", emoji: "🧼" },
-  segurando: { label: "Na mão de alguém", sub: "escala real, humano", emoji: "✋" },
-  lifestyle: { label: "Em ambiente de uso", sub: "cena, feed", emoji: "🌿" },
-  "flat-lay": { label: "Visto de cima", sub: "flat lay com props", emoji: "🍽️" },
-  macro: { label: "Detalhe / textura", sub: "close no material", emoji: "🔍" },
-  "ghost-mannequin": { label: "Sem modelo", sub: "roupa com volume", emoji: "👕" },
-};
+// ── Opções de geração por categoria de cliente ───────────────────────────────
+// Dois conjuntos: produto puro e produto com modelo (pessoa).
+// A direção de arte de cada categoria vive em lib/scene-blocks.ts (blocos verbatim);
+// aqui fica só o que a tela precisa.
+interface StyleOption {
+  key: string;
+  label: string;
+  sub: string;
+  emoji: string;
+  photoType: PhotoType;      // controla o aspect ratio
+}
 
-// Ordem em que sugerimos os próximos passos depois da primeira geração.
-const SUGGESTION_ORDER: PhotoType[] = ["segurando", "lifestyle", "flat-lay", "macro"];
+const STYLES_PRODUCT: StyleOption[] = [
+  { key: "estudio", label: "Estúdio", sub: "fundo limpo profissional", emoji: "💡", photoType: "fundo-limpo" },
+  { key: "mostruario", label: "Mostruário", sub: "vitrine · catálogo", emoji: "🏪", photoType: "fundo-limpo" },
+  { key: "comercial", label: "Comercial", sub: "cena de campanha", emoji: "🎬", photoType: "lifestyle" },
+  { key: "cg", label: "CG · Render 3D", sub: "visual premium digital", emoji: "💎", photoType: "fundo-limpo" },
+  { key: "detalhe", label: "Detalhe", sub: "close · textura", emoji: "🔍", photoType: "macro" },
+];
+
+const STYLES_WITH_MODEL: StyleOption[] = [
+  { key: "influencia", label: "Influência", sub: "estilo criador · UGC", emoji: "🤳", photoType: "segurando" },
+  { key: "estudio-modelo", label: "Estúdio", sub: "modelo em estúdio", emoji: "💡", photoType: "segurando" },
+  { key: "comercial-modelo", label: "Comercial", sub: "campanha com modelo", emoji: "🎬", photoType: "lifestyle" },
+  { key: "mostruario-modelo", label: "Mostruário", sub: "modelo apresentando", emoji: "🏪", photoType: "segurando" },
+];
+
+const VARIATIONS_PER_CLICK = 2;
+const MAX_PHOTOS = 6;
+const SUGGESTED_MIN_PHOTOS = 3;
 
 const CATEGORIES: { value: ProductCategory; label: string }[] = [
   { value: "bebida", label: "Bebida" },
@@ -37,31 +56,50 @@ const defaultProduct: ProductInfo = {
   labelPosition: "",
 };
 
+interface Photo {
+  url: string;
+  base64: string;
+}
+
 interface Batch {
   id: number;
-  photoType: PhotoType;
+  style: StyleOption;
   images: string[];
   loading: boolean;
   error?: string;
+  note?: string;                          // pedido específico usado nesta geração
+  feedback?: "yes" | "no" | "redone";     // resposta ao "foi satisfatória?"
+  feedbackText?: string;                  // o que faltou (quando "não")
+  redo?: { promptEN: string; resumoPT: string; note: string }; // prompt preparado p/ nova tentativa
+  redoPreparing?: boolean;
+  redoError?: string;
+  review?: boolean; // categoria de risco (SS alto) — conferir fidelidade do produto
 }
 
-type Phase = "upload" | "working" | "results";
+type Phase = "upload" | "working" | "studio";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export default function PromptGenerator({ onApparel }: { onApparel?: () => void } = {}) {
   const [phase, setPhase] = useState<Phase>("upload");
+  const [photos, setPhotos] = useState<Photo[]>([]);
   const [product, setProduct] = useState<ProductInfo>(defaultProduct);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [referenceBase64, setReferenceBase64] = useState<string | null>(null);
-  const [workingStatus, setWorkingStatus] = useState("Analisando sua foto…");
+  const [withModel, setWithModel] = useState(false);
+  const [selected, setSelected] = useState<StyleOption | null>(null);
+  const [request, setRequest] = useState("");
+  const [pending, setPending] = useState<{ style: StyleOption; note: string; promptEN: string; resumoPT: string } | null>(null);
+  const [preparing, setPreparing] = useState(false);
+  const [prepError, setPrepError] = useState<string | null>(null);
   const [batches, setBatches] = useState<Batch[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showAdjust, setShowAdjust] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const addInputRef = useRef<HTMLInputElement>(null);
   const cancelRef = useRef(false);
   const batchSeq = useRef(0);
+  const photosRef = useRef<Photo[]>([]);
+  useEffect(() => { photosRef.current = photos; }, [photos]);
 
   // Redimensiona + converte para base64 via canvas
   function resizeAndConvert(file: File): Promise<{ base64: string; mediaType: string }> {
@@ -87,43 +125,125 @@ export default function PromptGenerator({ onApparel }: { onApparel?: () => void 
     });
   }
 
+  // Adiciona fotos (multi). A primeira dispara a análise; as demais só somam referência.
+  async function addFiles(files: File[]) {
+    const imgs = files.filter((f) => f.type.startsWith("image/"));
+    if (imgs.length === 0) return;
+    const room = MAX_PHOTOS - photosRef.current.length;
+    const toAdd = imgs.slice(0, room);
+    if (toAdd.length === 0) return;
+
+    const isFirst = photosRef.current.length === 0;
+    if (isFirst) setPhase("working");
+    setError(null);
+
+    try {
+      const converted: Photo[] = [];
+      for (const f of toAdd) {
+        const { base64 } = await resizeAndConvert(f);
+        converted.push({ url: URL.createObjectURL(f), base64 });
+      }
+      setPhotos((prev) => [...prev, ...converted].slice(0, MAX_PHOTOS));
+
+      if (isFirst) {
+        const res = await fetch("/api/analyze-product", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageBase64: converted[0].base64, mediaType: "image/jpeg" }),
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || "Erro na análise");
+        setProduct({
+          category: data.category || "outro",
+          name: data.name || "",
+          color: data.color || "",
+          material: data.material || "",
+          size: data.size || "",
+          hasLabel: !!data.hasLabel,
+          labelText: data.labelText || "",
+          labelPosition: data.labelPosition || "",
+        });
+        setPhase("studio");
+      }
+    } catch (e) {
+      console.error(e);
+      if (isFirst) {
+        setError("Não consegui analisar a foto agora. Tente de novo em instantes.");
+        setPhotos([]);
+        setPhase("upload");
+      }
+    }
+  }
+
+  // Colar imagem (Ctrl+V) — funciona na tela inicial e no estúdio (soma foto)
+  useEffect(() => {
+    function handlePaste(e: ClipboardEvent) {
+      if (phase === "working") return;
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      const files: File[] = [];
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith("image/")) {
+          const f = item.getAsFile();
+          if (f) files.push(f);
+        }
+      }
+      if (files.length > 0) addFiles(files);
+    }
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
   function updateBatch(id: number, patch: Partial<Batch>) {
     setBatches((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch } : b)));
   }
 
-  function newBatch(photoType: PhotoType): number {
-    const id = ++batchSeq.current;
-    setBatches((prev) => [...prev, { id, photoType, images: [], loading: true }]);
-    return id;
+  // Etapa "transformar em prompt": o prompt-base vem dos blocos verbatim (código);
+  // o Claude só incorpora o pedido do cliente sem parafrasear os blocos fixos.
+  async function buildPromptRaw(style: StyleOption, note?: string): Promise<{ promptEN: string; resumoPT: string }> {
+    const base = assembleScene(style.key, product);
+    const pr = await fetch("/api/generate-prompt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ basePrompt: base.promptEN, clientRequest: note?.trim() || undefined }),
+    });
+    if (!pr.ok) throw new Error("Falha ao montar o prompt");
+    const d = await pr.json();
+    if (!d.promptEN) throw new Error("Prompt vazio");
+    return { promptEN: d.promptEN, resumoPT: d.resumoPT || "" };
   }
 
-  // Gera um lote: prompt (por tipo de foto) → N imagens no Magnific → poll
-  async function runBatch(batchId: number, photoType: PhotoType, count: number, productArg?: ProductInfo) {
-    const prod = productArg ?? product;
+  // Gera um lote — SÓ é chamada por botão de confirmação explícito.
+  // Sem pedido do cliente: prompt 100% montado em código (blocos verbatim, sem Claude).
+  // Com pedido: usa o prompt já ajustado e confirmado. Negative + Style Strength sempre.
+  async function generateStyle(style: StyleOption, note?: string, prebuiltPrompt?: string) {
+    const id = ++batchSeq.current;
+    const asm = assembleScene(style.key, product);
+    setBatches((prev) => [...prev, { id, style, images: [], loading: true, note, review: asm.needsReview }]);
     try {
-      updateBatch(batchId, { loading: true, error: undefined });
-      const scene: SceneInfo = { photoType, tool: "nano-banana", scene: "", background: "", lightMood: "" };
+      const promptEN = prebuiltPrompt ?? (note?.trim() ? (await buildPromptRaw(style, note)).promptEN : asm.promptEN);
 
-      const pr = await fetch("/api/generate-prompt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ product: prod, scene }),
-      });
-      if (!pr.ok) throw new Error("Falha ao montar o prompt");
-      const pdata = await pr.json();
-      const promptEN: string = pdata.promptEN;
-      if (!promptEN) throw new Error("Prompt vazio");
-
-      const reqs = Array.from({ length: count }, () =>
+      const refs = photosRef.current.map((p) => p.base64);
+      const reqs = Array.from({ length: VARIATIONS_PER_CLICK }, () =>
         fetch("/api/generate-images", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: promptEN, referenceImageBase64: referenceBase64, photoType }),
+          body: JSON.stringify({
+            prompt: promptEN,
+            referenceImagesBase64: refs,
+            photoType: style.photoType,
+            negativePrompt: asm.negative,
+            styleStrength: asm.styleStrength,
+          }),
         }).then((r) => r.json())
       );
       const tasks = await Promise.all(reqs);
       const taskIds = tasks.map((t) => t?.task_id).filter(Boolean) as string[];
-      if (taskIds.length === 0) throw new Error("Sem créditos no Magnific ou falha na geração");
+      if (taskIds.length === 0) {
+        const msg = tasks.find((t) => t?.error)?.error;
+        throw new Error(msg || "Falha na geração — verifique a chave/créditos do Magnific");
+      }
 
       const pending = new Set(taskIds);
       const collected: string[] = [];
@@ -132,118 +252,66 @@ export default function PromptGenerator({ onApparel }: { onApparel?: () => void 
         if (cancelRef.current) break;
         await sleep(3000);
         attempts++;
-        for (const id of Array.from(pending)) {
+        for (const tid of Array.from(pending)) {
           if (cancelRef.current) break;
-          const res = await fetch(`/api/image-status?taskId=${id}`);
+          const res = await fetch(`/api/image-status?taskId=${tid}`);
           const d = await res.json();
           if (d?.status === "COMPLETED") {
             collected.push(...((d?.generated as string[]) || []));
-            pending.delete(id);
-            updateBatch(batchId, { images: [...collected] });
+            pending.delete(tid);
+            updateBatch(id, { images: [...collected] });
           } else if (d?.status === "FAILED") {
-            pending.delete(id);
+            pending.delete(tid);
           }
         }
       }
       if (collected.length === 0) throw new Error("Nenhuma imagem gerada");
-      updateBatch(batchId, { loading: false });
+      updateBatch(id, { loading: false });
     } catch (e) {
-      updateBatch(batchId, { loading: false, error: e instanceof Error ? e.message : "Erro ao gerar" });
+      updateBatch(id, { loading: false, error: e instanceof Error ? e.message : "Erro ao gerar" });
     }
   }
 
-  // Ponto de entrada: sobe a foto → analisa → primeira geração automática
-  async function start(file: File) {
-    cancelRef.current = false;
-    setError(null);
-    setBatches([]);
-    setProduct(defaultProduct);
-    setPreviewUrl(URL.createObjectURL(file));
-    setPhase("working");
-    setWorkingStatus("Analisando sua foto…");
+  function retryBatch(batch: Batch) {
+    setBatches((prev) => prev.filter((b) => b.id !== batch.id));
+    generateStyle(batch.style, batch.note);
+  }
+
+  // "Não foi satisfatória" — etapa 1: transforma as considerações em prompt e mostra o resumo
+  async function prepareRedo(batch: Batch) {
+    const considerations = [batch.note, batch.feedbackText]
+      .filter((t) => t && t.trim())
+      .join(". Além disso: ");
+    updateBatch(batch.id, { redoPreparing: true, redoError: undefined });
     try {
-      const { base64, mediaType } = await resizeAndConvert(file);
-      setReferenceBase64(base64);
-
-      const res = await fetch("/api/analyze-product", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64: base64, mediaType }),
-      });
-      const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || "Erro na análise");
-
-      const analyzed: ProductInfo = {
-        category: data.category || "outro",
-        name: data.name || "",
-        color: data.color || "",
-        material: data.material || "",
-        size: data.size || "",
-        hasLabel: !!data.hasLabel,
-        labelText: data.labelText || "",
-        labelPosition: data.labelPosition || "",
-      };
-      setProduct(analyzed);
-
-      // Primeira geração automática — padrão universal: fundo branco, 4 fotos
-      setWorkingStatus("Preparando o estúdio…");
-      setPhase("results");
-      const id = newBatch("fundo-limpo");
-      await runBatch(id, "fundo-limpo", 4, analyzed);
-    } catch (e) {
-      console.error(e);
-      setError(
-        e instanceof Error && /api|key|análise|analis/i.test(e.message)
-          ? "Não consegui analisar a foto agora. Verifique a conexão com a IA e tente de novo."
-          : "Algo deu errado ao processar a foto. Tente de novo."
-      );
-      setPhase("upload");
+      const prep = await buildPromptRaw(batch.style, considerations);
+      updateBatch(batch.id, { redo: { ...prep, note: considerations }, redoPreparing: false });
+    } catch {
+      updateBatch(batch.id, { redoPreparing: false, redoError: "Não consegui preparar o prompt agora. Tente de novo." });
     }
   }
 
-  // Colar imagem (Ctrl+V) na tela inicial
-  useEffect(() => {
-    function handlePaste(e: ClipboardEvent) {
-      if (phase !== "upload") return;
-      const items = e.clipboardData?.items;
-      if (!items) return;
-      for (const item of Array.from(items)) {
-        if (item.type.startsWith("image/")) {
-          const file = item.getAsFile();
-          if (file) start(file);
-          break;
-        }
-      }
-    }
-    window.addEventListener("paste", handlePaste);
-    return () => window.removeEventListener("paste", handlePaste);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase]);
+  // "Não foi satisfatória" — etapa 2: cliente confirmou o resumo → gera as novas tentativas
+  function confirmRedo(batch: Batch) {
+    if (!batch.redo) return;
+    updateBatch(batch.id, { feedback: "redone" });
+    generateStyle(batch.style, batch.redo.note, batch.redo.promptEN);
+  }
 
   function reset() {
     cancelRef.current = true;
     setPhase("upload");
+    setPhotos([]);
     setProduct(defaultProduct);
-    setPreviewUrl(null);
-    setReferenceBase64(null);
+    setWithModel(false);
     setBatches([]);
     setError(null);
     setShowAdjust(false);
+    setTimeout(() => { cancelRef.current = false; }, 50);
   }
 
-  function addSuggestion(photoType: PhotoType) {
-    const id = newBatch(photoType);
-    runBatch(id, photoType, 2); // desdobramentos: 2 variações (mais barato)
-  }
-
-  function regenerateWithAdjust() {
-    const id = newBatch("fundo-limpo");
-    runBatch(id, "fundo-limpo", 4);
-    setShowAdjust(false);
-  }
-
-  const usedTypes = new Set(batches.map((b) => b.photoType));
-  const suggestions = SUGGESTION_ORDER.filter((t) => !usedTypes.has(t)).slice(0, 3);
+  const styles = withModel ? STYLES_WITH_MODEL : STYLES_PRODUCT;
+  const needMorePhotos = photos.length > 0 && photos.length < SUGGESTED_MIN_PHOTOS;
 
   // ── UPLOAD (tela de boas-vindas) ──────────────────────────────────────────
   if (phase === "upload") {
@@ -254,11 +322,11 @@ export default function PromptGenerator({ onApparel }: { onApparel?: () => void 
             Foto Estúdio IA · Swell
           </div>
           <h1 style={{ fontSize: 32, fontWeight: 700, color: "var(--text)", marginBottom: 10, lineHeight: 1.15 }}>
-            Comece enviando uma foto
+            Comece enviando fotos do seu produto
           </h1>
           <p style={{ fontSize: 15, color: "var(--text-muted)", lineHeight: 1.5 }}>
-            Produto, modelo ou vestuário — pode ser foto de celular.<br />
-            A gente cuida do resto e já te mostra as primeiras fotos prontas.
+            Pode ser foto de celular. De 3 a 5 fotos em ângulos diferentes<br />
+            deixam o resultado mais fiel — mas dá pra começar com uma.
           </p>
         </div>
 
@@ -267,8 +335,7 @@ export default function PromptGenerator({ onApparel }: { onApparel?: () => void 
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
             e.preventDefault();
-            const file = e.dataTransfer.files[0];
-            if (file && file.type.startsWith("image/")) start(file);
+            addFiles(Array.from(e.dataTransfer.files));
           }}
           style={{
             border: "2px dashed var(--border)",
@@ -287,17 +354,18 @@ export default function PromptGenerator({ onApparel }: { onApparel?: () => void 
             Cole, arraste ou clique para enviar
           </div>
           <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
-            Ctrl+V · arraste a imagem · ou clique aqui
+            Ctrl+V · arraste as imagens · ou clique aqui — até {MAX_PHOTOS} fotos
           </div>
         </div>
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
+          multiple
           style={{ display: "none" }}
           onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) start(file);
+            if (e.target.files) addFiles(Array.from(e.target.files));
+            e.target.value = "";
           }}
         />
 
@@ -319,45 +387,84 @@ export default function PromptGenerator({ onApparel }: { onApparel?: () => void 
     );
   }
 
-  // ── WORKING (analisando, antes da primeira imagem) ────────────────────────
+  // ── WORKING (analisando a primeira foto) ──────────────────────────────────
   if (phase === "working") {
     return (
       <div style={{ maxWidth: 620, margin: "0 auto", padding: "80px 20px", textAlign: "center" }}>
-        {previewUrl && (
-          <img src={previewUrl} alt="Sua foto" style={{ width: 140, height: 140, objectFit: "cover", borderRadius: 12, marginBottom: 24, opacity: 0.9 }} />
-        )}
         <div style={{ fontSize: 30, marginBottom: 12 }}>🔍</div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>{workingStatus}</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>Analisando sua foto…</div>
         <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Leva alguns segundos.</div>
       </div>
     );
   }
 
-  // ── RESULTS (imagens + cards de próximo passo) ────────────────────────────
+  // ── STUDIO (fotos + opções + resultados) ──────────────────────────────────
   return (
     <div style={{ maxWidth: 760, margin: "0 auto", padding: "40px 20px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          {previewUrl && (
-            <img src={previewUrl} alt="Sua foto" style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 8 }} />
-          )}
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text)" }}>
-              {product.name || "Seu produto"}
-            </div>
-            <button onClick={() => setShowAdjust((s) => !s)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 12, padding: 0, textDecoration: "underline" }}>
-              {showAdjust ? "ocultar ajustes" : "ajustar detalhes"}
-            </button>
+      {/* Cabeçalho: produto identificado */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20, gap: 12 }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 4 }}>
+            Identificamos
           </div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", lineHeight: 1.35, maxWidth: 520 }}>
+            {product.name || "Seu produto"}
+          </div>
+          <button onClick={() => setShowAdjust((s) => !s)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 12, padding: 0, textDecoration: "underline", marginTop: 4 }}>
+            {showAdjust ? "ocultar ajustes" : "ajustar detalhes"}
+          </button>
         </div>
-        <button onClick={reset} style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "9px 16px", fontSize: 13, cursor: "pointer" }}>
+        <button onClick={reset} style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "9px 16px", fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>
           Nova foto
         </button>
       </div>
 
-      {/* Painel de ajuste opcional (correção da análise) */}
+      {/* Fotos de referência (multi) */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          {photos.map((p, i) => (
+            <div key={i} style={{ position: "relative" }}>
+              <img src={p.url} alt={`Foto ${i + 1}`} style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8, display: "block", border: "1px solid var(--border)" }} />
+              <button
+                onClick={() => setPhotos((prev) => prev.filter((_, j) => j !== i))}
+                title="Remover"
+                style={{ position: "absolute", top: -6, right: -6, width: 18, height: 18, borderRadius: "50%", background: "rgba(0,0,0,0.8)", color: "#fff", border: "1px solid var(--border)", fontSize: 10, cursor: "pointer", lineHeight: 1, padding: 0 }}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          {photos.length < MAX_PHOTOS && (
+            <button
+              onClick={() => addInputRef.current?.click()}
+              style={{ width: 64, height: 64, borderRadius: 8, border: "2px dashed var(--border)", background: "var(--surface2)", color: "var(--text-muted)", fontSize: 22, cursor: "pointer" }}
+              title="Adicionar mais fotos"
+            >
+              +
+            </button>
+          )}
+          <input
+            ref={addInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            style={{ display: "none" }}
+            onChange={(e) => {
+              if (e.target.files) addFiles(Array.from(e.target.files));
+              e.target.value = "";
+            }}
+          />
+        </div>
+        {needMorePhotos && (
+          <div style={{ fontSize: 12, color: "#f59e0b", marginTop: 8 }}>
+            💡 Adicione mais {SUGGESTED_MIN_PHOTOS - photos.length} foto(s) em ângulos diferentes — melhora bastante a fidelidade do produto.
+          </div>
+        )}
+      </div>
+
+      {/* Painel de ajuste opcional */}
       {showAdjust && (
-        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 20, marginBottom: 28 }}>
+        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 20, marginBottom: 24 }}>
           <Field label="Categoria">
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {CATEGORIES.map((c) => (
@@ -376,25 +483,166 @@ export default function PromptGenerator({ onApparel }: { onApparel?: () => void 
               <Input value={product.material} onChange={(v) => setProduct((p) => ({ ...p, material: v }))} placeholder="Ex: vidro fosco" />
             </Field>
           </div>
-          <button onClick={regenerateWithAdjust} style={{ marginTop: 8, background: "var(--accent)", border: "none", color: "#fff", borderRadius: 8, padding: "11px 20px", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-            Aplicar e gerar de novo
-          </button>
         </div>
       )}
 
-      {/* Lotes de imagens */}
-      {batches.map((batch) => (
-        <div key={batch.id} style={{ marginBottom: 32 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-            <span style={{ fontSize: 15 }}>{SHOT_TYPES[batch.photoType].emoji}</span>
-            <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{SHOT_TYPES[batch.photoType].label}</span>
-            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>· {SHOT_TYPES[batch.photoType].sub}</span>
+      {/* Escolha do tipo de foto */}
+      <div style={{ marginBottom: 8 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", marginBottom: 4 }}>
+          Que tipo de foto você quer?
+        </div>
+        <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 16 }}>
+          Cada opção gera {VARIATIONS_PER_CLICK} fotos usando suas imagens como referência.
+        </div>
+      </div>
+
+      {/* Toggle: com modelo */}
+      <button
+        onClick={() => setWithModel((w) => !w)}
+        style={{
+          display: "flex", alignItems: "center", gap: 10,
+          background: withModel ? "rgba(200,121,65,0.12)" : "var(--surface)",
+          border: `1px solid ${withModel ? "var(--accent)" : "var(--border)"}`,
+          borderRadius: 10, padding: "12px 16px", cursor: "pointer", marginBottom: 16, width: "100%",
+        }}
+      >
+        <div style={{
+          width: 34, height: 20, borderRadius: 999, position: "relative", flexShrink: 0,
+          background: withModel ? "var(--accent)" : "var(--border)", transition: "background 0.2s",
+        }}>
+          <div style={{
+            position: "absolute", top: 2, left: withModel ? 16 : 2, width: 16, height: 16,
+            borderRadius: "50%", background: "#fff", transition: "left 0.2s",
+          }} />
+        </div>
+        <div style={{ textAlign: "left" }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: withModel ? "var(--accent)" : "var(--text)" }}>
+            Colocar com um modelo?
+          </div>
+          <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
+            Uma pessoa segurando, usando ou apresentando o produto
+          </div>
+        </div>
+      </button>
+
+      {/* Cards de opção — clicar SELECIONA; gerar só no botão de confirmar */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 12, marginBottom: 16 }}>
+        {styles.map((s) => (
+          <StyleCard
+            key={s.key}
+            style={s}
+            selected={selected?.key === s.key}
+            onClick={() => setSelected((cur) => (cur?.key === s.key ? null : s))}
+          />
+        ))}
+      </div>
+
+      {/* Painel de confirmação: pedido específico → prompt entendido → gerar */}
+      {selected && (
+        <div style={{ background: "var(--surface)", border: "1px solid var(--accent)", borderRadius: 12, padding: 20, marginBottom: 32 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", marginBottom: 4 }}>
+            {selected.emoji} {selected.label} <span style={{ fontWeight: 400, color: "var(--text-muted)" }}>· {selected.sub}</span>
           </div>
 
+          {!pending ? (
+            <>
+              <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 12 }}>
+                Quer pedir algo específico? Descreva do seu jeito — cenário, cor de fundo, clima, o que imaginar. (opcional)
+              </div>
+              <textarea
+                value={request}
+                onChange={(e) => setRequest(e.target.value)}
+                placeholder="Ex: quero ver a modelo da cintura pra cima, fundo rosa claro, clima natalino…"
+                rows={2}
+                style={{ width: "100%", background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", color: "var(--text)", fontSize: 14, resize: "vertical", outline: "none", fontFamily: "inherit", boxSizing: "border-box", marginBottom: 12 }}
+              />
+              {prepError && (
+                <div style={{ fontSize: 12, color: "#f87171", marginBottom: 10 }}>{prepError}</div>
+              )}
+              <button
+                disabled={preparing}
+                onClick={async () => {
+                  if (!request.trim()) {
+                    generateStyle(selected);
+                    setSelected(null);
+                    setRequest("");
+                    return;
+                  }
+                  setPreparing(true);
+                  setPrepError(null);
+                  try {
+                    const prep = await buildPromptRaw(selected, request);
+                    setPending({ style: selected, note: request.trim(), ...prep });
+                  } catch {
+                    setPrepError("Não consegui preparar o prompt agora. Tente de novo.");
+                  } finally {
+                    setPreparing(false);
+                  }
+                }}
+                style={{ width: "100%", background: preparing ? "var(--surface2)" : "var(--accent)", border: "none", color: preparing ? "var(--text-muted)" : "#fff", borderRadius: 8, padding: "14px", fontSize: 15, fontWeight: 700, cursor: preparing ? "wait" : "pointer" }}
+              >
+                {preparing
+                  ? "Entendendo o seu pedido…"
+                  : request.trim()
+                    ? "Transformar meu pedido em prompt →"
+                    : `Sim, gerar ${VARIATIONS_PER_CLICK} fotos →`}
+              </button>
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: 12, color: "var(--text-muted)", margin: "10px 0 6px" }}>
+                Entendi o seu pedido assim:
+              </div>
+              <div style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8, padding: "12px 14px", fontSize: 13, color: "var(--text)", lineHeight: 1.6, marginBottom: 12 }}>
+                {pending.resumoPT || "Pedido incorporado ao prompt de geração."}
+              </div>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <button
+                  onClick={() => {
+                    generateStyle(pending.style, pending.note, pending.promptEN);
+                    setPending(null);
+                    setSelected(null);
+                    setRequest("");
+                  }}
+                  style={{ flex: 1, minWidth: 200, background: "var(--accent)", border: "none", color: "#fff", borderRadius: 8, padding: "14px", fontSize: 15, fontWeight: 700, cursor: "pointer" }}
+                >
+                  Confirmar — gerar {VARIATIONS_PER_CLICK} fotos →
+                </button>
+                <button
+                  onClick={() => setPending(null)}
+                  style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "14px 18px", fontSize: 13, cursor: "pointer" }}
+                >
+                  ✏️ Ajustar pedido
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Lotes de imagens geradas */}
+      {batches.map((batch) => (
+        <div key={batch.id} style={{ marginBottom: 32 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: batch.note ? 4 : 12, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 15 }}>{batch.style.emoji}</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{batch.style.label}</span>
+            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>· {batch.style.sub}</span>
+          </div>
+          {batch.note && (
+            <div style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic", marginBottom: 12 }}>
+              com o seu pedido: “{batch.note}”
+            </div>
+          )}
+          {batch.review && !batch.loading && batch.images.length > 0 && (
+            <div style={{ fontSize: 12, color: "#f59e0b", marginBottom: 10 }}>
+              ⚠ Estilo de alta liberdade criativa — confira se o produto saiu fiel (cor, rótulo, forma). Se mudou, use o “Não” abaixo e conte o que alterou.
+            </div>
+          )}
+
           {batch.error ? (
-            <div style={{ padding: "12px 16px", background: "#2d1212", border: "1px solid #5c1a1a", borderRadius: 8, color: "#f87171", fontSize: 13, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ padding: "12px 16px", background: "#2d1212", border: "1px solid #5c1a1a", borderRadius: 8, color: "#f87171", fontSize: 13, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
               <span>{batch.error}</span>
-              <button onClick={() => runBatch(batch.id, batch.photoType, batch.photoType === "fundo-limpo" ? 4 : 2)} style={{ background: "none", border: "1px solid #5c1a1a", color: "#f87171", borderRadius: 6, padding: "5px 10px", fontSize: 12, cursor: "pointer" }}>
+              <button onClick={() => retryBatch(batch)} style={{ background: "none", border: "1px solid #5c1a1a", color: "#f87171", borderRadius: 6, padding: "5px 10px", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
                 Tentar de novo
               </button>
             </div>
@@ -402,8 +650,8 @@ export default function PromptGenerator({ onApparel }: { onApparel?: () => void 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 12 }}>
               {batch.images.map((url, i) => (
                 <div key={i} style={{ borderRadius: 10, overflow: "hidden", position: "relative", background: "var(--surface2)" }}>
-                  <img src={url} alt={`${SHOT_TYPES[batch.photoType].label} ${i + 1}`} style={{ width: "100%", display: "block" }} />
-                  <a href={url} download={`foto-${batch.photoType}-${i + 1}.jpg`} target="_blank" rel="noopener noreferrer" style={{ position: "absolute", bottom: 8, right: 8, background: "rgba(0,0,0,0.75)", color: "#fff", borderRadius: 6, padding: "5px 10px", fontSize: 11, fontWeight: 600, textDecoration: "none" }}>
+                  <img src={url} alt={`${batch.style.label} ${i + 1}`} style={{ width: "100%", display: "block" }} />
+                  <a href={url} download={`foto-${batch.style.key}-${i + 1}.jpg`} target="_blank" rel="noopener noreferrer" style={{ position: "absolute", bottom: 8, right: 8, background: "rgba(0,0,0,0.75)", color: "#fff", borderRadius: 6, padding: "5px 10px", fontSize: 11, fontWeight: 600, textDecoration: "none" }}>
                     Baixar
                   </a>
                 </div>
@@ -415,39 +663,104 @@ export default function PromptGenerator({ onApparel }: { onApparel?: () => void 
               )}
             </div>
           )}
+
+          {/* Feedback pós-geração */}
+          {!batch.loading && !batch.error && batch.images.length > 0 && batch.feedback !== "redone" && (
+            <div style={{ marginTop: 12, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px" }}>
+              {!batch.feedback && (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
+                    Essa geração foi satisfatória para você?
+                  </span>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      onClick={() => updateBatch(batch.id, { feedback: "yes" })}
+                      style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)", borderRadius: 8, padding: "8px 16px", fontSize: 13, cursor: "pointer" }}
+                    >
+                      👍 Sim
+                    </button>
+                    <button
+                      onClick={() => updateBatch(batch.id, { feedback: "no" })}
+                      style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)", borderRadius: 8, padding: "8px 16px", fontSize: 13, cursor: "pointer" }}
+                    >
+                      👎 Não
+                    </button>
+                  </div>
+                </div>
+              )}
+              {batch.feedback === "yes" && (
+                <div style={{ fontSize: 13, color: "#4ade80" }}>✓ Que bom! As fotos estão prontas pra baixar.</div>
+              )}
+              {batch.feedback === "no" && !batch.redo && (
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 8 }}>
+                    O que faltou? Conta do seu jeito que a gente ajusta.
+                  </div>
+                  <textarea
+                    value={batch.feedbackText || ""}
+                    onChange={(e) => updateBatch(batch.id, { feedbackText: e.target.value })}
+                    placeholder="Ex: quero ver a modelo inteira, não só a mão; fundo mais escuro; produto maior na foto…"
+                    rows={2}
+                    style={{ width: "100%", background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", color: "var(--text)", fontSize: 13, resize: "vertical", outline: "none", fontFamily: "inherit", boxSizing: "border-box", marginBottom: 10 }}
+                  />
+                  {batch.redoError && (
+                    <div style={{ fontSize: 12, color: "#f87171", marginBottom: 8 }}>{batch.redoError}</div>
+                  )}
+                  <button
+                    onClick={() => prepareRedo(batch)}
+                    disabled={!batch.feedbackText?.trim() || batch.redoPreparing}
+                    style={{
+                      background: batch.feedbackText?.trim() && !batch.redoPreparing ? "var(--accent)" : "var(--surface2)",
+                      color: batch.feedbackText?.trim() && !batch.redoPreparing ? "#fff" : "var(--text-muted)",
+                      border: "none", borderRadius: 8, padding: "11px 18px", fontSize: 13, fontWeight: 700,
+                      cursor: batch.feedbackText?.trim() && !batch.redoPreparing ? "pointer" : "not-allowed",
+                    }}
+                  >
+                    {batch.redoPreparing ? "Entendendo o que faltou…" : "Transformar no prompt →"}
+                  </button>
+                </div>
+              )}
+              {batch.feedback === "no" && batch.redo && (
+                <div>
+                  <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>
+                    Entendi as suas considerações assim:
+                  </div>
+                  <div style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8, padding: "12px 14px", fontSize: 13, color: "var(--text)", lineHeight: 1.6, marginBottom: 10 }}>
+                    {batch.redo.resumoPT || "Considerações incorporadas ao prompt."}
+                  </div>
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    <button
+                      onClick={() => confirmRedo(batch)}
+                      style={{ flex: 1, minWidth: 200, background: "var(--accent)", border: "none", color: "#fff", borderRadius: 8, padding: "12px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+                    >
+                      Confirmar — gerar {VARIATIONS_PER_CLICK} novas tentativas →
+                    </button>
+                    <button
+                      onClick={() => updateBatch(batch.id, { redo: undefined })}
+                      style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "12px 16px", fontSize: 12, cursor: "pointer" }}
+                    >
+                      ✏️ Ajustar
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       ))}
-
-      {/* Cards de próximo passo */}
-      {suggestions.length > 0 && (
-        <div style={{ marginTop: 8 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", marginBottom: 4 }}>
-            Quer ver de outro jeito?
-          </div>
-          <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 16 }}>
-            Um clique — a gente usa a mesma foto. Cada opção gera 2 novas.
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12 }}>
-            {suggestions.map((type) => (
-              <SuggestionCard key={type} photoType={type} onClick={() => addSuggestion(type)} />
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
-// ── Card de sugestão: imagem de exemplo (com fallback) ───────────────────────
-function SuggestionCard({ photoType, onClick }: { photoType: PhotoType; onClick: () => void }) {
+// ── Card de opção: imagem de exemplo (com fallback pra emoji) ────────────────
+function StyleCard({ style, selected, onClick }: { style: StyleOption; selected?: boolean; onClick: () => void }) {
   const [imgOk, setImgOk] = useState(true);
-  const meta = SHOT_TYPES[photoType];
   return (
     <button
       onClick={onClick}
       style={{
-        background: "var(--surface)",
-        border: "1px solid var(--border)",
+        background: selected ? "rgba(200,121,65,0.1)" : "var(--surface)",
+        border: `2px solid ${selected ? "var(--accent)" : "var(--border)"}`,
         borderRadius: 12,
         padding: 0,
         cursor: "pointer",
@@ -456,29 +769,29 @@ function SuggestionCard({ photoType, onClick }: { photoType: PhotoType; onClick:
         transition: "border-color 0.15s",
       }}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
+      onMouseLeave={(e) => { if (!selected) e.currentTarget.style.borderColor = "var(--border)"; }}
     >
-      <div style={{ aspectRatio: "4 / 3", background: "var(--surface2)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+      <div style={{ aspectRatio: "4 / 3", background: "var(--surface2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {imgOk ? (
           <img
-            src={`/exemplos/${photoType}.jpg`}
-            alt={meta.label}
+            src={`/exemplos/${style.key}.jpg`}
+            alt={style.label}
             onError={() => setImgOk(false)}
             style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
           />
         ) : (
-          <div style={{ fontSize: 40, opacity: 0.7 }}>{meta.emoji}</div>
+          <div style={{ fontSize: 36, opacity: 0.7 }}>{style.emoji}</div>
         )}
       </div>
-      <div style={{ padding: "12px 14px" }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", marginBottom: 2 }}>{meta.label}</div>
-        <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{meta.sub}</div>
+      <div style={{ padding: "10px 12px" }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", marginBottom: 2 }}>{style.label}</div>
+        <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{style.sub}</div>
       </div>
     </button>
   );
 }
 
-// ── Componentes de formulário (usados só no painel de ajuste) ────────────────
+// ── Componentes de formulário (painel de ajuste) ─────────────────────────────
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 16 }}>

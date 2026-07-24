@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
     const {
       prompt,
       referenceImageBase64,
+      referenceImagesBase64,
       photoType = "fundo-limpo",
       negativePrompt,
       styleStrength,
@@ -50,14 +51,21 @@ export async function POST(req: NextRequest) {
       body.style_strength = styleStrength;
     }
 
-    if (referenceImageBase64) {
-      body.reference_images = [
-        {
-          image: `data:image/jpeg;base64,${referenceImageBase64}`,
-          text: "Reference product image — keep this product exactly as shown",
-          mime_type: "image/jpeg",
-        },
-      ];
+    // Aceita várias fotos de referência (multi-upload) ou uma só (retrocompatível)
+    const refs: string[] = Array.isArray(referenceImagesBase64) && referenceImagesBase64.length > 0
+      ? referenceImagesBase64.slice(0, 5)
+      : referenceImageBase64
+        ? [referenceImageBase64]
+        : [];
+
+    if (refs.length > 0) {
+      body.reference_images = refs.map((b64: string, i: number) => ({
+        image: `data:image/jpeg;base64,${b64}`,
+        text: i === 0
+          ? "Reference product image — keep this product exactly as shown"
+          : "Additional angle of the same product — same shape, color, label and materials",
+        mime_type: "image/jpeg",
+      }));
     }
 
     const res = await fetch(MAGNIFIC_URL, {
