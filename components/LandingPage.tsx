@@ -100,7 +100,7 @@ function LandingInner() {
             <Feature icon="⚡" title="Rápido" desc="Ensaio completo em 3–5 minutos, pronto pra baixar" />
           </div>
 
-          <div style={{ padding: "16px 18px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6 }}>
+          <div style={{ padding: "16px 18px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 4, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6 }}>
             <strong style={{ color: "var(--text)" }}>Direção de arte Swell.</strong> Cada estilo do catálogo tem luz, cor, wardrobe e mood curados pela nossa equipe — o resultado não sai com &quot;cara de IA&quot;, sai com cara de foto real.
           </div>
         </div>
@@ -109,7 +109,7 @@ function LandingInner() {
         <div>
           <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 24 }}>
             {/* Tabs */}
-            <div style={{ display: "flex", background: "var(--surface2)", borderRadius: 8, padding: 3, marginBottom: 20 }}>
+            <div style={{ display: "flex", background: "var(--surface2)", borderRadius: 4, padding: 3, marginBottom: 20 }}>
               <TabButton active={tab === "trial"} onClick={() => { setTab("trial"); setError(null); }}>
                 Testar grátis
               </TabButton>
@@ -177,7 +177,7 @@ function LandingInner() {
                     href="https://kiwify.com.br"
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ display: "inline-block", background: "transparent", color: "var(--accent)", border: "1px solid var(--accent)", borderRadius: 8, padding: "10px 18px", fontSize: 13, fontWeight: 700, textDecoration: "none" }}
+                    style={{ display: "inline-block", background: "transparent", color: "var(--accent)", border: "1px solid var(--accent)", borderRadius: 4, padding: "10px 18px", fontSize: 13, fontWeight: 700, textDecoration: "none" }}
                   >
                     Ver planos de assinatura →
                   </a>
@@ -197,7 +197,7 @@ function LandingInner() {
                 <button
                   type="button"
                   onClick={() => { setMagicSent(false); setSigninEmail(""); }}
-                  style={{ background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer" }}
+                  style={{ background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: 4, padding: "10px 18px", fontSize: 13, cursor: "pointer" }}
                 >
                   Usar outro e-mail
                 </button>
@@ -205,7 +205,7 @@ function LandingInner() {
             )}
 
             {error && (
-              <div style={{ marginTop: 12, padding: "10px 12px", background: "#2d1212", border: "1px solid #5c1a1a", borderRadius: 8, color: "#f87171", fontSize: 13 }}>
+              <div style={{ marginTop: 12, padding: "10px 12px", background: "#2d1212", border: "1px solid #5c1a1a", borderRadius: 4, color: "#f87171", fontSize: 13 }}>
                 {error}
               </div>
             )}
@@ -225,7 +225,7 @@ const inputStyle: React.CSSProperties = {
   width: "100%",
   background: "var(--surface2)",
   border: "1px solid var(--border)",
-  borderRadius: 8,
+  borderRadius: 4,
   padding: "11px 13px",
   color: "var(--text)",
   fontSize: 14,
@@ -237,7 +237,7 @@ const primaryButton: React.CSSProperties = {
   background: "var(--accent)",
   color: "#fff",
   border: "none",
-  borderRadius: 8,
+  borderRadius: 4,
   padding: "13px 20px",
   fontSize: 15,
   fontWeight: 700,
@@ -253,7 +253,7 @@ function TabButton({ active, onClick, children }: { active: boolean; onClick: ()
         flex: 1,
         background: active ? "var(--surface)" : "transparent",
         border: "none",
-        borderRadius: 6,
+        borderRadius: 2,
         padding: "10px 12px",
         fontSize: 13,
         fontWeight: 600,

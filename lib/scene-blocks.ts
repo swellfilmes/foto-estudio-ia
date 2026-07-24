@@ -158,10 +158,26 @@ function measureLine(p: ProductInfo): string {
   return parts.join(" ");
 }
 
-// Estrutura-mestre: [TIPO] → [TRAVA] → [DELTA] → [MEDIDA] → [MUNDO] → [COMPOSIÇÃO] → [ANTI] → [EXCLUSÕES] → [FECHO]
+// Perfil de marca do lojista ("Minha Marca") — vira um slot do prompt.
+export interface BrandDirection {
+  tone?: string;     // ex: "premium e minimalista"
+  colorHex?: string; // cor principal da marca — guia fundo/set, nunca o produto
+  mood?: string;     // clima visual: clean, quente, escuro, colorido
+}
+
+function brandLine(b?: BrandDirection): string {
+  if (!b) return "";
+  const parts: string[] = [];
+  if (b.colorHex) parts.push(`the brand's primary color ${b.colorHex} may guide the backdrop and set accents (NEVER recolor the product itself)`);
+  if (b.tone) parts.push(`brand tone: ${b.tone}`);
+  if (b.mood) parts.push(`overall visual mood: ${b.mood}`);
+  return parts.length ? `Brand direction: ${parts.join("; ")}.` : "";
+}
+
+// Estrutura-mestre: [TIPO] → [TRAVA] → [DELTA] → [MEDIDA] → [MARCA] → [MUNDO] → [COMPOSIÇÃO] → [ANTI] → [EXCLUSÕES] → [FECHO]
 // `variant` escolhe a composição do leque — variações do mesmo clique saem com
 // composições diferentes (mata a monotonia sem perder o verbatim).
-export function assembleScene(categoryKey: string, product: ProductInfo, variant = 0): SceneAssembly {
+export function assembleScene(categoryKey: string, product: ProductInfo, variant = 0, brand?: BrandDirection): SceneAssembly {
   const c = CATEGORIES[categoryKey];
   if (!c) throw new Error(`Categoria desconhecida: ${categoryKey}`);
 
@@ -177,6 +193,7 @@ export function assembleScene(categoryKey: string, product: ProductInfo, variant
     TRAVA,
     c.delta,
     measureLine(product),
+    brandLine(brand),
     c.block,
     composition,
     styleBlock,

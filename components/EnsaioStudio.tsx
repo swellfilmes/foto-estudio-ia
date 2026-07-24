@@ -285,11 +285,11 @@ export default function EnsaioStudio({ onBack }: { onBack?: () => void } = {}) {
               const ref = refs[i];
               if (ref) {
                 return (
-                  <div key={i} style={{ position: "relative", aspectRatio: "3/4", borderRadius: 10, overflow: "hidden", background: "var(--surface2)" }}>
+                  <div key={i} style={{ position: "relative", aspectRatio: "3/4", borderRadius: 4, overflow: "hidden", background: "var(--surface2)" }}>
                     <img src={ref.previewUrl} alt={`Ref ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     <button
                       onClick={() => removeReference(i)}
-                      style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.75)", border: "none", color: "#fff", borderRadius: 6, padding: "3px 8px", fontSize: 11, cursor: "pointer" }}
+                      style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.75)", border: "none", color: "#fff", borderRadius: 2, padding: "3px 8px", fontSize: 11, cursor: "pointer" }}
                     >
                       Remover
                     </button>
@@ -303,7 +303,7 @@ export default function EnsaioStudio({ onBack }: { onBack?: () => void } = {}) {
                   style={{
                     aspectRatio: "3/4",
                     border: "2px dashed var(--border)",
-                    borderRadius: 10,
+                    borderRadius: 4,
                     background: "var(--surface2)",
                     cursor: "pointer",
                     fontSize: 12,
@@ -334,23 +334,23 @@ export default function EnsaioStudio({ onBack }: { onBack?: () => void } = {}) {
           />
 
           {analyzing && (
-            <div style={{ padding: "12px 16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text-muted)", fontSize: 13, marginBottom: 16 }}>
+            <div style={{ padding: "12px 16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 4, color: "var(--text-muted)", fontSize: 13, marginBottom: 16 }}>
               🔍 Analisando a pessoa na foto para dar contexto ao ensaio...
             </div>
           )}
           {analyzed && !analyzing && (
-            <div style={{ padding: "12px 16px", background: "#0e2018", border: "1px solid #1e4a3a", borderRadius: 8, color: "#4ade80", fontSize: 13, marginBottom: 16 }}>
+            <div style={{ padding: "12px 16px", background: "#0e2018", border: "1px solid #1e4a3a", borderRadius: 4, color: "#4ade80", fontSize: 13, marginBottom: 16 }}>
               ✓ Análise concluída — traços gerais captados: <em>{person.ageRange || "-"}, {person.skinTone || "-"}, cabelo {person.hairColor || "-"} {person.hairTexture || "-"}</em>
             </div>
           )}
 
           {error && (
-            <div style={{ padding: "12px 16px", background: "#2d1212", border: "1px solid #5c1a1a", borderRadius: 8, color: "#f87171", fontSize: 13, marginBottom: 16 }}>
+            <div style={{ padding: "12px 16px", background: "#2d1212", border: "1px solid #5c1a1a", borderRadius: 4, color: "#f87171", fontSize: 13, marginBottom: 16 }}>
               {error}
             </div>
           )}
 
-          <div style={{ padding: "14px 16px", background: "var(--surface2)", borderRadius: 8, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 20 }}>
+          <div style={{ padding: "14px 16px", background: "var(--surface2)", borderRadius: 4, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 20 }}>
             <strong style={{ color: "var(--text)" }}>Dica:</strong> Fotos com rosto bem iluminado, sem óculos escuros, sem sombra no rosto geram ensaios mais fiéis. Se enviar múltiplas, a IA usa todas como referência da mesma pessoa.
           </div>
 
@@ -371,10 +371,10 @@ export default function EnsaioStudio({ onBack }: { onBack?: () => void } = {}) {
                 onClick={() => setStyleId(style.id)}
                 style={{
                   padding: "16px 14px",
-                  borderRadius: 10,
+                  borderRadius: 4,
                   cursor: "pointer",
                   border: `1px solid ${styleId === style.id ? "var(--accent)" : "var(--border)"}`,
-                  background: styleId === style.id ? "rgba(200,121,65,0.08)" : "var(--surface)",
+                  background: styleId === style.id ? "rgba(224,116,47,0.08)" : "var(--surface)",
                   textAlign: "left",
                   transition: "all 0.15s",
                 }}
@@ -393,7 +393,7 @@ export default function EnsaioStudio({ onBack }: { onBack?: () => void } = {}) {
           <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
             <button
               onClick={() => setStep(1)}
-              style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "12px 20px", fontSize: 14, cursor: "pointer" }}
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 4, padding: "12px 20px", fontSize: 14, cursor: "pointer" }}
             >
               ← Voltar
             </button>
@@ -409,7 +409,7 @@ export default function EnsaioStudio({ onBack }: { onBack?: () => void } = {}) {
         <div>
           <SectionTitle step={3} title="Ajustes finais" />
 
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: 16, marginBottom: 20 }}>
+          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 4, padding: 16, marginBottom: 20 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 6 }}>
               Estilo escolhido
             </div>
@@ -431,7 +431,7 @@ export default function EnsaioStudio({ onBack }: { onBack?: () => void } = {}) {
                 width: "100%",
                 background: "var(--surface2)",
                 border: "1px solid var(--border)",
-                borderRadius: 8,
+                borderRadius: 4,
                 padding: "12px 14px",
                 color: "var(--text)",
                 fontSize: 14,
@@ -443,7 +443,7 @@ export default function EnsaioStudio({ onBack }: { onBack?: () => void } = {}) {
             />
           </Field>
 
-          <div style={{ padding: "12px 14px", background: "var(--surface2)", borderRadius: 8, fontSize: 12, color: "var(--text-muted)", marginBottom: 20 }}>
+          <div style={{ padding: "12px 14px", background: "var(--surface2)", borderRadius: 4, fontSize: 12, color: "var(--text-muted)", marginBottom: 20 }}>
             <strong style={{ color: "var(--text)" }}>Sugestões pra este estilo:</strong>
             <ul style={{ margin: "8px 0 0", paddingLeft: 20 }}>
               {selectedStyle.suggestions.map((s, i) => <li key={i} style={{ marginBottom: 3 }}>{s}</li>)}
@@ -451,7 +451,7 @@ export default function EnsaioStudio({ onBack }: { onBack?: () => void } = {}) {
           </div>
 
           {error && (
-            <div style={{ padding: "12px 16px", background: "#2d1212", border: "1px solid #5c1a1a", borderRadius: 8, color: "#f87171", fontSize: 13, marginBottom: 16 }}>
+            <div style={{ padding: "12px 16px", background: "#2d1212", border: "1px solid #5c1a1a", borderRadius: 4, color: "#f87171", fontSize: 13, marginBottom: 16 }}>
               {error}
             </div>
           )}
@@ -459,7 +459,7 @@ export default function EnsaioStudio({ onBack }: { onBack?: () => void } = {}) {
           <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
             <button
               onClick={() => setStep(2)}
-              style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "12px 20px", fontSize: 14, cursor: "pointer" }}
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 4, padding: "12px 20px", fontSize: 14, cursor: "pointer" }}
             >
               ← Trocar estilo
             </button>
@@ -493,14 +493,14 @@ export default function EnsaioStudio({ onBack }: { onBack?: () => void } = {}) {
           {images.length > 0 && (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
               {images.map((url, i) => (
-                <div key={i} style={{ borderRadius: 10, overflow: "hidden", position: "relative", background: "var(--surface2)" }}>
+                <div key={i} style={{ borderRadius: 4, overflow: "hidden", position: "relative", background: "var(--surface2)" }}>
                   <img src={url} alt={`Ensaio ${i + 1}`} style={{ width: "100%", display: "block" }} />
                   <a
                     href={url}
                     download={`swell-ensaio-${i + 1}.jpg`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ position: "absolute", bottom: 8, right: 8, background: "rgba(0,0,0,0.75)", color: "#fff", borderRadius: 6, padding: "5px 10px", fontSize: 11, fontWeight: 600, textDecoration: "none" }}
+                    style={{ position: "absolute", bottom: 8, right: 8, background: "rgba(0,0,0,0.75)", color: "#fff", borderRadius: 2, padding: "5px 10px", fontSize: 11, fontWeight: 600, textDecoration: "none" }}
                   >
                     Baixar
                   </a>
@@ -510,7 +510,7 @@ export default function EnsaioStudio({ onBack }: { onBack?: () => void } = {}) {
           )}
 
           {error && (
-            <div style={{ padding: "12px 16px", background: "#2d1212", border: "1px solid #5c1a1a", borderRadius: 8, color: "#f87171", fontSize: 13, marginBottom: 16 }}>
+            <div style={{ padding: "12px 16px", background: "#2d1212", border: "1px solid #5c1a1a", borderRadius: 4, color: "#f87171", fontSize: 13, marginBottom: 16 }}>
               {error}
             </div>
           )}
@@ -519,19 +519,19 @@ export default function EnsaioStudio({ onBack }: { onBack?: () => void } = {}) {
             <div style={{ display: "flex", gap: 10, flexDirection: "column", marginTop: 16 }}>
               <button
                 onClick={generateEnsaio}
-                style={{ width: "100%", background: "var(--accent)", border: "none", color: "#fff", borderRadius: 8, padding: "14px", fontSize: 15, cursor: "pointer", fontWeight: 700 }}
+                style={{ width: "100%", background: "var(--accent)", border: "none", color: "#fff", borderRadius: 4, padding: "14px", fontSize: 15, cursor: "pointer", fontWeight: 700 }}
               >
                 Gerar novo ensaio no mesmo estilo →
               </button>
               <button
                 onClick={() => setStep(2)}
-                style={{ width: "100%", background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "12px", fontSize: 14, cursor: "pointer" }}
+                style={{ width: "100%", background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 4, padding: "12px", fontSize: 14, cursor: "pointer" }}
               >
                 Trocar estilo
               </button>
               <button
                 onClick={resetAll}
-                style={{ width: "100%", background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "12px", fontSize: 14, cursor: "pointer" }}
+                style={{ width: "100%", background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 4, padding: "12px", fontSize: 14, cursor: "pointer" }}
               >
                 Nova pessoa
               </button>
@@ -581,7 +581,7 @@ function NavButton({ children, disabled, onClick, style }: { children: React.Rea
         background: disabled ? "var(--surface2)" : "var(--accent)",
         color: disabled ? "var(--text-muted)" : "#fff",
         border: "none",
-        borderRadius: 8,
+        borderRadius: 4,
         padding: "13px 24px",
         fontSize: 14,
         fontWeight: 700,

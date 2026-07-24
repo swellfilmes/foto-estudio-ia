@@ -14,7 +14,7 @@ export default function StudioPage() {
           color: "var(--text-muted)",
           textDecoration: "none",
           border: "1px solid var(--border)",
-          borderRadius: 8,
+          borderRadius: 4,
           padding: "6px 12px",
         }}
       >

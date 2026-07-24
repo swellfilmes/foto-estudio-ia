@@ -2,7 +2,21 @@
 
 import { useState, useRef, useEffect } from "react";
 import { ProductInfo, PhotoType, ProductCategory } from "@/lib/types";
-import { assembleScene } from "@/lib/scene-blocks";
+import { assembleScene, BrandDirection } from "@/lib/scene-blocks";
+
+// Perfil "Minha Marca" — guardado no navegador; entra como slot de direção nos prompts
+interface BrandProfile {
+  name: string;
+  tone: string;
+  colorHex: string;
+  mood: string;
+}
+
+const emptyBrand: BrandProfile = { name: "", tone: "", colorHex: "", mood: "" };
+const BRAND_STORAGE_KEY = "swell-brand";
+
+const BRAND_TONES = ["Minimalista", "Premium", "Acolhedor", "Vibrante", "Natural"];
+const BRAND_MOODS = ["Clean", "Quente", "Escuro", "Colorido"];
 
 // ── Opções de geração por categoria de cliente ───────────────────────────────
 // Dois conjuntos: produto puro e produto com modelo (pessoa).
@@ -93,6 +107,8 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
   const [batches, setBatches] = useState<Batch[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showAdjust, setShowAdjust] = useState(false);
+  const [brand, setBrand] = useState<BrandProfile>(emptyBrand);
+  const [showBrand, setShowBrand] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const addInputRef = useRef<HTMLInputElement>(null);
@@ -100,6 +116,30 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
   const batchSeq = useRef(0);
   const photosRef = useRef<Photo[]>([]);
   useEffect(() => { photosRef.current = photos; }, [photos]);
+
+  // Carrega o perfil de marca salvo no navegador (assíncrono pra não brigar com a hidratação)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try {
+        const raw = localStorage.getItem(BRAND_STORAGE_KEY);
+        if (raw) setBrand({ ...emptyBrand, ...JSON.parse(raw) });
+      } catch { /* perfil corrompido — ignora */ }
+    }, 0);
+    return () => clearTimeout(t);
+  }, []);
+
+  function saveBrand(b: BrandProfile) {
+    setBrand(b);
+    try { localStorage.setItem(BRAND_STORAGE_KEY, JSON.stringify(b)); } catch { /* sem storage */ }
+    setShowBrand(false);
+  }
+
+  // Direção de marca pros prompts (só se houver algo preenchido)
+  const brandDirection: BrandDirection | undefined =
+    brand.tone || brand.colorHex || brand.mood
+      ? { tone: brand.tone || undefined, colorHex: brand.colorHex || undefined, mood: brand.mood || undefined }
+      : undefined;
+  const hasBrand = !!(brand.name || brandDirection);
 
   // Redimensiona + converte para base64 via canvas
   function resizeAndConvert(file: File): Promise<{ base64: string; mediaType: string }> {
@@ -202,7 +242,7 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
   // Etapa "transformar em prompt": o prompt-base vem dos blocos verbatim (código);
   // o Claude só incorpora o pedido do cliente sem parafrasear os blocos fixos.
   async function buildPromptRaw(style: StyleOption, note?: string): Promise<{ promptEN: string; resumoPT: string }> {
-    const base = assembleScene(style.key, product);
+    const base = assembleScene(style.key, product, 0, brandDirection);
     const pr = await fetch("/api/generate-prompt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -220,7 +260,7 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
   // Com pedido: usa o prompt já ajustado e confirmado (igual nas variações).
   async function generateStyle(style: StyleOption, note?: string, prebuiltPrompt?: string) {
     const id = ++batchSeq.current;
-    const asm = assembleScene(style.key, product);
+    const asm = assembleScene(style.key, product, 0, brandDirection);
     setBatches((prev) => [...prev, { id, style, images: [], loading: true, note, review: asm.needsReview }]);
     try {
       let prompts: string[];
@@ -230,7 +270,7 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
         const built = (await buildPromptRaw(style, note)).promptEN;
         prompts = Array(VARIATIONS_PER_CLICK).fill(built);
       } else {
-        prompts = Array.from({ length: VARIATIONS_PER_CLICK }, (_, i) => assembleScene(style.key, product, i).promptEN);
+        prompts = Array.from({ length: VARIATIONS_PER_CLICK }, (_, i) => assembleScene(style.key, product, i, brandDirection).promptEN);
       }
 
       const refs = photosRef.current.map((p) => p.base64);
@@ -327,10 +367,10 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
     return (
       <div style={{ maxWidth: 620, margin: "0 auto", padding: "72px 20px" }}>
         <div style={{ textAlign: "center", marginBottom: 36 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 12 }}>
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 500, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 12 }}>
             Foto Estúdio IA · Swell
           </div>
-          <h1 style={{ fontSize: 32, fontWeight: 700, color: "var(--text)", marginBottom: 10, lineHeight: 1.15 }}>
+          <h1 style={{ fontSize: 34, fontWeight: 700, color: "var(--text)", marginBottom: 10, lineHeight: 1.05 }}>
             Comece enviando fotos do seu produto
           </h1>
           <p style={{ fontSize: 15, color: "var(--text-muted)", lineHeight: 1.5 }}>
@@ -338,6 +378,8 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
             deixam o resultado mais fiel — mas dá pra começar com uma.
           </p>
         </div>
+
+        {showBrand && <BrandPanel brand={brand} onSave={saveBrand} onClose={() => setShowBrand(false)} />}
 
         <div
           onClick={() => fileInputRef.current?.click()}
@@ -348,7 +390,7 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
           }}
           style={{
             border: "2px dashed var(--border)",
-            borderRadius: 16,
+            borderRadius: 8,
             padding: "56px 24px",
             textAlign: "center",
             cursor: "pointer",
@@ -379,13 +421,26 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
         />
 
         {error && (
-          <div style={{ marginTop: 20, padding: "12px 16px", background: "#2d1212", border: "1px solid #5c1a1a", borderRadius: 8, color: "#f87171", fontSize: 13, textAlign: "center" }}>
+          <div style={{ marginTop: 20, padding: "12px 16px", background: "#2d1212", border: "1px solid #5c1a1a", borderRadius: 4, color: "#f87171", fontSize: 13, textAlign: "center" }}>
             {error}
           </div>
         )}
 
+        <div style={{ display: "flex", justifyContent: "center", gap: 18, marginTop: 24, flexWrap: "wrap" }}>
+          {["PRODUTO FIEL AO ORIGINAL", "ARQUIVOS PRIVADOS", "RESULTADO EM MINUTOS"].map((t) => (
+            <span key={t} style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: "0.12em", color: "var(--text-muted)" }}>{t}</span>
+          ))}
+        </div>
+
+        <p style={{ textAlign: "center", marginTop: 20, fontSize: 12, color: "var(--text-muted)" }}>
+          {hasBrand ? `Marca ativa: ${brand.name || "perfil salvo"}` : "Quer toda geração com a cara da sua marca?"}{" "}
+          <button onClick={() => setShowBrand((s) => !s)} style={{ background: "none", border: "none", color: "var(--accent)", cursor: "pointer", fontSize: 12, padding: 0, textDecoration: "underline" }}>
+            {hasBrand ? "editar Minha Marca" : "Minha Marca →"}
+          </button>
+        </p>
+
         {onEnsaio && (
-          <p style={{ textAlign: "center", marginTop: 28, fontSize: 12, color: "var(--text-muted)" }}>
+          <p style={{ textAlign: "center", marginTop: 12, fontSize: 12, color: "var(--text-muted)" }}>
             Quer fotos suas, não de produto?{" "}
             <button onClick={onEnsaio} style={{ background: "none", border: "none", color: "var(--accent)", cursor: "pointer", fontSize: 12, padding: 0, textDecoration: "underline" }}>
               Ensaio de Pessoa →
@@ -413,8 +468,8 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
       {/* Cabeçalho: produto identificado */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20, gap: 12 }}>
         <div>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 4 }}>
-            Identificamos
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 500, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 4 }}>
+            Produto identificado
           </div>
           <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", lineHeight: 1.35, maxWidth: 520 }}>
             {product.name || "Seu produto"}
@@ -423,17 +478,24 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
             {showAdjust ? "ocultar ajustes" : "ajustar detalhes"}
           </button>
         </div>
-        <button onClick={reset} style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "9px 16px", fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>
-          Nova foto
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={() => setShowBrand((s) => !s)} style={{ background: hasBrand ? "rgba(224,116,47,0.12)" : "var(--surface)", border: `1px solid ${hasBrand ? "var(--accent)" : "var(--border)"}`, color: hasBrand ? "var(--accent)" : "var(--text-muted)", borderRadius: 4, padding: "9px 16px", fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>
+            {brand.name ? `● ${brand.name}` : "Minha marca"}
+          </button>
+          <button onClick={reset} style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 4, padding: "9px 16px", fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>
+            Nova foto
+          </button>
+        </div>
       </div>
+
+      {showBrand && <BrandPanel brand={brand} onSave={saveBrand} onClose={() => setShowBrand(false)} />}
 
       {/* Fotos de referência (multi) */}
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
           {photos.map((p, i) => (
             <div key={i} style={{ position: "relative" }}>
-              <img src={p.url} alt={`Foto ${i + 1}`} style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8, display: "block", border: "1px solid var(--border)" }} />
+              <img src={p.url} alt={`Foto ${i + 1}`} style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 4, display: "block", border: "1px solid var(--border)" }} />
               <button
                 onClick={() => setPhotos((prev) => prev.filter((_, j) => j !== i))}
                 title="Remover"
@@ -446,7 +508,7 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
           {photos.length < MAX_PHOTOS && (
             <button
               onClick={() => addInputRef.current?.click()}
-              style={{ width: 64, height: 64, borderRadius: 8, border: "2px dashed var(--border)", background: "var(--surface2)", color: "var(--text-muted)", fontSize: 22, cursor: "pointer" }}
+              style={{ width: 64, height: 64, borderRadius: 4, border: "2px dashed var(--border)", background: "var(--surface2)", color: "var(--text-muted)", fontSize: 22, cursor: "pointer" }}
               title="Adicionar mais fotos"
             >
               +
@@ -473,7 +535,7 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
 
       {/* Painel de ajuste opcional */}
       {showAdjust && (
-        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 20, marginBottom: 24 }}>
+        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 4, padding: 20, marginBottom: 24 }}>
           <Field label="Categoria">
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {CATEGORIES.map((c) => (
@@ -501,7 +563,7 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
           Que tipo de foto você quer?
         </div>
         <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 16 }}>
-          Cada opção gera {VARIATIONS_PER_CLICK} fotos usando suas imagens como referência.
+          Cada opção gera {VARIATIONS_PER_CLICK} fotos usando suas imagens como referência · {VARIATIONS_PER_CLICK} créditos por geração.
         </div>
       </div>
 
@@ -510,9 +572,9 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
         onClick={() => setWithModel((w) => !w)}
         style={{
           display: "flex", alignItems: "center", gap: 10,
-          background: withModel ? "rgba(200,121,65,0.12)" : "var(--surface)",
+          background: withModel ? "rgba(224,116,47,0.12)" : "var(--surface)",
           border: `1px solid ${withModel ? "var(--accent)" : "var(--border)"}`,
-          borderRadius: 10, padding: "12px 16px", cursor: "pointer", marginBottom: 16, width: "100%",
+          borderRadius: 4, padding: "12px 16px", cursor: "pointer", marginBottom: 16, width: "100%",
         }}
       >
         <div style={{
@@ -548,7 +610,7 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
 
       {/* Painel de confirmação: pedido específico → prompt entendido → gerar */}
       {selected && (
-        <div style={{ background: "var(--surface)", border: "1px solid var(--accent)", borderRadius: 12, padding: 20, marginBottom: 32 }}>
+        <div style={{ background: "var(--surface)", border: "1px solid var(--accent)", borderRadius: 4, padding: 20, marginBottom: 32 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", marginBottom: 4 }}>
             {selected.emoji} {selected.label} <span style={{ fontWeight: 400, color: "var(--text-muted)" }}>· {selected.sub}</span>
           </div>
@@ -563,7 +625,7 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
                 onChange={(e) => setRequest(e.target.value)}
                 placeholder="Ex: quero ver a modelo da cintura pra cima, fundo rosa claro, clima natalino…"
                 rows={2}
-                style={{ width: "100%", background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", color: "var(--text)", fontSize: 14, resize: "vertical", outline: "none", fontFamily: "inherit", boxSizing: "border-box", marginBottom: 12 }}
+                style={{ width: "100%", background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 4, padding: "10px 12px", color: "var(--text)", fontSize: 14, resize: "vertical", outline: "none", fontFamily: "inherit", boxSizing: "border-box", marginBottom: 12 }}
               />
               {prepError && (
                 <div style={{ fontSize: 12, color: "#f87171", marginBottom: 10 }}>{prepError}</div>
@@ -588,13 +650,13 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
                     setPreparing(false);
                   }
                 }}
-                style={{ width: "100%", background: preparing ? "var(--surface2)" : "var(--accent)", border: "none", color: preparing ? "var(--text-muted)" : "#fff", borderRadius: 8, padding: "14px", fontSize: 15, fontWeight: 700, cursor: preparing ? "wait" : "pointer" }}
+                style={{ width: "100%", background: preparing ? "var(--surface2)" : "var(--accent)", border: "none", color: preparing ? "var(--text-muted)" : "#fff", borderRadius: 4, padding: "14px", fontSize: 15, fontWeight: 700, cursor: preparing ? "wait" : "pointer" }}
               >
                 {preparing
                   ? "Entendendo o seu pedido…"
                   : request.trim()
                     ? "Transformar meu pedido em prompt →"
-                    : `Sim, gerar ${VARIATIONS_PER_CLICK} fotos →`}
+                    : `Sim, gerar ${VARIATIONS_PER_CLICK} fotos · ${VARIATIONS_PER_CLICK} créditos →`}
               </button>
             </>
           ) : (
@@ -602,7 +664,7 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
               <div style={{ fontSize: 12, color: "var(--text-muted)", margin: "10px 0 6px" }}>
                 Entendi o seu pedido assim:
               </div>
-              <div style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8, padding: "12px 14px", fontSize: 13, color: "var(--text)", lineHeight: 1.6, marginBottom: 12 }}>
+              <div style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 4, padding: "12px 14px", fontSize: 13, color: "var(--text)", lineHeight: 1.6, marginBottom: 12 }}>
                 {pending.resumoPT || "Pedido incorporado ao prompt de geração."}
               </div>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -613,13 +675,13 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
                     setSelected(null);
                     setRequest("");
                   }}
-                  style={{ flex: 1, minWidth: 200, background: "var(--accent)", border: "none", color: "#fff", borderRadius: 8, padding: "14px", fontSize: 15, fontWeight: 700, cursor: "pointer" }}
+                  style={{ flex: 1, minWidth: 200, background: "var(--accent)", border: "none", color: "#fff", borderRadius: 4, padding: "14px", fontSize: 15, fontWeight: 700, cursor: "pointer" }}
                 >
-                  Confirmar — gerar {VARIATIONS_PER_CLICK} fotos →
+                  Confirmar — gerar {VARIATIONS_PER_CLICK} fotos · {VARIATIONS_PER_CLICK} créditos →
                 </button>
                 <button
                   onClick={() => setPending(null)}
-                  style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "14px 18px", fontSize: 13, cursor: "pointer" }}
+                  style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 4, padding: "14px 18px", fontSize: 13, cursor: "pointer" }}
                 >
                   ✏️ Ajustar pedido
                 </button>
@@ -629,7 +691,19 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
         </div>
       )}
 
-      {/* Lotes de imagens geradas */}
+      {/* Suas gerações — galeria da sessão + fila */}
+      {batches.length > 0 && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--border)", paddingTop: 20, marginBottom: 20 }}>
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-muted)" }}>
+            Suas gerações · desta sessão
+          </span>
+          <span style={{ fontSize: 12, color: batches.some((b) => b.loading) ? "var(--accent)" : "var(--text-muted)" }}>
+            {batches.filter((b) => b.loading).length > 0
+              ? `${batches.filter((b) => b.loading).length} na fila…`
+              : "tudo pronto ✓"}
+          </span>
+        </div>
+      )}
       {batches.map((batch) => (
         <div key={batch.id} style={{ marginBottom: 32 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: batch.note ? 4 : 12, flexWrap: "wrap" }}>
@@ -649,18 +723,18 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
           )}
 
           {batch.error ? (
-            <div style={{ padding: "12px 16px", background: "#2d1212", border: "1px solid #5c1a1a", borderRadius: 8, color: "#f87171", fontSize: 13, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+            <div style={{ padding: "12px 16px", background: "#2d1212", border: "1px solid #5c1a1a", borderRadius: 4, color: "#f87171", fontSize: 13, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
               <span>{batch.error}</span>
-              <button onClick={() => retryBatch(batch)} style={{ background: "none", border: "1px solid #5c1a1a", color: "#f87171", borderRadius: 6, padding: "5px 10px", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
+              <button onClick={() => retryBatch(batch)} style={{ background: "none", border: "1px solid #5c1a1a", color: "#f87171", borderRadius: 2, padding: "5px 10px", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>
                 Tentar de novo
               </button>
             </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 12 }}>
               {batch.images.map((url, i) => (
-                <div key={i} style={{ borderRadius: 10, overflow: "hidden", position: "relative", background: "var(--surface2)" }}>
+                <div key={i} style={{ borderRadius: 4, overflow: "hidden", position: "relative", background: "var(--surface2)" }}>
                   <img src={url} alt={`${batch.style.label} ${i + 1}`} style={{ width: "100%", display: "block" }} />
-                  <a href={url} download={`foto-${batch.style.key}-${i + 1}.jpg`} target="_blank" rel="noopener noreferrer" style={{ position: "absolute", bottom: 8, right: 8, background: "rgba(0,0,0,0.75)", color: "#fff", borderRadius: 6, padding: "5px 10px", fontSize: 11, fontWeight: 600, textDecoration: "none" }}>
+                  <a href={url} download={`foto-${batch.style.key}-${i + 1}.jpg`} target="_blank" rel="noopener noreferrer" style={{ position: "absolute", bottom: 8, right: 8, background: "rgba(0,0,0,0.75)", color: "#fff", borderRadius: 2, padding: "5px 10px", fontSize: 11, fontWeight: 600, textDecoration: "none" }}>
                     Baixar
                   </a>
                 </div>
@@ -675,7 +749,7 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
 
           {/* Feedback pós-geração */}
           {!batch.loading && !batch.error && batch.images.length > 0 && batch.feedback !== "redone" && (
-            <div style={{ marginTop: 12, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px" }}>
+            <div style={{ marginTop: 12, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 4, padding: "14px 16px" }}>
               {!batch.feedback && (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                   <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
@@ -684,13 +758,13 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
                       onClick={() => updateBatch(batch.id, { feedback: "yes" })}
-                      style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)", borderRadius: 8, padding: "8px 16px", fontSize: 13, cursor: "pointer" }}
+                      style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)", borderRadius: 4, padding: "8px 16px", fontSize: 13, cursor: "pointer" }}
                     >
                       👍 Sim
                     </button>
                     <button
                       onClick={() => updateBatch(batch.id, { feedback: "no" })}
-                      style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)", borderRadius: 8, padding: "8px 16px", fontSize: 13, cursor: "pointer" }}
+                      style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)", borderRadius: 4, padding: "8px 16px", fontSize: 13, cursor: "pointer" }}
                     >
                       👎 Não
                     </button>
@@ -710,7 +784,7 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
                     onChange={(e) => updateBatch(batch.id, { feedbackText: e.target.value })}
                     placeholder="Ex: quero ver a modelo inteira, não só a mão; fundo mais escuro; produto maior na foto…"
                     rows={2}
-                    style={{ width: "100%", background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", color: "var(--text)", fontSize: 13, resize: "vertical", outline: "none", fontFamily: "inherit", boxSizing: "border-box", marginBottom: 10 }}
+                    style={{ width: "100%", background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 4, padding: "10px 12px", color: "var(--text)", fontSize: 13, resize: "vertical", outline: "none", fontFamily: "inherit", boxSizing: "border-box", marginBottom: 10 }}
                   />
                   {batch.redoError && (
                     <div style={{ fontSize: 12, color: "#f87171", marginBottom: 8 }}>{batch.redoError}</div>
@@ -721,7 +795,7 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
                     style={{
                       background: batch.feedbackText?.trim() && !batch.redoPreparing ? "var(--accent)" : "var(--surface2)",
                       color: batch.feedbackText?.trim() && !batch.redoPreparing ? "#fff" : "var(--text-muted)",
-                      border: "none", borderRadius: 8, padding: "11px 18px", fontSize: 13, fontWeight: 700,
+                      border: "none", borderRadius: 4, padding: "11px 18px", fontSize: 13, fontWeight: 700,
                       cursor: batch.feedbackText?.trim() && !batch.redoPreparing ? "pointer" : "not-allowed",
                     }}
                   >
@@ -734,19 +808,19 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
                   <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>
                     Entendi as suas considerações assim:
                   </div>
-                  <div style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8, padding: "12px 14px", fontSize: 13, color: "var(--text)", lineHeight: 1.6, marginBottom: 10 }}>
+                  <div style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 4, padding: "12px 14px", fontSize: 13, color: "var(--text)", lineHeight: 1.6, marginBottom: 10 }}>
                     {batch.redo.resumoPT || "Considerações incorporadas ao prompt."}
                   </div>
                   <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                     <button
                       onClick={() => confirmRedo(batch)}
-                      style={{ flex: 1, minWidth: 200, background: "var(--accent)", border: "none", color: "#fff", borderRadius: 8, padding: "12px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+                      style={{ flex: 1, minWidth: 200, background: "var(--accent)", border: "none", color: "#fff", borderRadius: 4, padding: "12px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
                     >
-                      Confirmar — gerar {VARIATIONS_PER_CLICK} novas tentativas →
+                      Confirmar — gerar {VARIATIONS_PER_CLICK} novas tentativas · {VARIATIONS_PER_CLICK} créditos →
                     </button>
                     <button
                       onClick={() => updateBatch(batch.id, { redo: undefined })}
-                      style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, padding: "12px 16px", fontSize: 12, cursor: "pointer" }}
+                      style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 4, padding: "12px 16px", fontSize: 12, cursor: "pointer" }}
                     >
                       ✏️ Ajustar
                     </button>
@@ -768,9 +842,9 @@ function StyleCard({ style, selected, onClick }: { style: StyleOption; selected?
     <button
       onClick={onClick}
       style={{
-        background: selected ? "rgba(200,121,65,0.1)" : "var(--surface)",
+        background: selected ? "rgba(224,116,47,0.1)" : "var(--surface)",
         border: `2px solid ${selected ? "var(--accent)" : "var(--border)"}`,
-        borderRadius: 12,
+        borderRadius: 4,
         padding: 0,
         cursor: "pointer",
         textAlign: "left",
@@ -816,7 +890,7 @@ function Input({ value, onChange, placeholder }: { value: string; onChange: (v: 
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      style={{ width: "100%", background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", color: "var(--text)", fontSize: 14, outline: "none", boxSizing: "border-box" }}
+      style={{ width: "100%", background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 4, padding: "10px 12px", color: "var(--text)", fontSize: 14, outline: "none", boxSizing: "border-box" }}
     />
   );
 }
@@ -826,13 +900,72 @@ function Chip({ selected, onClick, label }: { selected: boolean; onClick: () => 
     <button
       onClick={onClick}
       style={{
-        padding: "7px 14px", borderRadius: 6, fontSize: 13, fontWeight: selected ? 600 : 400, cursor: "pointer",
+        padding: "7px 14px", borderRadius: 2, fontSize: 13, fontWeight: selected ? 600 : 400, cursor: "pointer",
         border: `1px solid ${selected ? "var(--accent)" : "var(--border)"}`,
-        background: selected ? "rgba(200,121,65,0.15)" : "var(--surface2)",
+        background: selected ? "rgba(224,116,47,0.15)" : "var(--surface2)",
         color: selected ? "var(--accent)" : "var(--text-muted)", transition: "all 0.15s",
       }}
     >
       {label}
     </button>
+  );
+}
+
+// ── Painel "Minha Marca" — perfil salvo no navegador, entra em todo prompt ───
+function BrandPanel({ brand, onSave, onClose }: { brand: BrandProfile; onSave: (b: BrandProfile) => void; onClose: () => void }) {
+  const [draft, setDraft] = useState<BrandProfile>(brand);
+  const set = (field: keyof BrandProfile, v: string) => setDraft((d) => ({ ...d, [field]: v }));
+  return (
+    <div style={{ background: "var(--surface)", border: "1px solid var(--accent)", borderRadius: 8, padding: 20, marginBottom: 24, textAlign: "left" }}>
+      <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 500, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 4 }}>
+        Minha marca
+      </div>
+      <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 16 }}>
+        Sua marca, no comando: toda geração sai com a sua cara. É opcional — dá pra pular.
+      </div>
+      <Field label="Nome da marca">
+        <Input value={draft.name} onChange={(v) => set("name", v)} placeholder="Ex: Beco Gelato" />
+      </Field>
+      <Field label="Tom da marca">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {BRAND_TONES.map((t) => (
+            <Chip key={t} selected={draft.tone === t} onClick={() => set("tone", draft.tone === t ? "" : t)} label={t} />
+          ))}
+        </div>
+      </Field>
+      <Field label="Cor principal">
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <input
+            type="color"
+            value={draft.colorHex || "#E0742F"}
+            onChange={(e) => set("colorHex", e.target.value)}
+            style={{ width: 44, height: 34, border: "1px solid var(--border)", borderRadius: 4, background: "var(--surface2)", cursor: "pointer", padding: 2 }}
+          />
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-muted)" }}>
+            {draft.colorHex || "sem cor definida"}
+          </span>
+          {draft.colorHex && (
+            <button onClick={() => set("colorHex", "")} style={{ background: "none", border: "none", color: "var(--text-muted)", fontSize: 11, cursor: "pointer", textDecoration: "underline", padding: 0 }}>
+              remover
+            </button>
+          )}
+        </div>
+      </Field>
+      <Field label="Clima visual">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {BRAND_MOODS.map((m) => (
+            <Chip key={m} selected={draft.mood === m} onClick={() => set("mood", draft.mood === m ? "" : m)} label={m} />
+          ))}
+        </div>
+      </Field>
+      <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+        <button onClick={() => onSave(draft)} style={{ flex: 1, background: "var(--accent)", border: "none", color: "#fff", borderRadius: 4, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+          Salvar minha marca
+        </button>
+        <button onClick={onClose} style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 4, padding: "12px 16px", fontSize: 13, cursor: "pointer" }}>
+          Pular por enquanto
+        </button>
+      </div>
+    </div>
   );
 }

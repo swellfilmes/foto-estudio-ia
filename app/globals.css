@@ -1,24 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
+/* ============================================================
+   Swell Filmes — Maré · polo escuro (do design system oficial)
+   Abyss (preto-quente) + Ember (único acento) + superfícies de
+   areia translúcida. Cantos retos, hairlines em vez de sombras.
+   ============================================================ */
 :root {
-  --bg: #0f0f0f;
-  --surface: #1a1a1a;
-  --surface2: #242424;
-  --border: #2e2e2e;
-  --text: #f0ece6;
-  --text-muted: #888;
-  --accent: #c87941;
-  --accent-light: #d98b52;
+  --bg: #0A0908;                            /* abyss */
+  --surface: #16140F;                       /* abyss elevated */
+  --surface2: rgba(244, 239, 230, 0.05);    /* sand véu — wells, inputs */
+  --border: rgba(239, 234, 224, 0.12);      /* hairline sobre escuro */
+  --text: #EFEAE0;                          /* foam — warm off-white */
+  --text-muted: #9A938A;                    /* foam soft */
+  --accent: #E0742F;                        /* EMBER — o acento único */
+  --accent-light: #EE8440;
+  --positive: #3F7D5A;
+  --warning: #C28A1E;
+  --critical: #B23B2E;
+
+  --font-display: 'Manrope', system-ui, -apple-system, sans-serif;
+  --font-body: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
 }
 
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
 
-::selection { background: var(--accent); color: #fff; }
+h1, h2, h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+::selection { background: var(--accent); color: #0A0908; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
