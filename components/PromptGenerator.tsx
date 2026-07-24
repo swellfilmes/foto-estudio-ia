@@ -80,7 +80,7 @@ type Phase = "upload" | "working" | "studio";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export default function PromptGenerator({ onApparel }: { onApparel?: () => void } = {}) {
+export default function PromptGenerator({ onBack }: { onBack?: () => void } = {}) {
   const [phase, setPhase] = useState<Phase>("upload");
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [product, setProduct] = useState<ProductInfo>(defaultProduct);
@@ -316,7 +316,15 @@ export default function PromptGenerator({ onApparel }: { onApparel?: () => void 
   // ── UPLOAD (tela de boas-vindas) ──────────────────────────────────────────
   if (phase === "upload") {
     return (
-      <div style={{ maxWidth: 620, margin: "0 auto", padding: "72px 20px" }}>
+      <div style={{ maxWidth: 620, margin: "0 auto", padding: "48px 20px 72px" }}>
+        {onBack && (
+          <button
+            onClick={onBack}
+            style={{ background: "transparent", border: "none", color: "var(--text-muted)", fontSize: 12, cursor: "pointer", padding: 0, marginBottom: 20 }}
+          >
+            ← Trocar modo
+          </button>
+        )}
         <div style={{ textAlign: "center", marginBottom: 36 }}>
           <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 12 }}>
             Foto Estúdio IA · Swell
@@ -375,14 +383,6 @@ export default function PromptGenerator({ onApparel }: { onApparel?: () => void 
           </div>
         )}
 
-        {onApparel && (
-          <p style={{ textAlign: "center", marginTop: 28, fontSize: 12, color: "var(--text-muted)" }}>
-            É uma peça de roupa para vestir num modelo?{" "}
-            <button onClick={onApparel} style={{ background: "none", border: "none", color: "var(--accent)", cursor: "pointer", fontSize: 12, padding: 0, textDecoration: "underline" }}>
-              Modo vestuário →
-            </button>
-          </p>
-        )}
       </div>
     );
   }

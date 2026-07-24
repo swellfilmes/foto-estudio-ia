@@ -3,137 +3,224 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+type Tab = "signin" | "trial";
+
 function LandingInner() {
   const router = useRouter();
   const search = useSearchParams();
   const next = search.get("next") || "/studio";
 
+  const [tab, setTab] = useState<Tab>("trial");
+
+  // Trial (captura de lead)
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+
+  // Sign-in por e-mail (magic link)
+  const [signinEmail, setSigninEmail] = useState("");
+  const [magicSent, setMagicSent] = useState(false);
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    document.title = "Foto Estúdio IA — Swell Filmes";
+    document.title = "Swell — Ensaios e fotos de produto por IA";
+    const erro = search.get("erro");
+    if (erro === "link-invalido") setError("Link expirado ou inválido. Peça um novo abaixo.");
+    else if (erro === "acesso-expirado") setError("Sua assinatura não está mais ativa.");
+    if (erro) setTab("signin");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function submit(e: React.FormEvent) {
+  async function submitTrial(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!email.trim()) {
-      setError("Informe seu e-mail");
-      return;
-    }
+    if (!email.trim()) { setError("Informe seu e-mail"); return; }
     setSubmitting(true);
     try {
       const res = await fetch("/api/lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), email: email.trim(), source: "landing" }),
+        body: JSON.stringify({ name: name.trim(), email: email.trim(), source: "landing-trial" }),
       });
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "Erro");
       router.push(next);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível liberar o acesso");
+      setError(err instanceof Error ? err.message : "Não foi possível liberar o teste");
+      setSubmitting(false);
+    }
+  }
+
+  async function submitSignin(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    const em = signinEmail.trim().toLowerCase();
+    if (!em || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
+      setError("Informe um e-mail válido");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/access/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: em }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "Erro");
+      setMagicSent(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao solicitar acesso");
+    } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 20px" }}>
-      <div style={{ maxWidth: 520, width: "100%" }}>
-        <div style={{ marginBottom: 32 }}>
+    <div style={{ minHeight: "100vh" }}>
+      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "60px 20px 40px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "start" }}>
+
+        {/* Coluna esquerda: proposta */}
+        <div>
           <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 8 }}>
             Swell Filmes
           </div>
-          <h1 style={{ fontSize: 34, fontWeight: 700, color: "var(--text)", marginBottom: 12, lineHeight: 1.15 }}>
-            Foto de estúdio<br />sem estúdio.
+          <h1 style={{ fontSize: 40, fontWeight: 700, color: "var(--text)", marginBottom: 16, lineHeight: 1.1 }}>
+            Ensaio de estúdio<br />
+            <span style={{ color: "var(--accent)" }}>sem estúdio.</span>
           </h1>
-          <p style={{ fontSize: 15, color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 8 }}>
-            Você tira a foto do produto no celular ou envia a peça de roupa. A IA gera a foto pronta para catálogo, feed de Instagram e anúncio — em 30–60 segundos.
+          <p style={{ fontSize: 16, color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 24 }}>
+            Envie fotos de referência. Escolha um estilo do catálogo Swell. Receba <strong style={{ color: "var(--text)" }}>8 fotos com cara de ensaio profissional</strong> em minutos — sem fotógrafo, sem sessão, sem edição.
           </p>
-        </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
-          <Feature icon="📸" title="Produtos: bebida, alimento, cosmético, artesanal, acessório" />
-          <Feature icon="👕" title="Pessoas vestindo: e-commerce, lifestyle, UGC, editorial" />
-          <Feature icon="⚡" title="4 variações por geração, resultado em ~1 minuto" />
-        </div>
-
-        <form
-          onSubmit={submit}
-          style={{
-            background: "var(--surface)",
-            border: "1px solid var(--border)",
-            borderRadius: 12,
-            padding: 24,
-          }}
-        >
-          <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 14 }}>
-            Testar grátis agora
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 32 }}>
+            <Feature icon="📸" title="Ensaio de pessoa" desc="Editorial, street, praia, rooftop, corporativo, fashion, café, natureza" />
+            <Feature icon="📦" title="Foto de produto" desc="Bebida, alimento, cosmético, artesanal — 4 variações por foto de celular" />
+            <Feature icon="⚡" title="Rápido" desc="Ensaio completo em 3–5 minutos, pronto pra baixar" />
           </div>
 
-          <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6, color: "var(--text)" }}>Nome</label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Como você quer ser chamado"
-            style={inputStyle}
-            autoComplete="name"
-          />
+          <div style={{ padding: "16px 18px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6 }}>
+            <strong style={{ color: "var(--text)" }}>Direção de arte Swell.</strong> Cada estilo do catálogo tem luz, cor, wardrobe e mood curados pela nossa equipe — o resultado não sai com &quot;cara de IA&quot;, sai com cara de foto real.
+          </div>
+        </div>
 
-          <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginTop: 14, marginBottom: 6, color: "var(--text)" }}>E-mail</label>
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            type="email"
-            placeholder="voce@exemplo.com"
-            style={inputStyle}
-            autoComplete="email"
-            required
-          />
-
-          {error && (
-            <div style={{ marginTop: 12, padding: "10px 12px", background: "#2d1212", border: "1px solid #5c1a1a", borderRadius: 8, color: "#f87171", fontSize: 13 }}>
-              {error}
+        {/* Coluna direita: acesso */}
+        <div>
+          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 24 }}>
+            {/* Tabs */}
+            <div style={{ display: "flex", background: "var(--surface2)", borderRadius: 8, padding: 3, marginBottom: 20 }}>
+              <TabButton active={tab === "trial"} onClick={() => { setTab("trial"); setError(null); }}>
+                Testar grátis
+              </TabButton>
+              <TabButton active={tab === "signin"} onClick={() => { setTab("signin"); setError(null); }}>
+                Já sou assinante
+              </TabButton>
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            style={{
-              width: "100%",
-              marginTop: 18,
-              background: submitting ? "var(--surface2)" : "var(--accent)",
-              color: submitting ? "var(--text-muted)" : "#fff",
-              border: "none",
-              borderRadius: 8,
-              padding: "14px 20px",
-              fontSize: 15,
-              fontWeight: 700,
-              cursor: submitting ? "not-allowed" : "pointer",
-              transition: "background 0.2s",
-            }}
-          >
-            {submitting ? "Liberando acesso…" : "Entrar no estúdio →"}
-          </button>
+            {tab === "trial" && (
+              <form onSubmit={submitTrial}>
+                <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 16, lineHeight: 1.6 }}>
+                  Teste o estúdio antes de assinar. Sem cartão, sem compromisso.
+                </div>
 
-          <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 12, textAlign: "center", lineHeight: 1.5 }}>
-            Ao entrar você libera o teste. Sem cartão. Sem spam.<br />
-            Guardamos o e-mail só para te avisar quando lançar a versão paga.
+                <label style={labelStyle}>Nome</label>
+                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Como você quer ser chamado" style={inputStyle} autoComplete="name" />
+
+                <label style={{ ...labelStyle, marginTop: 14 }}>E-mail</label>
+                <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="voce@exemplo.com" style={inputStyle} autoComplete="email" required />
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  style={{ ...primaryButton, marginTop: 18, opacity: submitting ? 0.6 : 1 }}
+                >
+                  {submitting ? "Liberando..." : "Entrar no teste grátis →"}
+                </button>
+
+                <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 12, textAlign: "center", lineHeight: 1.5 }}>
+                  Guardamos só seu e-mail pra te avisar sobre o lançamento.
+                </p>
+              </form>
+            )}
+
+            {tab === "signin" && !magicSent && (
+              <form onSubmit={submitSignin}>
+                <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 16, lineHeight: 1.6 }}>
+                  Digite o e-mail da sua assinatura. Enviamos um link seguro pra você entrar.
+                </div>
+
+                <label style={labelStyle}>E-mail da assinatura</label>
+                <input
+                  value={signinEmail}
+                  onChange={(e) => setSigninEmail(e.target.value)}
+                  type="email"
+                  autoComplete="email"
+                  placeholder="voce@exemplo.com"
+                  style={inputStyle}
+                  required
+                />
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  style={{ ...primaryButton, marginTop: 18, opacity: submitting ? 0.6 : 1 }}
+                >
+                  {submitting ? "Enviando..." : "Enviar link de acesso →"}
+                </button>
+
+                <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)", textAlign: "center" }}>
+                  <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 8 }}>
+                    Ainda não assina?
+                  </div>
+                  <a
+                    href="https://kiwify.com.br"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: "inline-block", background: "transparent", color: "var(--accent)", border: "1px solid var(--accent)", borderRadius: 8, padding: "10px 18px", fontSize: 13, fontWeight: 700, textDecoration: "none" }}
+                  >
+                    Ver planos de assinatura →
+                  </a>
+                </div>
+              </form>
+            )}
+
+            {tab === "signin" && magicSent && (
+              <div style={{ textAlign: "center", padding: "20px 4px" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>✉️</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>
+                  Verifique seu e-mail
+                </div>
+                <div style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 20 }}>
+                  Se <strong style={{ color: "var(--text)" }}>{signinEmail}</strong> tem uma assinatura ativa, você recebeu um link de acesso. O link vale por 15 minutos.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setMagicSent(false); setSigninEmail(""); }}
+                  style={{ background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 18px", fontSize: 13, cursor: "pointer" }}
+                >
+                  Usar outro e-mail
+                </button>
+              </div>
+            )}
+
+            {error && (
+              <div style={{ marginTop: 12, padding: "10px 12px", background: "#2d1212", border: "1px solid #5c1a1a", borderRadius: 8, color: "#f87171", fontSize: 13 }}>
+                {error}
+              </div>
+            )}
+          </div>
+
+          <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 16, textAlign: "center" }}>
+            Feito por Swell Filmes · <a href="mailto:contato@swellfilmes.com.br" style={{ color: "var(--text-muted)" }}>contato@swellfilmes.com.br</a>
           </p>
-        </form>
-
-        <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 20, textAlign: "center" }}>
-          Feito por Swell Filmes · <a href="mailto:filmesswell@gmail.com" style={{ color: "var(--text-muted)" }}>filmesswell@gmail.com</a>
-        </p>
+        </div>
       </div>
     </div>
   );
 }
 
+const labelStyle: React.CSSProperties = { display: "block", fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 6 };
 const inputStyle: React.CSSProperties = {
   width: "100%",
   background: "var(--surface2)",
@@ -145,12 +232,49 @@ const inputStyle: React.CSSProperties = {
   outline: "none",
   boxSizing: "border-box",
 };
+const primaryButton: React.CSSProperties = {
+  width: "100%",
+  background: "var(--accent)",
+  color: "#fff",
+  border: "none",
+  borderRadius: 8,
+  padding: "13px 20px",
+  fontSize: 15,
+  fontWeight: 700,
+  cursor: "pointer",
+};
 
-function Feature({ icon, title }: { icon: string; title: string }) {
+function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "var(--text)" }}>
-      <span style={{ fontSize: 18, width: 24, textAlign: "center" }}>{icon}</span>
-      <span>{title}</span>
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        flex: 1,
+        background: active ? "var(--surface)" : "transparent",
+        border: "none",
+        borderRadius: 6,
+        padding: "10px 12px",
+        fontSize: 13,
+        fontWeight: 600,
+        color: active ? "var(--text)" : "var(--text-muted)",
+        cursor: "pointer",
+        transition: "all 0.15s",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Feature({ icon, title, desc }: { icon: string; title: string; desc: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+      <span style={{ fontSize: 20, width: 24, textAlign: "center", flexShrink: 0, marginTop: 1 }}>{icon}</span>
+      <div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{title}</div>
+        <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{desc}</div>
+      </div>
     </div>
   );
 }
