@@ -163,6 +163,7 @@ export interface BrandDirection {
   tone?: string;     // ex: "premium e minimalista"
   colorHex?: string; // cor principal da marca — guia fundo/set, nunca o produto
   mood?: string;     // clima visual: clean, quente, escuro, colorido
+  human?: string;    // presença humana preferida da marca
 }
 
 function brandLine(b?: BrandDirection): string {
@@ -171,6 +172,7 @@ function brandLine(b?: BrandDirection): string {
   if (b.colorHex) parts.push(`the brand's primary color ${b.colorHex} may guide the backdrop and set accents (NEVER recolor the product itself)`);
   if (b.tone) parts.push(`brand tone: ${b.tone}`);
   if (b.mood) parts.push(`overall visual mood: ${b.mood}`);
+  if (b.human) parts.push(`human presence preference: ${b.human}`);
   return parts.length ? `Brand direction: ${parts.join("; ")}.` : "";
 }
 
