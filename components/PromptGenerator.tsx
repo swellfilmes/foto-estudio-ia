@@ -900,6 +900,9 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
 
       {galleryOpen && (
         <Drawer kicker="SUAS GERAÇÕES" title="Galeria" onClose={() => setGalleryOpen(false)}>
+          <a href="/galeria" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, background: foam(0.05), border: `1px solid ${foam(0.14)}`, color: FOAM, borderRadius: 8, padding: "10px", fontSize: 13, fontWeight: 600, textDecoration: "none", marginBottom: 16 }}>
+            Abrir galeria completa ↗
+          </a>
           <div style={{ ...mono(9, 0.14), color: historyEmail ? foam(0.5) : "#C28A1E", marginBottom: 16, wordBreak: "break-all" }}>
             {historyEmail ? `HISTÓRICO DE ${historyEmail.toUpperCase()}` : "SEM SESSÃO — FAÇA LOGIN DE NOVO PARA VER SEU HISTÓRICO"}
           </div>
