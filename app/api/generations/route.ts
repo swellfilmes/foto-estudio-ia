@@ -27,20 +27,14 @@ export async function POST(req: NextRequest) {
     }
 
     const permanent: string[] = [];
-    let blobError: string | null = null;
     for (const url of images.slice(0, 6)) {
       try {
         permanent.push(await persistImage(String(url), style || "foto"));
       } catch (e) {
         // Se o Blob falhar, guarda a URL temporária (melhor que perder o registro)
-        blobError = e instanceof Error ? e.message : String(e);
         console.error("[generations] Blob falhou, mantém URL temporária:", e);
         permanent.push(String(url));
       }
-    }
-    // Diagnóstico temporário: se veio ?debug=1, devolve o erro do Blob
-    if (new URL(req.url).searchParams.get("debug") === "1") {
-      return NextResponse.json({ blobError, saved: permanent[0], token: !!process.env.BLOB_READ_WRITE_TOKEN });
     }
 
     const generation = await saveGeneration({
