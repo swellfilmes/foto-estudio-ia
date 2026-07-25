@@ -148,6 +148,7 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
   const [queueOpen, setQueueOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [history, setHistory] = useState<{ id: number; style: string; label: string | null; images: string[]; note: string | null; created_at: string }[]>([]);
+  const [historyEmail, setHistoryEmail] = useState<string | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [pricingOpen, setPricingOpen] = useState(false);
   const [msgIdx, setMsgIdx] = useState(0);
@@ -186,7 +187,7 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
       setHistoryLoading(true);
       fetch("/api/generations")
         .then((r) => r.json())
-        .then((d) => setHistory(Array.isArray(d.generations) ? d.generations : []))
+        .then((d) => { setHistory(Array.isArray(d.generations) ? d.generations : []); setHistoryEmail(d.email ?? null); })
         .catch(() => { /* silencioso */ })
         .finally(() => setHistoryLoading(false));
     }, 0);
@@ -896,10 +897,13 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
 
       {galleryOpen && (
         <Drawer kicker="SUAS GERAÇÕES" title="Galeria" onClose={() => setGalleryOpen(false)}>
+          <div style={{ ...mono(9, 0.14), color: historyEmail ? foam(0.5) : "#C28A1E", marginBottom: 16, wordBreak: "break-all" }}>
+            {historyEmail ? `HISTÓRICO DE ${historyEmail.toUpperCase()}` : "SEM SESSÃO — FAÇA LOGIN DE NOVO PARA VER SEU HISTÓRICO"}
+          </div>
           {historyLoading && (
             <div style={{ fontSize: 13, color: foam(0.45), textAlign: "center", padding: "30px 0" }}>Carregando seu histórico…</div>
           )}
-          {!historyLoading && history.length === 0 && (
+          {!historyLoading && history.length === 0 && historyEmail && (
             <div style={{ fontSize: 13, color: foam(0.45), textAlign: "center", padding: "30px 0" }}>Nada por aqui ainda — tudo que você gerar fica salvo aqui, pra sempre.</div>
           )}
           {!historyLoading && history.map((g) => (

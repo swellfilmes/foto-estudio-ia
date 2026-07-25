@@ -6,13 +6,13 @@ import { persistImage } from "@/lib/blob-store";
 // GET — histórico da pessoa logada (por e-mail da sessão)
 export async function GET(req: NextRequest) {
   const email = getSessionEmail(req);
-  if (!email) return NextResponse.json({ generations: [] });
+  if (!email) return NextResponse.json({ email: null, generations: [] });
   try {
     const generations = await listGenerations(email);
-    return NextResponse.json({ generations });
+    return NextResponse.json({ email, generations });
   } catch (e) {
     console.error("[generations] falha ao listar:", e);
-    return NextResponse.json({ generations: [] });
+    return NextResponse.json({ email, generations: [] });
   }
 }
 
