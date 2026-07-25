@@ -61,39 +61,78 @@ interface CategoryDef {
 }
 
 const CATEGORIES: Record<string, CategoryDef> = {
-  estudio: {
-    type: "Studio packshot",
-    delta: "Only generate the backdrop, surface, lighting and shadows around it.",
+  // ── Taxonomia Riverflow (funil: identificar → inspecionar → entender → desejar) ──
+  // IDENTIFICAR — a base de marketplace, limpa e padronizada (conserta o "estúdio mid")
+  "fundo-branco": {
+    type: "Clean e-commerce product photo on white",
+    delta: "Only generate the seamless white backdrop, the soft even light and the contact shadow.",
     block:
-      "Clean premium studio product photography on a seamless backdrop with a gentle gradient — never a flat dead background. Soft, sculpted studio lighting with intention.",
+      "Pure marketplace product shot: the product perfectly centered on a clean pure-white to very light warm-grey seamless background, evenly and softly lit, with one subtle realistic contact shadow directly beneath. Consistent catalog framing with even breathing room. NO props, NO gradient drama, NO colored backdrop — absolute clarity and standardization, the way Amazon / Shopee / Mercado Livre listings require. The product razor sharp, true-to-life color, every label perfectly readable.",
     compositions: [
-      "Front three-quarter view, eye-level, product standing on light marble with a soft floor reflection, key light from camera-left at 45 degrees plus a subtle rim, seamless warm-grey gradient behind. 85mm, shallow depth of field.",
-      "Slightly elevated top-down angle (about 30 degrees), product on textured pale paper, one soft directional shadow raking to the right, minimal negative space above for breathing room. 50mm.",
-      "Low hero angle looking slightly up, product on a raised stone plinth against a darker moody gradient, dramatic single key with controlled falloff and a bright specular edge. 100mm.",
+      "Straight-on eye-level front view, product centered on pure white, one soft contact shadow beneath, 100mm lens for zero distortion.",
+      "Gentle three-quarter angle showing a hint of depth, still on pure clean white, soft even light, a subtle shadow to one side. 85mm.",
+      "Slightly elevated angle (about 20 degrees) — better for products read from above like jars, pots and boxes — pure white, soft top light. 85mm.",
     ],
-    style: "real", person: false, st: 22,
+    style: "real", person: false, st: 18,
   },
-  mostruario: {
-    type: "Editorial retail display photograph",
-    delta: "Only generate the display, hands/use, props, lighting and background around it.",
+  // INSPECIONAR — reduzir a dúvida sobre qualidade tátil/funcional
+  detalhe: {
+    type: "Macro detail product photograph",
+    delta: "Only generate the lighting and the softly blurred surroundings.",
     block:
-      "The product shown as it lives in real use — a display or in-use moment that makes a shopper want it. Directional, characterful lighting.",
+      "Extreme close-up that lets the buyer inspect what matters before buying — the texture, the finish, the applicator, the mechanism, the material weave, the label print. The key detail razor sharp, everything else melting into shallow focus. Reduces doubt about tactile and functional quality. 100mm macro lens.",
     compositions: [
-      "In-use hero: a hand (natural skin texture, from the wrist) holding or operating the product mid-gesture, the product razor sharp and large in frame, a softly blurred real environment behind fitting the product. 50mm.",
-      "Live storefront display: the product on a designed retail shelf or stand with 2-3 specific props from its own universe, depth and reflections like a boutique window, directional light from above at 30 degrees. 35mm.",
-      "Flat-lay from directly overhead: the product arranged with a curated set of matching props on a surface that fits its world, balanced editorial composition, soft even top light. 35mm.",
+      "Neutral macro: the product detail against a clean, out-of-focus neutral studio backdrop, raking side light revealing the relief of the texture, no distracting props.",
+      "In-context macro: the same tight detail nested in a softly blurred environment that fits the product's world, warm directional light, a hint of a matching prop bokeh behind.",
+    ],
+    style: "real", person: false, st: 24,
+  },
+  // ENTENDER escala — produto na mão (sem modelo, só mão pra dar escala)
+  "na-mao": {
+    type: "Product-in-hand photograph",
+    delta: "Only generate the hand, the setting, the light and background around it.",
+    block:
+      "A single hand (natural real skin from the wrist, realistic grip) holding, opening or using the product to communicate its REAL SCALE and how it is handled — ideal for small products (beauty, food, supplements, accessories). The product stays the sharp hero, large in frame; fingers only at the edges, NEVER covering the label or key details. Soft natural light, a softly blurred fitting background.",
+    compositions: [
+      "A hand holding the product up toward soft window light, product face to camera and razor sharp, cozy real background blurred, fingers at the edges only. 85mm shallow depth of field.",
+      "Hand mid-action opening or using the product (twisting the cap, dispensing, unboxing), captured naturally, the mechanism visible, warm directional light. 50mm.",
+    ],
+    style: "real", person: false, negativeExtra: NEG_HANDS + ", fingers covering the product, product too small", st: 34,
+  },
+  // ENTENDER conteúdo — flat lay, kit/props vistos de cima
+  "flat-lay": {
+    type: "Overhead flat-lay product photograph",
+    delta: "Only generate the surface, the matching props and the even top light around it.",
+    block:
+      "A top-down flat-lay: the product arranged from directly above with a curated set of 2-4 matching props, ingredients or kit pieces from its own universe, laid out with balanced editorial composition and breathing room. Great for beauty, food, stationery and gift sets. Soft even overhead light with one gentle unified shadow. Square-friendly, clean and intentional — tells the whole story of the product or routine at a glance.",
+    compositions: [
+      "Perfectly overhead, the product as the anchor with a symmetrical arrangement of matching props on a surface that fits its world (linen, marble, wood, kraft paper), soft even light. 50mm top-down.",
+      "Overhead off-center rule-of-thirds composition, a looser lifestyle scatter of related props and ingredients, warm directional top light casting soft real shadows. 35mm top-down.",
     ],
     style: "real", person: false, st: 30,
   },
-  comercial: {
-    type: "Bold advertising campaign photograph",
-    delta: "Only generate the campaign world, environment, action, lighting and background around it.",
+  // DESEJAR (contexto) — lifestyle, produto vivendo numa cena real, aspiracional
+  lifestyle: {
+    type: "Lifestyle product photograph in a real setting",
+    delta: "Only generate the real everyday environment, props, light and background around it.",
     block:
-      "A striking ADVERTISING CAMPAIGN image — not a quiet lifestyle snapshot. Build a bold, purpose-built campaign WORLD that fits THIS specific product's universe, inferred from the product described above (for example: an action camera or sports gear → a dynamic outdoor adventure/extreme-sport scene with motion, spray, dust or speed; a gourmet food or drink → a rich artisanal or celebratory table with atmosphere; a cosmetic or fragrance → a sensorial, editorial spa-like or fashion set; a tech gadget → a sleek modern lifestyle environment). Cinematic advertising lighting with intention and mood, strong art direction, generous negative space for a headline. The product is the unmistakable hero of the campaign.",
+      "The product living in a real, believable everyday setting that fits its world and its moment of use (a morning kitchen counter, a cozy bathroom shelf, a sunny café table, a work desk — whatever matches the product). Warm natural light, specific real props of that world softly present, gentle depth of field. Aspirational but honest — the buyer should picture themselves using it. NOT a studio, NOT a staged ad.",
     compositions: [
-      "Wide cinematic campaign frame: the product hero in its bold campaign world with real depth and atmosphere (motion, elements, weather or ambience fitting the product), dramatic directional light, headline space to one side. 35mm.",
-      "Dynamic close campaign angle: tighter on the product mid-action within the campaign world, energy and movement around it (splash, dust, light streaks or steam as fits), strong rim light. 50mm.",
-      "Poster hero: the product large and central against a committed campaign environment, symmetrical confident art direction, cinematic key and haze, premium mood. 85mm.",
+      "The product on a real surface in its natural habitat, morning window light, a couple of authentic props of its world softly out of focus, generous negative space. 35mm.",
+      "Closer intimate angle, the product mid-life (just used, lid off, steam or condensation as fits), warm golden light, shallow focus. 50mm.",
+    ],
+    style: "real", person: false, st: 34,
+  },
+  // DESEJAR (campanha) — hero shot, impacto, espaço pra headline
+  hero: {
+    type: "Hero campaign product photograph",
+    delta: "Only generate the campaign set, props, dramatic lighting and background around it.",
+    block:
+      "A striking HERO campaign image built to stop the scroll and create desire — the kind used for launches, paid ads, email banners and landing pages. ONE strong visual idea, elaborate art direction, dramatic sculpted studio lighting, a few intentional premium props, and GENEROUS clean space reserved for a headline. Bold, premium, aspirational — impact over explanation. The product is the unmistakable hero. Build a bold set that fits THIS product's universe (inferred from the product described above).",
+    compositions: [
+      "The product elevated on a sculptural pedestal or floating, dramatic single key light with deep shadow, a committed bold color backdrop matching the product's world, wide headline space above. 85mm.",
+      "Dynamic hero with motion and atmosphere fitting the product (splash, powder, petals, light streaks or smoke), the product frozen center-frame, cinematic rim light. 50mm.",
+      "Symmetrical poster composition, the product large and central, haze and a premium color grade, clean room for a tagline. 100mm.",
     ],
     style: "real", person: false, st: 42,
   },
@@ -108,17 +147,6 @@ const CATEGORIES: Record<string, CategoryDef> = {
       "Low-angle suspended moment: the product floating center-frame with a few related elements frozen mid-air in slow-motion feel, deep gradient background, dual cool rim lights. 100mm.",
     ],
     style: "render", person: false, st: 40,
-  },
-  detalhe: {
-    type: "Macro editorial photograph",
-    delta: "Only generate the lighting and the out-of-focus surroundings.",
-    block:
-      "Extreme close-up revealing the craft of the product — texture, label, seam or material. The detail razor sharp, the rest dissolving into shallow focus. 100mm macro lens.",
-    compositions: [
-      "Neutral macro: the product detail against a clean, out-of-focus neutral studio backdrop, raking side light revealing the relief of the texture, no distracting props.",
-      "In-context macro: the same tight detail but nested in a softly blurred environment that fits the product's world, warm directional light, a hint of a matching prop bokeh behind.",
-    ],
-    style: "real", person: false, st: 24,
   },
   influencia: {
     type: "Authentic UGC customer smartphone selfie",

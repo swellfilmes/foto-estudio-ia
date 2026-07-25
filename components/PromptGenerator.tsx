@@ -4,9 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import { ProductInfo, PhotoType, ProductCategory } from "@/lib/types";
 import { assembleScene, BrandDirection } from "@/lib/scene-blocks";
 import {
-  ArrowRight, ArrowUp, Camera, Check, Clapperboard, Download, Film, Gem, Layers,
-  Lightbulb, Lock, LogOut, Plus, Search, Smartphone, Store, ThumbsDown, ThumbsUp, X, Zap,
-  type LucideIcon,
+  ArrowRight, ArrowUp, Camera, Check, Clapperboard, Coffee, Download, Film, Gem, Hand,
+  Image as ImageIcon, Layers, LayoutGrid, Lightbulb, Lock, LogOut, Plus, Search, Smartphone,
+  Sparkles, Store, ThumbsDown, ThumbsUp, X, Zap, type LucideIcon,
 } from "lucide-react";
 
 // ── Design do protótipo (Claude Design) — Estúdio Swell ──────────────────────
@@ -48,12 +48,15 @@ interface StyleOption {
   photoType: PhotoType;
 }
 
+// Ordem do funil Riverflow: identificar → inspecionar → entender → desejar
 const STYLES_PRODUCT: StyleOption[] = [
-  { key: "estudio", label: "Estúdio", sub: "fundo limpo profissional", icon: Lightbulb, photoType: "fundo-limpo" },
-  { key: "mostruario", label: "Mostruário", sub: "vitrine · catálogo", icon: Store, photoType: "fundo-limpo" },
-  { key: "comercial", label: "Comercial", sub: "cena de campanha", icon: Clapperboard, photoType: "lifestyle" },
+  { key: "fundo-branco", label: "Fundo Branco", sub: "e-commerce · marketplace", icon: ImageIcon, photoType: "fundo-limpo" },
+  { key: "detalhe", label: "Detalhe", sub: "close · inspeção", icon: Search, photoType: "macro" },
+  { key: "na-mao", label: "Na Mão", sub: "escala real", icon: Hand, photoType: "segurando" },
+  { key: "flat-lay", label: "Flat Lay", sub: "de cima · kit/props", icon: LayoutGrid, photoType: "flat-lay" },
+  { key: "lifestyle", label: "Lifestyle", sub: "cena real · desejo", icon: Coffee, photoType: "lifestyle" },
+  { key: "hero", label: "Hero", sub: "campanha · impacto", icon: Sparkles, photoType: "lifestyle" },
   { key: "cg", label: "CG · Render 3D", sub: "visual premium digital", icon: Gem, photoType: "fundo-limpo" },
-  { key: "detalhe", label: "Detalhe", sub: "close · textura", icon: Search, photoType: "macro" },
 ];
 
 const STYLES_WITH_MODEL: StyleOption[] = [
