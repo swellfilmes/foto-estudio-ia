@@ -31,10 +31,16 @@ export async function POST(req: NextRequest) {
 
     if (!prompt) return NextResponse.json({ error: "Prompt obrigatório" }, { status: 400 });
 
+    // Magnific limita o prompt a 3000 caracteres — trava de segurança pra nunca dar 400.
+    const MAX_PROMPT = 3000;
+    const safePrompt = typeof prompt === "string" && prompt.length > MAX_PROMPT
+      ? prompt.slice(0, MAX_PROMPT)
+      : prompt;
+
     const aspectRatio = aspectOverride || PRODUCT_ASPECT_RATIO_MAP[photoType] || "1:1";
 
     const body: Record<string, unknown> = {
-      prompt,
+      prompt: safePrompt,
       aspect_ratio: aspectRatio,
       resolution: "1K",
     };
@@ -76,7 +82,11 @@ export async function POST(req: NextRequest) {
     const data = await res.json();
     if (!res.ok) {
       console.error("Magnific error:", data);
-      return NextResponse.json({ error: data?.message || "Erro no Magnific" }, { status: res.status });
+      const detail = data?.invalid_params?.[0]?.reason;
+      const msg = data?.message
+        ? (detail ? `${data.message}: ${detail}` : data.message)
+        : "Erro no Magnific";
+      return NextResponse.json({ error: msg }, { status: res.status });
     }
 
     const taskId = data?.data?.task_id || data?.task_id;

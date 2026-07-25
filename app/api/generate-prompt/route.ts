@@ -24,6 +24,7 @@ REGRAS:
 2. NÃO parafraseie o que o pedido não afeta — altere só os trechos necessários.
 3. Especifique com medida física, nunca adjetivo. Palavras proibidas: beautiful, stunning, perfect, vibrant, amazing, high quality, professional, 4k, 8k, aesthetic.
 4. O pedido não pode quebrar a fidelidade do produto.
+5. O prompt final deve ser CONCISO — no máximo ~180 palavras (limite rígido de 2000 caracteres). Corte redundância, não adicione floreio.
 
 Responda EXATAMENTE neste formato, sem mais nada:
 ===PROMPT===
@@ -38,12 +39,12 @@ Responda EXATAMENTE neste formato, sem mais nada:
       const rtext = refit.content[0].type === "text" ? refit.content[0].text : "";
       const pMatch = rtext.match(/===PROMPT===\s*([\s\S]*?)\s*===RESUMO===/);
       const sMatch = rtext.match(/===RESUMO===\s*([\s\S]*)$/);
-      const promptEN = (pMatch ? pMatch[1] : "").trim();
+      const promptEN = (pMatch ? pMatch[1] : "").trim().slice(0, 2900);
       const resumoPT = (sMatch ? sMatch[1] : "").trim();
       // Fallback: se o formato veio torto, usa o base + pedido colado (nunca quebra)
       if (!promptEN) {
         return NextResponse.json({
-          promptEN: `${basePrompt} CLIENT REQUEST (top priority): ${clientRequest}.`,
+          promptEN: `${basePrompt} CLIENT REQUEST (top priority): ${clientRequest}.`.slice(0, 2900),
           resumoPT: `Vamos gerar com o seu pedido: ${clientRequest}.`,
         });
       }
