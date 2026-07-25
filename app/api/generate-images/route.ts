@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const MAGNIFIC_URL = "https://api.magnific.com/v1/ai/text-to-image/nano-banana-pro-flash";
+// Modelo do Magnific. "nano-banana-pro" = qualidade máxima (mais créditos, ~mais lento).
+// Alternativa mais barata/rápida: "nano-banana-pro-flash".
+const MAGNIFIC_MODEL = "nano-banana-pro";
+const MAGNIFIC_URL = `https://api.magnific.com/v1/ai/text-to-image/${MAGNIFIC_MODEL}`;
 
 // Aspect ratio por tipo de foto de PRODUTO (modo Produto).
 // Ensaio passa aspectRatio direto no body.

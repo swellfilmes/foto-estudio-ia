@@ -912,7 +912,7 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>{g.label || g.style}</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {g.images.map((src, i) => (
-                  <a key={i} href={src} download={`swell-${g.style}-${i + 1}.jpg`} target="_blank" rel="noopener noreferrer">
+                  <a key={i} href={`/api/download?u=${encodeURIComponent(src)}&name=swell-${g.style}-${i + 1}.jpg`}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={src} alt="" style={{ width: 56, height: 70, objectFit: "cover", borderRadius: 8, border: `1px solid ${foam(0.1)}`, display: "block" }} />
                   </a>
@@ -1022,7 +1022,7 @@ function BatchBlock({ batch, msgIdx, progressPct, onRetry, onYes, onNo, onFeedba
               <img src={src} alt={`${batch.style.label} ${i + 1}`} style={{ width: "100%", display: "block" }} />
               <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", background: "linear-gradient(180deg, rgba(10,9,8,0) 0%, rgba(10,9,8,0.85) 100%)" }}>
                 <span style={{ ...mono(9, 0.16), color: foam(0.75) }}>VAR {String(i + 1).padStart(2, "0")}</span>
-                <a href={src} download={`foto-${batch.style.key}-${i + 1}.jpg`} target="_blank" rel="noopener noreferrer"
+                <a href={`/api/download?u=${encodeURIComponent(src)}&name=swell-${batch.style.key}-${i + 1}.jpg`}
                   style={{ display: "flex", alignItems: "center", gap: 5, background: foam(0.12), backdropFilter: "blur(8px)", color: FOAM, borderRadius: 8, padding: "5px 10px", fontSize: 11, fontWeight: 600, textDecoration: "none" }}>
                   <Download size={11} />Baixar
                 </a>

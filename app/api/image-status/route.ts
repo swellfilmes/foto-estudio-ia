@@ -8,8 +8,9 @@ export async function GET(req: NextRequest) {
   if (!taskId) return NextResponse.json({ error: "taskId obrigatório" }, { status: 400 });
 
   try {
+    // Precisa casar com o modelo usado na geração (generate-images).
     const res = await fetch(
-      `https://api.magnific.com/v1/ai/text-to-image/nano-banana-pro-flash/${taskId}`,
+      `https://api.magnific.com/v1/ai/text-to-image/nano-banana-pro/${taskId}`,
       { headers: { "x-magnific-api-key": key } }
     );
 
