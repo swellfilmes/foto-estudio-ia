@@ -480,7 +480,7 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
       borderBottom: `1px solid ${foam(0.08)}`,
     }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
-        <div style={{ ...display, fontSize: 19, letterSpacing: "-0.02em" }}>Swell<span style={{ color: EMBER }}>.</span></div>
+        <button onClick={reset} title="Voltar ao início" style={{ ...display, fontSize: 19, letterSpacing: "-0.02em", background: "none", border: "none", color: FOAM, cursor: "pointer", padding: 0 }}>Swell<span style={{ color: EMBER }}>.</span></button>
         <div style={{ ...mono(10, 0.22), color: foam(0.45) }}>FOTO ESTÚDIO IA</div>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
