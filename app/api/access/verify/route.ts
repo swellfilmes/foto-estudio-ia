@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   const res = NextResponse.redirect(dest);
   res.cookies.set({
     name: COOKIE_NAME,
-    value: "ok",
+    value: Buffer.from(email).toString("base64url"), // guarda o e-mail p/ histórico por usuário
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

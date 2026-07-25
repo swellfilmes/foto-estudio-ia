@@ -117,6 +117,19 @@ type Stage = "category" | "results";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+function formatWhen(iso: string): string {
+  try {
+    const d = new Date(iso);
+    return (
+      d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) +
+      " · " +
+      d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+    ).toUpperCase();
+  } catch {
+    return "";
+  }
+}
+
 export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } = {}) {
   const [phase, setPhase] = useState<Phase>("upload");
   const [stage, setStage] = useState<Stage>("category");
@@ -134,6 +147,8 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
   const [brandOpen, setBrandOpen] = useState(false);
   const [queueOpen, setQueueOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [history, setHistory] = useState<{ id: number; style: string; label: string | null; images: string[]; note: string | null; created_at: string }[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [pricingOpen, setPricingOpen] = useState(false);
   const [msgIdx, setMsgIdx] = useState(0);
   const [now, setNow] = useState(0);
@@ -163,6 +178,20 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
     }, 0);
     return () => clearTimeout(t);
   }, []);
+
+  // Carrega o histórico permanente (por e-mail) quando a Galeria abre
+  useEffect(() => {
+    if (!galleryOpen) return;
+    const t = setTimeout(() => {
+      setHistoryLoading(true);
+      fetch("/api/generations")
+        .then((r) => r.json())
+        .then((d) => setHistory(Array.isArray(d.generations) ? d.generations : []))
+        .catch(() => { /* silencioso */ })
+        .finally(() => setHistoryLoading(false));
+    }, 0);
+    return () => clearTimeout(t);
+  }, [galleryOpen]);
 
   function saveBrand(b: BrandProfile) {
     setBrand(b);
@@ -344,6 +373,13 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
       }
       if (collected.length === 0) throw new Error("Nenhuma imagem gerada");
       updateBatch(id, { loading: false });
+
+      // Salva no histórico permanente por e-mail (best-effort, não trava a UI)
+      fetch("/api/generations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ style: style.key, label: style.label, images: collected, note: note || null }),
+      }).catch(() => { /* histórico é best-effort */ });
     } catch (e) {
       updateBatch(id, { loading: false, error: e instanceof Error ? e.message : "Erro ao gerar" });
     }
@@ -860,25 +896,27 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
 
       {galleryOpen && (
         <Drawer kicker="SUAS GERAÇÕES" title="Galeria" onClose={() => setGalleryOpen(false)}>
-          {batches.filter((b) => b.images.length > 0).length === 0 && (
-            <div style={{ fontSize: 13, color: foam(0.45), textAlign: "center", padding: "30px 0" }}>Nada por aqui ainda — as fotos desta sessão aparecem assim que você gerar.</div>
+          {historyLoading && (
+            <div style={{ fontSize: 13, color: foam(0.45), textAlign: "center", padding: "30px 0" }}>Carregando seu histórico…</div>
           )}
-          {batches.filter((b) => b.images.length > 0).map((b) => (
-            <div key={b.id} style={{ marginBottom: 22, background: foam(0.03), border: `1px solid ${foam(0.08)}`, borderRadius: 14, padding: 14 }}>
-              <div style={{ ...mono(9, 0.18), color: foam(0.4), marginBottom: 6 }}>DESTA SESSÃO</div>
-              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>{b.isBase ? "Base e-commerce" : b.style.label}</div>
+          {!historyLoading && history.length === 0 && (
+            <div style={{ fontSize: 13, color: foam(0.45), textAlign: "center", padding: "30px 0" }}>Nada por aqui ainda — tudo que você gerar fica salvo aqui, pra sempre.</div>
+          )}
+          {!historyLoading && history.map((g) => (
+            <div key={g.id} style={{ marginBottom: 22, background: foam(0.03), border: `1px solid ${foam(0.08)}`, borderRadius: 14, padding: 14 }}>
+              <div style={{ ...mono(9, 0.18), color: foam(0.4), marginBottom: 6 }}>{formatWhen(g.created_at)}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>{g.label || g.style}</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {b.images.map((src, i) => (
-                  <a key={i} href={src} target="_blank" rel="noopener noreferrer">
+                {g.images.map((src, i) => (
+                  <a key={i} href={src} download={`swell-${g.style}-${i + 1}.jpg`} target="_blank" rel="noopener noreferrer">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={src} alt="" style={{ width: 56, height: 70, objectFit: "cover", borderRadius: 8, border: `1px solid ${foam(0.1)}`, display: "block" }} />
                   </a>
                 ))}
               </div>
-              <div style={{ fontSize: 11, color: foam(0.4), marginTop: 8 }}>{b.images.length} foto{b.images.length === 1 ? "" : "s"} · baixa dentro de 24h</div>
+              <div style={{ fontSize: 11, color: foam(0.4), marginTop: 8 }}>{g.images.length} foto{g.images.length === 1 ? "" : "s"} · salvas pra sempre</div>
             </div>
           ))}
-          <p style={{ fontSize: 11, color: foam(0.35), textAlign: "center", marginTop: 10 }}>Histórico permanente entre sessões: em breve.</p>
         </Drawer>
       )}
 

@@ -121,6 +121,78 @@ export async function upsertSubscriber(input: UpsertInput): Promise<void> {
   `;
 }
 
+// ── Histórico de gerações por usuário (linkado pelo e-mail) ──────────────────
+export type Generation = {
+  id: number;
+  email: string;
+  style: string;
+  label: string | null;
+  images: string[];
+  note: string | null;
+  created_at: string;
+};
+
+let genSchemaReady: Promise<void> | null = null;
+
+export function ensureGenerationsSchema(): Promise<void> {
+  if (!genSchemaReady) {
+    const sql = client();
+    genSchemaReady = (async () => {
+      await sql`
+        CREATE TABLE IF NOT EXISTS generations (
+          id BIGSERIAL PRIMARY KEY,
+          email TEXT NOT NULL,
+          style TEXT NOT NULL,
+          label TEXT,
+          images JSONB NOT NULL DEFAULT '[]'::jsonb,
+          note TEXT,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `;
+      await sql`CREATE INDEX IF NOT EXISTS generations_email_idx ON generations (email, created_at DESC)`;
+    })().catch((e) => {
+      genSchemaReady = null;
+      throw e;
+    });
+  }
+  return genSchemaReady;
+}
+
+export async function saveGeneration(input: {
+  email: string;
+  style: string;
+  label?: string | null;
+  images: string[];
+  note?: string | null;
+}): Promise<Generation> {
+  await ensureGenerationsSchema();
+  const sql = client();
+  const rows = (await sql`
+    INSERT INTO generations (email, style, label, images, note)
+    VALUES (
+      ${input.email.toLowerCase()},
+      ${input.style},
+      ${input.label ?? null},
+      ${JSON.stringify(input.images)}::jsonb,
+      ${input.note ?? null}
+    )
+    RETURNING id, email, style, label, images, note, created_at
+  `) as Generation[];
+  return rows[0];
+}
+
+export async function listGenerations(email: string, limit = 60): Promise<Generation[]> {
+  await ensureGenerationsSchema();
+  const sql = client();
+  return (await sql`
+    SELECT id, email, style, label, images, note, created_at
+    FROM generations
+    WHERE email = ${email.toLowerCase()}
+    ORDER BY created_at DESC
+    LIMIT ${limit}
+  `) as Generation[];
+}
+
 // Usado por eventos de cancelamento/reembolso — precisa poder ZERAR datas.
 export async function markCanceled(
   email: string,
