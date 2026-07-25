@@ -430,6 +430,10 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
     setError(null);
     setQueueOpen(false);
     setGalleryOpen(false);
+    setBrandOpen(false);
+    setPricingOpen(false);
+    setPreparing(false);
+    setPrepError(null);
     setTimeout(() => { cancelRef.current = false; }, 50);
   }
 
