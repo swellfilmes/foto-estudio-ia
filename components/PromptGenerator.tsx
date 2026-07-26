@@ -951,9 +951,9 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
               <button onClick={() => setPricingOpen(false)} style={closeBtn}><X size={15} /></button>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 14, marginBottom: 18 }}>
-              <PlanCard kicker="AVULSO" price="R$ 79" desc={<>1 sessão · 16 fotos<br />1 produto</>} cta="Escolher" />
-              <PlanCard kicker="PRO" price="R$ 249" suffix="/mês" desc={<>80 fotos por mês<br />produtos ilimitados · fila prioritária</>} cta="Assinar Pro" featured />
-              <PlanCard kicker="MARCA" price="R$ 690" suffix="/mês" desc={<>Fotos ilimitadas<br />direção de arte Swell · suporte direto</>} cta="Falar com a gente" />
+              <PlanCard kicker="ESSENCIAL" price="R$ 69" suffix="/mês" desc={<>30 fotos por mês<br />qualidade Nano Banana Pro · ideal pra começar</>} cta="Assinar" />
+              <PlanCard kicker="PRO" price="R$ 149" suffix="/mês" desc={<>90 fotos por mês<br />produtos ilimitados · fila prioritária</>} cta="Assinar Pro" featured />
+              <PlanCard kicker="MARCA" price="R$ 299" suffix="/mês" desc={<>240 fotos por mês<br />direção de arte Swell · suporte direto</>} cta="Falar com a gente" />
             </div>
             <div style={{ ...mono(10, 0.16), color: foam(0.4), textAlign: "center" }}>1 GERAÇÃO = {VARIATIONS_PER_CLICK} CRÉDITOS · VOCÊ USOU {creditsUsed} NESTA SESSÃO</div>
           </div>
