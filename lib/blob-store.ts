@@ -14,3 +14,16 @@ export async function persistImage(url: string, styleHint: string): Promise<stri
   });
   return blob.url;
 }
+
+// Sobe uma imagem que já está em base64 (as fotos-referência do produto vêm assim do
+// navegador). Usado ao criar um Projeto pra guardar as referências pra sempre.
+export async function persistBase64(base64: string, hint: string): Promise<string> {
+  const buf = Buffer.from(base64, "base64");
+  const safe = (hint || "produto").replace(/[^a-z0-9-]/gi, "").slice(0, 24) || "produto";
+  const blob = await put(`projetos/${safe}.jpg`, buf, {
+    access: "public",
+    contentType: "image/jpeg",
+    addRandomSuffix: true,
+  });
+  return blob.url;
+}

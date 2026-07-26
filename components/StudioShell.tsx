@@ -49,8 +49,9 @@ function Intro({ onDone }: { onDone: () => void }) {
   );
 }
 
-export default function StudioShell() {
-  const [intro, setIntro] = useState(true);
+export default function StudioShell({ initialProjectId }: { initialProjectId?: string } = {}) {
+  // Ao reabrir um projeto, pula a animação de abertura e vai direto pro estúdio.
+  const [intro, setIntro] = useState(!initialProjectId);
   const [ensaio, setEnsaio] = useState(false);
 
   return (
@@ -59,7 +60,7 @@ export default function StudioShell() {
       {ensaio ? (
         <EnsaioStudio onBack={() => setEnsaio(false)} />
       ) : (
-        <PromptGenerator onEnsaio={() => setEnsaio(true)} />
+        <PromptGenerator onEnsaio={() => setEnsaio(true)} initialProjectId={initialProjectId} />
       )}
     </>
   );

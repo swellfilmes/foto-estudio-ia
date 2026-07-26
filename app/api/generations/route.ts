@@ -21,10 +21,11 @@ export async function POST(req: NextRequest) {
   const email = getSessionEmail(req);
   if (!email) return NextResponse.json({ error: "sem sessão" }, { status: 401 });
   try {
-    const { style, label, images, note } = await req.json();
+    const { style, label, images, note, projectId } = await req.json();
     if (!Array.isArray(images) || images.length === 0) {
       return NextResponse.json({ error: "sem imagens" }, { status: 400 });
     }
+    const pid = Number.isFinite(Number(projectId)) ? Number(projectId) : null;
 
     const permanent: string[] = [];
     for (const url of images.slice(0, 6)) {
@@ -43,6 +44,7 @@ export async function POST(req: NextRequest) {
       label: label ? String(label) : null,
       images: permanent,
       note: note ? String(note) : null,
+      projectId: pid,
     });
     return NextResponse.json({ generation });
   } catch (e) {

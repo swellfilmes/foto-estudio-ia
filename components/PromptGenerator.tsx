@@ -133,8 +133,8 @@ function formatWhen(iso: string): string {
   }
 }
 
-export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } = {}) {
-  const [phase, setPhase] = useState<Phase>("upload");
+export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsaio?: () => void; initialProjectId?: string } = {}) {
+  const [phase, setPhase] = useState<Phase>(initialProjectId ? "analyzing" : "upload");
   const [stage, setStage] = useState<Stage>("category");
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [product, setProduct] = useState<ProductInfo>(defaultProduct);
@@ -153,16 +153,25 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
   const [history, setHistory] = useState<{ id: number; style: string; label: string | null; images: string[]; note: string | null; created_at: string }[]>([]);
   const [historyEmail, setHistoryEmail] = useState<string | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyProjects, setHistoryProjects] = useState<{ id: number; name: string | null; ref_images: string[]; gen_count: number; updated_at: string }[]>([]);
   const [pricingOpen, setPricingOpen] = useState(false);
   const [msgIdx, setMsgIdx] = useState(0);
   const [now, setNow] = useState(0);
+
+  // ── Projeto (produto salvo = fotos-referência + análise + suas gerações) ──
+  const [projectName, setProjectName] = useState<string>("");
+  const [projectGens, setProjectGens] = useState<{ id: number; style: string; label: string | null; images: string[]; note: string | null; created_at: string }[]>([]);
+  const projectIdRef = useRef<number | null>(null);
+  const projectCreateRef = useRef<Promise<number | null> | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const addInputRef = useRef<HTMLInputElement>(null);
   const cancelRef = useRef(false);
   const batchSeq = useRef(0);
   const photosRef = useRef<Photo[]>([]);
+  const productRef = useRef<ProductInfo>(product);
   useEffect(() => { photosRef.current = photos; }, [photos]);
+  useEffect(() => { productRef.current = product; }, [product]);
 
   // Mensagens rotativas + tick de progresso enquanto algo carrega
   const anyLoading = phase === "analyzing" || batches.some((b) => b.loading);
@@ -188,9 +197,15 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
     if (!galleryOpen) return;
     const t = setTimeout(() => {
       setHistoryLoading(true);
-      fetch("/api/generations")
-        .then((r) => r.json())
-        .then((d) => { setHistory(Array.isArray(d.generations) ? d.generations : []); setHistoryEmail(d.email ?? null); })
+      Promise.all([
+        fetch("/api/projects").then((r) => r.json()).catch(() => ({})),
+        fetch("/api/generations").then((r) => r.json()).catch(() => ({})),
+      ])
+        .then(([p, d]) => {
+          setHistoryProjects(Array.isArray(p.projects) ? p.projects : []);
+          setHistory(Array.isArray(d.generations) ? d.generations : []);
+          setHistoryEmail(d.email ?? p.email ?? null);
+        })
         .catch(() => { /* silencioso */ })
         .finally(() => setHistoryLoading(false));
     }, 0);
@@ -301,9 +316,64 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
+  // Reabrir um projeto: carrega fotos-referência + análise e vai direto pra geração
+  useEffect(() => {
+    if (!initialProjectId) return;
+    let alive = true;
+    fetch(`/api/projects?id=${encodeURIComponent(initialProjectId)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!alive || !d?.project) { if (alive) setPhase("upload"); return; }
+        projectIdRef.current = d.project.id;
+        setProjectName(d.project.name || "");
+        setProduct({
+          category: d.project.category || "outro",
+          name: d.project.name || "",
+          color: d.project.color || "",
+          material: d.project.material || "",
+          size: d.project.size || "",
+          hasLabel: false, labelText: "", labelPosition: "",
+        });
+        const refs: string[] = Array.isArray(d.refsBase64) ? d.refsBase64 : [];
+        setPhotos(refs.map((b64) => ({ url: `data:image/jpeg;base64,${b64}`, base64: b64 })));
+        setProjectGens(Array.isArray(d.generations) ? d.generations : []);
+        setPhase("studio");
+        setStage("results");
+      })
+      .catch(() => { if (alive) setPhase("upload"); });
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialProjectId]);
+
   // ── Geração ───────────────────────────────────────────────────────────────
   function updateBatch(id: number, patch: Partial<Batch>) {
     setBatches((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch } : b)));
+  }
+
+  // Garante que existe um Projeto pra esta sessão (cria 1x, salvando as referências).
+  // É disparado no início da 1ª geração e só resolvido na hora de salvar — não trava a geração.
+  function ensureProject(): Promise<number | null> {
+    if (projectIdRef.current) return Promise.resolve(projectIdRef.current);
+    if (!projectCreateRef.current) {
+      const p = productRef.current;
+      const refs = photosRef.current.map((ph) => ph.base64);
+      projectCreateRef.current = fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: p.name || "", category: p.category, color: p.color, material: p.material, size: p.size,
+          refImagesBase64: refs,
+        }),
+      })
+        .then((r) => r.json())
+        .then((d) => {
+          const id = d?.project?.id ?? null;
+          if (id) { projectIdRef.current = id; if (!projectName) setProjectName(p.name || ""); }
+          return id;
+        })
+        .catch(() => null);
+    }
+    return projectCreateRef.current;
   }
 
   async function buildPromptRaw(style: StyleOption, note?: string): Promise<{ promptEN: string; resumoPT: string }> {
@@ -323,6 +393,7 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
     const id = ++batchSeq.current;
     const asm = assembleScene(style.key, product, 0, brandDirection);
     setBatches((prev) => [...prev, { id, style, images: [], loading: true, note, review: asm.needsReview, isBase, startedAt: Date.now() }]);
+    void ensureProject(); // começa a salvar as referências em paralelo (não trava a geração)
     try {
       let prompts: string[];
       if (prebuiltPrompt) {
@@ -378,12 +449,16 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
       if (collected.length === 0) throw new Error("Nenhuma imagem gerada");
       updateBatch(id, { loading: false });
 
-      // Salva no histórico permanente por e-mail (best-effort, não trava a UI)
+      // Salva no histórico permanente por e-mail + linka ao projeto (best-effort, não trava a UI)
+      const projectId = await ensureProject();
       fetch("/api/generations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ style: style.key, label: style.label, images: collected, note: note || null }),
-      }).catch(() => { /* histórico é best-effort */ });
+        body: JSON.stringify({ style: style.key, label: style.label, images: collected, note: note || null, projectId }),
+      })
+        .then((r) => r.json())
+        .then((saved) => { if (saved?.generation) setProjectGens((prev) => [saved.generation, ...prev]); })
+        .catch(() => { /* histórico é best-effort */ });
     } catch (e) {
       updateBatch(id, { loading: false, error: e instanceof Error ? e.message : "Erro ao gerar" });
     }
@@ -434,6 +509,10 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
     setPricingOpen(false);
     setPreparing(false);
     setPrepError(null);
+    projectIdRef.current = null;
+    projectCreateRef.current = null;
+    setProjectName("");
+    setProjectGens([]);
     setTimeout(() => { cancelRef.current = false; }, 50);
   }
 
@@ -730,13 +809,15 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
                 <div>
                   <div style={{ display: "inline-flex", alignItems: "center", gap: 7, border: `1px solid ${foam(0.2)}`, borderRadius: 999, padding: "6px 14px", marginBottom: 16 }}>
                     <Check size={11} color={EMBER} />
-                    <span style={{ ...mono(9, 0.2), color: foam(0.7) }}>PRODUTO TRAVADO · {photos.length} REFERÊNCIA{photos.length > 1 ? "S" : ""}</span>
+                    <span style={{ ...mono(9, 0.2), color: foam(0.7) }}>{projectName ? `PROJETO · ${photos.length} REFERÊNCIA${photos.length > 1 ? "S" : ""}` : `PRODUTO TRAVADO · ${photos.length} REFERÊNCIA${photos.length > 1 ? "S" : ""}`}</span>
                   </div>
                   <div style={{ ...display, fontWeight: 800, fontSize: "clamp(28px, 3.4vw, 44px)", letterSpacing: "-0.03em", lineHeight: 1 }}>
-                    {product.name || "Seu produto"}
+                    {projectName || product.name || "Seu produto"}
                   </div>
                   <p style={{ fontSize: 14, color: foam(0.55), margin: "10px 0 0" }}>
-                    Nenhum crédito gasto ainda. Escolha um estilo abaixo — cada geração usa suas fotos só pra travar o produto e cria um cenário novo.
+                    {projectGens.length > 0
+                      ? "Você está continuando este projeto — gere mais fotos no mesmo produto, com as referências já travadas."
+                      : "Nenhum crédito gasto ainda. Escolha um estilo abaixo — cada geração usa suas fotos só pra travar o produto e cria um cenário novo."}
                   </p>
                 </div>
                 <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
@@ -764,6 +845,25 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
                 <input ref={addInputRef} type="file" accept="image/*" multiple style={{ display: "none" }}
                   onChange={(e) => { if (e.target.files) addFiles(Array.from(e.target.files)); e.target.value = ""; }} />
               </div>
+
+              {/* Já feitas neste projeto (quando reabre um projeto salvo) */}
+              {projectGens.length > 0 && (
+                <div style={{ marginBottom: 28 }}>
+                  <div style={{ ...mono(11, 0.24), color: foam(0.45), marginBottom: 12 }}>
+                    JÁ FEITAS NESTE PROJETO · {projectGens.reduce((n, g) => n + g.images.length, 0)}
+                  </div>
+                  <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 6 }}>
+                    {projectGens.flatMap((g) =>
+                      g.images.map((src, i) => (
+                        <a key={`${g.id}-${i}`} href={`/api/download?u=${encodeURIComponent(src)}&name=swell-${g.style}-${i + 1}.jpg`} title={`${g.label || g.style} · baixar`} style={{ flexShrink: 0 }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={src} alt="" style={{ width: 92, height: 116, objectFit: "cover", borderRadius: 12, border: `1px solid ${foam(0.1)}`, display: "block" }} />
+                        </a>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Próximo melhor passo */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 14, flexWrap: "wrap", marginBottom: 20 }}>
@@ -910,6 +1010,30 @@ export default function PromptGenerator({ onEnsaio }: { onEnsaio?: () => void } 
           <div style={{ ...mono(9, 0.14), color: historyEmail ? foam(0.5) : "#C28A1E", marginBottom: 16, wordBreak: "break-all" }}>
             {historyEmail ? `HISTÓRICO DE ${historyEmail.toUpperCase()}` : "SEM SESSÃO — FAÇA LOGIN DE NOVO PARA VER SEU HISTÓRICO"}
           </div>
+
+          {!historyLoading && historyProjects.length > 0 && (
+            <div style={{ marginBottom: 22 }}>
+              <div style={{ ...mono(9, 0.2), color: foam(0.45), marginBottom: 10 }}>PROJETOS · ABRIR PRA GERAR MAIS</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                {historyProjects.map((p) => (
+                  <a key={p.id} href={`/studio?project=${p.id}`} style={{ textDecoration: "none", color: "inherit", background: foam(0.03), border: `1px solid ${foam(0.09)}`, borderRadius: 12, overflow: "hidden", display: "block" }}>
+                    <div style={{ aspectRatio: "4 / 3", background: "#1B1714", position: "relative" }}>
+                      {p.ref_images?.[0] && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={p.ref_images[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                      )}
+                      <span style={{ position: "absolute", right: 6, top: 6, ...mono(7, 0.12), color: FOAM, background: "rgba(10,9,8,0.65)", borderRadius: 999, padding: "3px 7px" }}>{p.gen_count}</span>
+                    </div>
+                    <div style={{ padding: "8px 10px" }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name || "Produto"}</div>
+                      <div style={{ ...mono(8, 0.12), color: EMBER, marginTop: 3 }}>ABRIR ↗</div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
           {historyLoading && (
             <div style={{ fontSize: 13, color: foam(0.45), textAlign: "center", padding: "30px 0" }}>Carregando seu histórico…</div>
           )}
