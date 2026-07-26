@@ -5,8 +5,8 @@ import { ProductInfo, PhotoType, ProductCategory } from "@/lib/types";
 import { assembleScene, BrandDirection } from "@/lib/scene-blocks";
 import {
   ArrowRight, ArrowUp, Camera, Check, Clapperboard, Coffee, Download, Film, Gem, Hand,
-  Image as ImageIcon, Layers, LayoutGrid, Lightbulb, Lock, LogOut, Plus, Search, Smartphone,
-  Sparkles, Store, ThumbsDown, ThumbsUp, X, Zap, type LucideIcon,
+  Image as ImageIcon, Layers, LayoutGrid, Lock, LogOut, Plus, Search, Smartphone,
+  Sparkles, ThumbsDown, ThumbsUp, X, Zap, type LucideIcon,
 } from "lucide-react";
 
 // ── Design do protótipo (Claude Design) — Estúdio Swell ──────────────────────
@@ -60,15 +60,23 @@ const STYLES_PRODUCT: StyleOption[] = [
 ];
 
 const STYLES_WITH_MODEL: StyleOption[] = [
-  { key: "influencia", label: "Influência", sub: "estilo criador · UGC", icon: Smartphone, photoType: "segurando" },
-  { key: "estudio-modelo", label: "Estúdio", sub: "modelo em estúdio", icon: Lightbulb, photoType: "segurando" },
-  { key: "comercial-modelo", label: "Comercial", sub: "campanha com modelo", icon: Clapperboard, photoType: "lifestyle" },
-  { key: "mostruario-modelo", label: "Mostruário", sub: "modelo apresentando", icon: Store, photoType: "segurando" },
+  { key: "estudio-modelo", label: "No Corpo", sub: "escala real · vestindo", icon: Gem, photoType: "segurando" },
+  { key: "mostruario-modelo", label: "Em Uso", sub: "mãos · rotina", icon: Hand, photoType: "segurando" },
+  { key: "influencia", label: "Cliente Real", sub: "UGC · como um cliente postaria", icon: Smartphone, photoType: "segurando" },
+  { key: "comercial-modelo", label: "Campanha", sub: "modelo · alto impacto", icon: Clapperboard, photoType: "lifestyle" },
 ];
 
 const VARIATIONS_PER_CLICK = 2;
 const MAX_PHOTOS = 6;
 const SUGGESTED_MIN_PHOTOS = 3;
+const VARIATION_CHOICES = [1, 2, 4];
+const ASPECTS: { v: string; label: string }[] = [
+  { v: "auto", label: "Auto" },
+  { v: "1:1", label: "1:1 · quadrado" },
+  { v: "4:5", label: "4:5 · feed" },
+  { v: "9:16", label: "9:16 · story" },
+  { v: "16:9", label: "16:9 · site" },
+];
 
 const CATEGORIES: { value: ProductCategory; label: string }[] = [
   { value: "bebida", label: "Bebida" },
@@ -157,6 +165,11 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
   const [pricingOpen, setPricingOpen] = useState(false);
   const [msgIdx, setMsgIdx] = useState(0);
   const [now, setNow] = useState(0);
+  // Controles de geração: quantas fotos por clique e a proporção
+  const [variations, setVariations] = useState(VARIATIONS_PER_CLICK);
+  const [aspect, setAspect] = useState<string>("auto");
+  // Contador REAL de fotos já geradas (persistente — não zera ao trocar de ensaio)
+  const [usedTotal, setUsedTotal] = useState(0);
 
   // ── Projeto (produto salvo = fotos-referência + análise + suas gerações) ──
   const [projectName, setProjectName] = useState<string>("");
@@ -190,6 +203,20 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
       } catch { /* ignora */ }
     }, 0);
     return () => clearTimeout(t);
+  }, []);
+
+  // Total real de fotos já geradas por esta conta — contador honesto e persistente
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/generations")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!alive) return;
+        const gens = Array.isArray(d.generations) ? d.generations : [];
+        setUsedTotal(gens.reduce((n: number, g: { images?: string[] }) => n + (g.images?.length || 0), 0));
+      })
+      .catch(() => { /* silencioso */ });
+    return () => { alive = false; };
   }, []);
 
   // Carrega o histórico permanente (por e-mail) quando a Galeria abre
@@ -394,15 +421,17 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
     const asm = assembleScene(style.key, product, 0, brandDirection);
     setBatches((prev) => [...prev, { id, style, images: [], loading: true, note, review: asm.needsReview, isBase, startedAt: Date.now() }]);
     void ensureProject(); // começa a salvar as referências em paralelo (não trava a geração)
+    const count = variations;          // quantas fotos a pessoa escolheu neste clique
+    const chosenAspect = aspect;       // proporção escolhida (ou "auto")
     try {
       let prompts: string[];
       if (prebuiltPrompt) {
-        prompts = Array(VARIATIONS_PER_CLICK).fill(prebuiltPrompt);
+        prompts = Array(count).fill(prebuiltPrompt);
       } else if (note?.trim()) {
         const built = (await buildPromptRaw(style, note)).promptEN;
-        prompts = Array(VARIATIONS_PER_CLICK).fill(built);
+        prompts = Array(count).fill(built);
       } else {
-        prompts = Array.from({ length: VARIATIONS_PER_CLICK }, (_, i) => assembleScene(style.key, product, i, brandDirection).promptEN);
+        prompts = Array.from({ length: count }, (_, i) => assembleScene(style.key, product, i, brandDirection).promptEN);
       }
 
       const refs = photosRef.current.map((p) => p.base64);
@@ -416,6 +445,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
             photoType: style.photoType,
             negativePrompt: asm.negative,
             styleStrength: asm.styleStrength,
+            aspectRatio: chosenAspect !== "auto" ? chosenAspect : undefined,
           }),
         }).then((r) => r.json())
       );
@@ -448,6 +478,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
       }
       if (collected.length === 0) throw new Error("Nenhuma imagem gerada");
       updateBatch(id, { loading: false });
+      setUsedTotal((n) => n + collected.length); // contador real e persistente
 
       // Salva no histórico permanente por e-mail + linka ao projeto (best-effort, não trava a UI)
       const projectId = await ensureProject();
@@ -519,7 +550,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
   const styles = withModel ? STYLES_WITH_MODEL : STYLES_PRODUCT;
   const needMorePhotos = photos.length > 0 && photos.length < SUGGESTED_MIN_PHOTOS;
   const queueCount = batches.filter((b) => b.loading).length;
-  const creditsUsed = batches.length * VARIATIONS_PER_CLICK;
+  const creditsUsed = usedTotal;
   const progressPct = (b?: { startedAt: number }) =>
     b && now > 0 ? `${Math.min(92, Math.max(6, Math.round(((now - b.startedAt) / 50000) * 100)))}%` : "6%";
 
@@ -583,7 +614,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
             color: EMBER, borderRadius: 999, padding: "7px 14px", ...mono(11, 0.12), cursor: "pointer",
           }}
         >
-          {creditsUsed} CRÉDITOS USADOS
+          {usedTotal} FOTO{usedTotal === 1 ? "" : "S"} GERADA{usedTotal === 1 ? "" : "S"}
         </button>
         <a href="/api/logout" title="Sair" style={{
           display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34,
@@ -894,7 +925,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                       <div style={{ padding: "13px 15px" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginBottom: 3 }}>
                           <span style={{ fontSize: 14, fontWeight: 700, color: FOAM }}>{s.label}</span>
-                          <span style={{ fontSize: 11, color: EMBER, whiteSpace: "nowrap" }}>{VARIATIONS_PER_CLICK} créditos →</span>
+                          <span style={{ fontSize: 11, color: EMBER, whiteSpace: "nowrap" }}>{variations} foto{variations === 1 ? "" : "s"} →</span>
                         </div>
                         <div style={{ fontSize: 12, color: foam(0.5) }}>{s.sub}</div>
                       </div>
@@ -916,7 +947,27 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                       <div style={{ fontSize: 12, color: foam(0.5), marginBottom: 12 }}>Quer pedir algo específico? Descreva do seu jeito — cenário, fundo, clima. (opcional)</div>
                       <textarea value={request} onChange={(e) => setRequest(e.target.value)} rows={2}
                         placeholder="Ex: fundo rosa claro, clima natalino, modelo da cintura pra cima…"
-                        style={{ width: "100%", background: foam(0.05), border: `1px solid ${foam(0.12)}`, borderRadius: 12, padding: "12px 14px", color: FOAM, fontSize: 14, resize: "vertical", outline: "none", fontFamily: "'Hanken Grotesk', sans-serif", boxSizing: "border-box", marginBottom: 14 }} />
+                        style={{ width: "100%", background: foam(0.05), border: `1px solid ${foam(0.12)}`, borderRadius: 12, padding: "12px 14px", color: FOAM, fontSize: 14, resize: "vertical", outline: "none", fontFamily: "'Hanken Grotesk', sans-serif", boxSizing: "border-box", marginBottom: 16 }} />
+
+                      <div style={{ display: "flex", gap: 24, flexWrap: "wrap", marginBottom: 16 }}>
+                        <div>
+                          <div style={{ ...mono(9, 0.18), color: foam(0.45), marginBottom: 8 }}>QUANTAS FOTOS</div>
+                          <div style={{ display: "flex", gap: 7 }}>
+                            {VARIATION_CHOICES.map((n) => (
+                              <button key={n} onClick={() => setVariations(n)} style={{ ...miniChip(variations === n), minWidth: 42, textAlign: "center" }}>{n}</button>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{ ...mono(9, 0.18), color: foam(0.45), marginBottom: 8 }}>PROPORÇÃO</div>
+                          <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+                            {ASPECTS.map((a) => (
+                              <button key={a.v} onClick={() => setAspect(a.v)} style={miniChip(aspect === a.v)}>{a.label}</button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
                       {prepError && <div style={{ fontSize: 12, color: "#E8836F", marginBottom: 10 }}>{prepError}</div>}
                       <button
                         disabled={preparing}
@@ -937,7 +988,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                           }
                         }}
                         style={{ width: "100%", background: preparing ? foam(0.08) : EMBER, border: "none", color: preparing ? foam(0.5) : INK, borderRadius: 12, padding: 15, fontSize: 15, fontWeight: 700, cursor: preparing ? "wait" : "pointer", fontFamily: "'Hanken Grotesk', sans-serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                        {preparing ? "Entendendo o seu pedido…" : request.trim() ? "Transformar meu pedido em prompt" : `Gerar agora · ${VARIATIONS_PER_CLICK} créditos`}
+                        {preparing ? "Entendendo o seu pedido…" : request.trim() ? "Transformar meu pedido em prompt" : `Gerar agora · ${variations} foto${variations === 1 ? "" : "s"}`}
                         <ArrowRight size={16} />
                       </button>
                     </>
@@ -950,7 +1001,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                         <button onClick={() => { generateStyle(pending.style, pending.note, pending.promptEN); setPending(null); setSelected(null); setRequest(""); }}
                           style={{ flex: 1, minWidth: 220, background: EMBER, border: "none", color: INK, borderRadius: 12, padding: 14, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>
-                          Confirmar — gerar {VARIATIONS_PER_CLICK} fotos →
+                          Confirmar — gerar {variations} foto{variations === 1 ? "" : "s"} →
                         </button>
                         <button onClick={() => setPending(null)}
                           style={{ background: foam(0.05), border: `1px solid ${foam(0.15)}`, color: foam(0.65), borderRadius: 12, padding: "14px 18px", fontSize: 13, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>
@@ -992,7 +1043,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 700 }}>{b.isBase ? "Base e-commerce" : b.style.label}</div>
-                <div style={{ ...mono(8, 0.16), color: foam(0.4), marginTop: 4 }}>{b.images.length} FOTO{b.images.length === 1 ? "" : "S"} · {VARIATIONS_PER_CLICK} CRÉDITOS</div>
+                <div style={{ ...mono(8, 0.16), color: foam(0.4), marginTop: 4 }}>{b.images.length} FOTO{b.images.length === 1 ? "" : "S"}</div>
               </div>
               <span style={{ ...mono(8, 0.16), color: b.error ? "#E8836F" : b.loading ? EMBER : foam(0.6), border: `1px solid ${b.error ? "rgba(178,59,46,0.5)" : b.loading ? ember(0.5) : foam(0.2)}`, borderRadius: 999, padding: "4px 10px", whiteSpace: "nowrap", animation: b.loading ? "softPulse 1.6s ease-in-out infinite" : "none" }}>
                 {b.error ? "ERRO" : b.loading ? "GERANDO" : "PRONTO"}
@@ -1079,7 +1130,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
               <PlanCard kicker="PRO" price="R$ 149" suffix="/mês" desc={<>90 fotos por mês<br />produtos ilimitados · fila prioritária</>} cta="Assinar Pro" featured />
               <PlanCard kicker="MARCA" price="R$ 299" suffix="/mês" desc={<>240 fotos por mês<br />direção de arte Swell · suporte direto</>} cta="Falar com a gente" />
             </div>
-            <div style={{ ...mono(10, 0.16), color: foam(0.4), textAlign: "center" }}>1 GERAÇÃO = {VARIATIONS_PER_CLICK} CRÉDITOS · VOCÊ USOU {creditsUsed} NESTA SESSÃO</div>
+            <div style={{ ...mono(10, 0.16), color: foam(0.4), textAlign: "center" }}>VOCÊ JÁ GEROU {usedTotal} FOTO{usedTotal === 1 ? "" : "S"} NESTA CONTA</div>
           </div>
         </div>
       )}
@@ -1091,6 +1142,13 @@ const navBtn: React.CSSProperties = {
   background: "none", border: "none", color: foam(0.6), borderRadius: 999, padding: "8px 13px",
   fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif",
 };
+
+const miniChip = (active: boolean): React.CSSProperties => ({
+  padding: "8px 13px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
+  fontFamily: "'Hanken Grotesk', sans-serif", transition: "all 180ms",
+  border: `1px solid ${active ? ember(0.6) : foam(0.14)}`, background: active ? ember(0.12) : foam(0.04),
+  color: active ? EMBER : foam(0.7),
+});
 
 const closeBtn: React.CSSProperties = {
   width: 34, height: 34, borderRadius: "50%", background: foam(0.06), border: `1px solid ${foam(0.12)}`,
@@ -1211,7 +1269,7 @@ function BatchBlock({ batch, msgIdx, progressPct, onRetry, onYes, onNo, onFeedba
               </div>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                 <button onClick={onConfirmRedo} style={{ flex: 1, minWidth: 220, background: EMBER, border: "none", color: INK, borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>
-                  Confirmar — gerar {VARIATIONS_PER_CLICK} novas tentativas →
+                  Confirmar — gerar novas tentativas →
                 </button>
                 <button onClick={onEditRedo} style={{ background: foam(0.05), border: `1px solid ${foam(0.15)}`, color: foam(0.6), borderRadius: 10, padding: "12px 16px", fontSize: 12, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>
                   Ajustar

@@ -47,6 +47,14 @@ const NEG_RENDER =
   "photographic grain, candid photo, messy background, low-poly, game asset look, plastic cheap material, flat shading, harsh reflections, watermark, text overlay";
 const NEG_HANDS =
   "extra fingers, deformed hands, mannequin hands, plastic skin";
+// [6b. NEGATIVE PESSOA] — os modos que a IA mais erra em humanos; obrigatório em toda categoria com pessoa
+const NEG_PERSON =
+  "deformed face, distorted facial features, asymmetric eyes, extra eyes, crossed eyes, malformed iris, uncanny valley face, waxy plastic skin, airbrushed doll skin, extra fingers, missing fingers, fused fingers, six fingers, mangled hands, extra hands, extra arms, extra limbs, deformed ears, malformed teeth, unnatural neck, warped body proportions, mannequin look";
+
+// [REGRA HUMANO] — verbatim em toda categoria com pessoa: subordina o humano ao produto
+// e empurra pro degrau confiável do dial (parcial/recortado > rosto frontal inteiro).
+const HUMAN_RULE =
+  "The person is CONTEXT for the product, never the subject: the product stays the sharp, well-lit hero, large and fully readable, never covered by fingers, hair or clothing. Favor natural partial framing — hands, forearms, a cropped torso, the body turned or seen from the side — over full frontal faces. Any visible face is a calm natural micro-moment and must be anatomically correct: two even eyes, natural hands with exactly five fingers, real skin texture, believable proportions. Realistic contact and shadows between the person and the product.";
 
 interface CategoryDef {
   type: string;            // [TIPO DE FOTO]
@@ -148,52 +156,57 @@ const CATEGORIES: Record<string, CategoryDef> = {
     ],
     style: "render", person: false, st: 40,
   },
+  // ── Presença humana = dial subordinado ao produto (mãos → parcial → inteiro).
+  // Leque sempre com o enquadramento MAIS SEGURO primeiro (variações padrão = 0 e 1).
+  // NO CORPO — worn scale: prova fit/escala com o corpo de régua, recorte na parte
+  "estudio-modelo": {
+    type: "On-body worn-scale product photograph",
+    delta: "Only generate the relevant body part, the skin, styling, lighting and background around it.",
+    block:
+      "The product WORN or held against the exact body part it belongs to, cropped tight to that zone to prove REAL SCALE and FIT with the body as the ruler — a ring or bracelet on a hand and wrist, a necklace or pendant on a neck and décolletage, earrings beside the jaw, a watch on a wrist, apparel on a torso, a cosmetic swatch on skin or lips. No full face and no full body needed — just enough body to read scale and how it sits. The commercial job is FIT and SCALE. Clean neutral styling so the product is the only strong element, soft even editorial light, the product the sharp hero.",
+    compositions: [
+      "Tight crop on the body zone the product relates to (hand, wrist, neckline, ear, forearm), the product worn and razor sharp, natural skin in soft even light, plain out-of-focus neutral backdrop, NO face in frame. 100mm.",
+      "Slightly wider worn shot showing the body part in a calm natural gesture (a relaxed hand, a turned neck), the product catching the key light, neutral styling, gentle side light sculpting the skin, face cropped out or turned away. 85mm.",
+    ],
+    style: "real", person: true, negativeExtra: NEG_PERSON, st: 30,
+  },
+  // EM USO — manuseio/rotina: mãos + torso recortado usando, sem rosto
+  "mostruario-modelo": {
+    type: "Product-in-use photograph",
+    delta: "Only generate the hands, partial body, the action, setting, lighting and shadows around it.",
+    block:
+      "The product actively IN USE by a partial model — hands and a cropped torso applying, operating, pouring, wearing or demonstrating it in a believable moment. The commercial job is to show HOW IT WORKS so the shopper gets it instantly. Favor hands and a cropped body over any full face; the product is sharp, central and mid-action. Clean catalog-grade light or a soft real setting that fits the product.",
+    compositions: [
+      "Close on the hands using the product as intended (applying, opening, operating, pouring), the mechanism or result clearly visible, product sharp and central, NO face in frame, soft directional light, backdrop softly blurred. 100mm.",
+      "Cropped-torso use shot: waist-up or over-the-shoulder, a cropped body mid-gesture using the product, face out of frame or turned away, the action reading clearly, clean solid or soft real backdrop. 50mm.",
+    ],
+    style: "real", person: true, negativeExtra: NEG_PERSON, st: 32,
+  },
+  // CLIENTE REAL — UGC/depoimento: único com rosto, mas produto na frente e rosto secundário
   influencia: {
-    type: "Authentic UGC customer smartphone selfie",
+    type: "Authentic UGC customer smartphone photo",
     delta: "Only generate the person, hand, setting, lighting and background around it.",
     block:
-      "Must look like a REAL PHOTO A CUSTOMER TOOK — credible for TikTok Shop, Instagram and marketplace — NOT a produced ad. A young Brazilian person with a casual look, front-facing selfie at arm's length with slight lens distortion, in a cozy everyday home setting fitting the product's vibe. Soft domestic or natural window light, no studio look. Simple pose, spontaneous genuine expression, small natural photographic imperfections (slight motion, uneven light, real skin). PRODUCT IS THE PROTAGONIST even with a person present: show it whole or nearly whole, large enough to recognize clearly, held near the face or chest to draw attention, in a natural position of use or presentation. The hand holds the product plausibly — correct finger placement, believable scale and contact, real shadows, NEVER fingers covering the label, face or key details, never a floating or pasted-on look. Keep the product's shape, colors, face/design, proportions, glossy finish and any ring/clasp exactly as in the reference.",
+      "Must look like a REAL PHOTO A CUSTOMER TOOK for TikTok Shop, Instagram or a marketplace review — never a produced ad. A young Brazilian person, casual, in a cozy everyday home with soft domestic or window light, holding and showing the product to the phone. The commercial job is TRUST from a real peer: the PRODUCT IS THE PROTAGONIST — shown whole, large, clearly recognizable, held near the chest or face to draw the eye, in a natural position of use; the person's face is soft and secondary, never a posed stock smile at the camera. Small honest phone-photo imperfections (slight motion, uneven light, real skin). Keep the product's shape, colors, design, proportions and finish exactly as in the reference.",
     compositions: [
-      "Selfie holding it up by the face: front-facing phone selfie, the person smiling softly, holding the product right beside their cheek so it reads big and clear, cozy bedroom or living-room background softly blurred, warm lamp + window light.",
-      "Chest-height show to camera: waist-up selfie, the product held forward at chest level facing the lens, fingers only at the edges so nothing important is covered, casual outfit, everyday kitchen or desk setting behind.",
-      "Mirror selfie: phone visible in a mirror reflection, the product held up in the free hand near the face, full casual outfit visible, real home clutter softly out of focus, natural imperfections in the glass.",
+      "Hands-only close review: both hands holding and turning the product toward the phone over a real home surface, NO face in frame, natural window light, the product filling much of the frame.",
+      "Chest-height show-to-camera: waist-up phone photo, the product held forward at chest level facing the lens and razor sharp, fingers only at the edges, the face soft and secondary (half in frame or glancing DOWN at the product, not a posed smile), everyday kitchen or desk softly blurred behind.",
+      "Held beside the face, candid: the person looking DOWN at the product held up near the cheek (not staring at the camera), warm lamp + window light, cozy room bokeh, product big and clear.",
     ],
-    style: "real", person: true, negativeExtra: NEG_HANDS + ", fingers covering the product, product too small, floating product, pasted-on look, studio lighting, glossy advertising look", st: 48, review: true,
+    style: "real", person: true, negativeExtra: NEG_PERSON + ", fingers covering the product, product too small, floating product, pasted-on look, studio lighting, glossy advertising look", st: 42, review: true,
   },
-  "estudio-modelo": {
-    type: "Editorial studio photograph",
-    delta: "Only generate the model, backdrop, lighting and shadows around it.",
-    block:
-      "A Brazilian model on a seamless gradient backdrop with real photographic direction, the product as the protagonist. Soft editorial key from camera-right at 45 degrees, subtle rim light, soft floor shadow. Confident restrained pose, editorial gaze — premium is restraint, not a smiling stock pose. Styling in neutral basics so the product is the only strong color.",
-    compositions: [
-      "FULL-BODY editorial: the model head-to-toe with generous headroom, three-quarter turn, gaze off camera, the product held loosely at waist height catching the key light — architectural fashion-campaign framing. 50mm.",
-      "TORSO-AND-HEAD crop (waist up): tight editorial framing, the model looking DOWN at the product in her hands, absorbed, product at the brightest point of the frame. 85mm shallow depth of field.",
-      "Half-body seated on an apple box, relaxed editorial posture, the product resting on her knee or beside her hand, eyes away from camera, side light sculpting the face. 85mm.",
-    ],
-    style: "real", person: true, negativeExtra: NEG_HANDS, st: 32,
-  },
+  // CAMPANHA — único com modelo inteiro; de perfil/costas primeiro, QA forte, marcado como risco
   "comercial-modelo": {
-    type: "Bold advertising campaign photograph with a model",
+    type: "Advertising campaign photograph with a model",
     delta: "Only generate the model, campaign world, action, lighting and background around it.",
     block:
-      "A real ADVERTISING CAMPAIGN with a model — NOT a selfie, NOT UGC, NOT a casual phone photo. Cinematic art direction: a model interacting with the product inside a bold campaign WORLD that fits the product's universe (inferred from the product described above), professional campaign lighting with mood and intention, generous space for a headline. Polished, aspirational, magazine-ad quality.",
+      "A real ADVERTISING CAMPAIGN with a model — NOT a selfie, NOT UGC, NOT a casual phone photo. Cinematic art direction: a model interacting with the product inside a bold campaign WORLD that fits the product's universe (inferred from the product described above), professional lighting with mood, generous space for a headline. The commercial job is DESIRE and brand aspiration. Even here the product stays the unmistakable hero, sharp and readable; the model serves the product. Favor a confident restrained pose over a posed smile.",
     compositions: [
-      "Wide campaign frame: the model in motion using or presenting the product within a committed campaign environment fitting the product, cinematic directional light and atmosphere, the product clearly readable as the hero. 35mm.",
-      "Editorial medium shot: the model three-quarter, product held with intention at chest height, strong rim separating her from a dramatic campaign backdrop, confident non-smiling editorial gaze. 85mm.",
+      "Editorial medium shot, the model three-quarter and slightly turned, the product held with intention at chest height and razor sharp, strong rim light separating her from a dramatic campaign backdrop, calm non-smiling gaze off camera. 85mm.",
+      "The model seen from behind or in profile presenting the product forward into the light within a committed campaign environment, so the focus stays on the product, cinematic directional light and atmosphere. 50mm.",
+      "Wide campaign frame, the model in motion using the product inside a bold set fitting the product, the product clearly the hero, headline space around. 35mm.",
     ],
-    style: "real", person: true, negativeExtra: NEG_HANDS, st: 40,
-  },
-  "mostruario-modelo": {
-    type: "Editorial product presentation photograph",
-    delta: "Only generate the model, use, backdrop, lighting and shadows around it.",
-    block:
-      "The product shown IN USE by a model — someone actually wearing, holding-in-use or demonstrating it — so a shopper sees how it works and wants it. Clean catalog-grade lighting, the product always the sharp hero.",
-    compositions: [
-      "In-use demonstration: the model actively using the product as intended (wearing it, operating it, applying it), mid-gesture, product sharp and central, clean solid-color backdrop with a gentle gradient. 50mm.",
-      "Offering gesture: the product held out on an open palm at frame center, the model looking at the product (not the camera), calm museum-like restraint, soft catalog light. 85mm.",
-      "Close use-detail: tight on the model's hands using the product against a softly blurred solid backdrop, the mechanism or fit clearly visible. 100mm.",
-    ],
-    style: "real", person: true, negativeExtra: NEG_HANDS, st: 32,
+    style: "real", person: true, negativeExtra: NEG_PERSON, st: 40, review: true,
   },
 };
 
@@ -251,6 +264,7 @@ export function assembleScene(categoryKey: string, product: ProductInfo, variant
     measureLine(product),
     brandLine(brand),
     c.block,
+    c.person ? HUMAN_RULE : "",
     composition,
     styleBlock,
     anti,
