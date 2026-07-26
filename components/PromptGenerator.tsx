@@ -69,7 +69,7 @@ const STYLES_WITH_MODEL: StyleOption[] = [
 const VARIATIONS_PER_CLICK = 2;
 const MAX_PHOTOS = 6;
 const SUGGESTED_MIN_PHOTOS = 3;
-const VARIATION_CHOICES = [1, 2, 4];
+const VARIATION_CHOICES = [1, 2, 3, 4, 5];
 const ASPECTS: { v: string; label: string }[] = [
   { v: "auto", label: "Auto" },
   { v: "1:1", label: "1:1 · quadrado" },
