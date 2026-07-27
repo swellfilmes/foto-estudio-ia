@@ -32,11 +32,11 @@ export type Subscriber = {
 // Landing: Simples R$67 · Médio R$147 · Grande R$267.
 export const PLAN_QUOTAS: Record<string, number> = {
   essencial: 20,  // Simples
-  pro: 60,        // Médio
+  pro: 80,        // Médio
   marca: 180,     // Grande
 };
 // Teste grátis: fotos liberadas pra experimentar
-export const TRIAL_QUOTA = 3;
+export const TRIAL_QUOTA = 5;
 
 let schemaReady: Promise<void> | null = null;
 

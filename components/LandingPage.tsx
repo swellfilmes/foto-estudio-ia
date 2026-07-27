@@ -54,7 +54,7 @@ const PLANS: Plan[] = [
   },
   {
     url: "https://pay.kiwify.com.br/Q2dYAL2" + utm("plano_medio"),
-    name: "MÉDIO", label: "Médio", price: "R$147", photos: "60", perFoto: "R$2,45",
+    name: "MÉDIO", label: "Médio", price: "R$147", photos: "80", perFoto: "R$1,84",
     featured: true, border: "rgba(224,116,47,0.5)",
     shadow: "0 0 100px rgba(224,116,47,0.12), 0 30px 90px rgba(0,0,0,0.5)", nameColor: SW.ember,
     btnBg: EMBER_GRAD, btnBorder: "none", btnColor: "#0A0908", btnShadow: "0 12px 40px rgba(224,116,47,0.25)",
@@ -86,7 +86,7 @@ const TESTIMONIALS = [
 const FAQS = [
   { q: "Preciso saber mexer com IA?", a: "Não. Você sobe a foto do produto e a IA preenche tudo sozinha — cenário, luz, ângulo. Você só confirma." },
   { q: "O produto fica idêntico mesmo? Rótulo, cor, formato?", a: "Sim. A fidelidade ao original é o coração do Swell Studio: rótulo, textura e formato são preservados a partir das fotos que você envia." },
-  { q: "Quantas fotos eu recebo?", a: "Depende do plano: 20 fotos/mês no Simples, 60 no Médio e 180 no Grande. Cada foto é uma imagem gerada — você escolhe quantas gerar por vez, de 1 a 5." },
+  { q: "Quantas fotos eu recebo?", a: "Depende do plano: 20 fotos/mês no Simples, 80 no Médio e 180 no Grande. Cada foto é uma imagem gerada — você escolhe quantas gerar por vez, de 1 a 5." },
   { q: "Posso cancelar?", a: "Sim, a qualquer momento. E você tem 7 dias de garantia em qualquer plano — não gostou, devolvemos." },
   { q: "Serve pro meu negócio?", a: "Se você vende produto — bebida, alimento, cosmético, artesanal, moda — é exatamente pra você. E o ensaio de pessoa cobre suas fotos profissionais também." },
   { q: "Quanto tempo demora?", a: "Cada ensaio fica pronto em 3 a 5 minutos. Sem agenda, sem espera." },

@@ -1154,7 +1154,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 14, marginBottom: 18 }}>
               <PlanCard kicker="SIMPLES" price="R$ 67" suffix="/mês" desc={<>20 fotos por mês<br />foto de produto + ensaio de pessoa</>} cta="Assinar Simples" />
-              <PlanCard kicker="MÉDIO" price="R$ 147" suffix="/mês" desc={<>60 fotos por mês<br />todos os estilos · fila prioritária</>} cta="Assinar Médio" featured />
+              <PlanCard kicker="MÉDIO" price="R$ 147" suffix="/mês" desc={<>80 fotos por mês<br />todos os estilos · fila prioritária</>} cta="Assinar Médio" featured />
               <PlanCard kicker="GRANDE" price="R$ 267" suffix="/mês" desc={<>180 fotos por mês<br />direção de arte Swell · suporte direto</>} cta="Assinar Grande" />
             </div>
             <div style={{ ...mono(10, 0.16), color: foam(0.4), textAlign: "center" }}>VOCÊ JÁ GEROU {usedTotal} FOTO{usedTotal === 1 ? "" : "S"} NESTA CONTA</div>
