@@ -143,7 +143,7 @@ export default function LandingPage() {
     if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 60, behavior: "smooth" });
   };
 
-  const submitLead = () => {
+  const submitLead = async () => {
     const email = leadEmail.trim();
     // Validação de verdade — antes só checava "@" e voltava em silêncio (sem avisar nada).
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -173,6 +173,15 @@ export default function LandingPage() {
         created_at: new Date().toISOString(),
       }),
     }).catch(() => {});
+    // Libera o teste DE VERDADE: cria o trial, seta o cookie de acesso e dispara o e-mail (Resend).
+    // Antes o modal só registrava no CRM — nenhum e-mail saía e o acesso não era liberado.
+    try {
+      await fetch("/api/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, source: "landing-swell-studio" }),
+      });
+    } catch { /* acesso/e-mail é best-effort; a captura no CRM já foi feita acima */ }
     setLeadSent(true);
   };
 
@@ -485,9 +494,10 @@ export default function LandingPage() {
               </>
             ) : (
               <>
-                <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.22em", color: SW.ember, marginBottom: 16 }}>✓ E-MAIL RECEBIDO</div>
-                <div style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(26px, 4vw, 34px)", letterSpacing: "-0.03em", lineHeight: 1, marginBottom: 12 }}>Confira sua caixa de entrada<span style={{ color: SW.ember }}>.</span></div>
-                <p style={{ fontSize: 14, lineHeight: 1.65, color: SW.t55, margin: 0 }}>Seu acesso ao teste grátis chega em instantes.</p>
+                <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.22em", color: SW.ember, marginBottom: 16 }}>✓ TESTE LIBERADO</div>
+                <div style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(26px, 4vw, 34px)", letterSpacing: "-0.03em", lineHeight: 1, marginBottom: 12 }}>Tudo pronto<span style={{ color: SW.ember }}>.</span></div>
+                <p style={{ fontSize: 14, lineHeight: 1.65, color: SW.t55, margin: "0 0 22px" }}>Seu teste está liberado — entre agora e comece pela foto do produto. O link também vai pro seu e-mail.</p>
+                <a href="/studio" className="sw-cta" style={{ display: "block", textAlign: "center", background: EMBER_GRAD, color: "#0A0908", borderRadius: 14, padding: 16, fontSize: 15, fontWeight: 700, textDecoration: "none", fontFamily: FONT.body, boxShadow: "0 12px 40px rgba(224,116,47,0.25)" }}>Abrir o estúdio agora →</a>
               </>
             )}
           </div>
