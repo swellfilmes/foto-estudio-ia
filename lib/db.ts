@@ -31,7 +31,7 @@ export type Subscriber = {
 // Cota de fotos/mês de cada plano (1 foto = 1 imagem gerada = 1 crédito).
 // Landing: Simples R$67 · Médio R$147 · Grande R$267.
 export const PLAN_QUOTAS: Record<string, number> = {
-  essencial: 20,  // Simples
+  essencial: 35,  // Simples
   pro: 80,        // Médio
   marca: 180,     // Grande
 };
