@@ -48,20 +48,20 @@ type Plan = {
 const PLANS: Plan[] = [
   {
     url: "https://pay.kiwify.com.br/Acv9bKu" + utm("plano_simples"),
-    name: "SIMPLES", label: "Simples", price: "R$67", photos: "50", perFoto: "R$1,34",
+    name: "SIMPLES", label: "Simples", price: "R$67", photos: "20", perFoto: "R$3,35",
     featured: false, border: "rgba(244,239,230,0.1)", shadow: "none", nameColor: SW.t45,
     btnBg: "none", btnBorder: "1px solid rgba(244,239,230,0.18)", btnColor: SW.text, btnShadow: "none",
   },
   {
     url: "https://pay.kiwify.com.br/Q2dYAL2" + utm("plano_medio"),
-    name: "MÉDIO", label: "Médio", price: "R$147", photos: "150", perFoto: "R$0,98",
+    name: "MÉDIO", label: "Médio", price: "R$147", photos: "60", perFoto: "R$2,45",
     featured: true, border: "rgba(224,116,47,0.5)",
     shadow: "0 0 100px rgba(224,116,47,0.12), 0 30px 90px rgba(0,0,0,0.5)", nameColor: SW.ember,
     btnBg: EMBER_GRAD, btnBorder: "none", btnColor: "#0A0908", btnShadow: "0 12px 40px rgba(224,116,47,0.25)",
   },
   {
     url: "https://pay.kiwify.com.br/5Q3p3nP" + utm("plano_grande"),
-    name: "GRANDE", label: "Grande", price: "R$267", photos: "300", perFoto: "R$0,89",
+    name: "GRANDE", label: "Grande", price: "R$267", photos: "180", perFoto: "R$1,48",
     featured: false, border: "rgba(244,239,230,0.1)", shadow: "none", nameColor: SW.t45,
     btnBg: "none", btnBorder: "1px solid rgba(244,239,230,0.18)", btnColor: SW.text, btnShadow: "none",
   },
@@ -86,7 +86,7 @@ const TESTIMONIALS = [
 const FAQS = [
   { q: "Preciso saber mexer com IA?", a: "Não. Você sobe a foto do produto e a IA preenche tudo sozinha — cenário, luz, ângulo. Você só confirma." },
   { q: "O produto fica idêntico mesmo? Rótulo, cor, formato?", a: "Sim. A fidelidade ao original é o coração do Swell Studio: rótulo, textura e formato são preservados a partir das fotos que você envia." },
-  { q: "Quantas fotos eu recebo?", a: "Depende do plano: 50 fotos/mês no Simples, 150 no Médio e 300 no Grande. Cada foto de produto gera 4 variações e cada ensaio de pessoa gera 8 fotos." },
+  { q: "Quantas fotos eu recebo?", a: "Depende do plano: 20 fotos/mês no Simples, 60 no Médio e 180 no Grande. Cada foto é uma imagem gerada — você escolhe quantas gerar por vez, de 1 a 5." },
   { q: "Posso cancelar?", a: "Sim, a qualquer momento. E você tem 7 dias de garantia em qualquer plano — não gostou, devolvemos." },
   { q: "Serve pro meu negócio?", a: "Se você vende produto — bebida, alimento, cosmético, artesanal, moda — é exatamente pra você. E o ensaio de pessoa cobre suas fotos profissionais também." },
   { q: "Quanto tempo demora?", a: "Cada ensaio fica pronto em 3 a 5 minutos. Sem agenda, sem espera." },

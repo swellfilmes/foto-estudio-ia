@@ -28,11 +28,12 @@ export type Subscriber = {
   photo_quota: number | null;  // fotos/mês do plano (null = sem trava, fail-open)
 };
 
-// Cota de fotos por mês de cada plano (travado pela dona — tudo Nano Banana Pro)
+// Cota de fotos/mês de cada plano (1 foto = 1 imagem gerada = 1 crédito).
+// Landing: Simples R$67 · Médio R$147 · Grande R$267.
 export const PLAN_QUOTAS: Record<string, number> = {
-  essencial: 30,
-  pro: 90,
-  marca: 240,
+  essencial: 20,  // Simples
+  pro: 60,        // Médio
+  marca: 180,     // Grande
 };
 // Teste grátis: fotos liberadas pra experimentar
 export const TRIAL_QUOTA = 3;

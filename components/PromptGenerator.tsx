@@ -1153,9 +1153,9 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
               <button onClick={() => setPricingOpen(false)} style={closeBtn}><X size={15} /></button>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 14, marginBottom: 18 }}>
-              <PlanCard kicker="ESSENCIAL" price="R$ 69" suffix="/mês" desc={<>30 fotos por mês<br />qualidade Nano Banana Pro · ideal pra começar</>} cta="Assinar" />
-              <PlanCard kicker="PRO" price="R$ 149" suffix="/mês" desc={<>90 fotos por mês<br />produtos ilimitados · fila prioritária</>} cta="Assinar Pro" featured />
-              <PlanCard kicker="MARCA" price="R$ 299" suffix="/mês" desc={<>240 fotos por mês<br />direção de arte Swell · suporte direto</>} cta="Falar com a gente" />
+              <PlanCard kicker="SIMPLES" price="R$ 67" suffix="/mês" desc={<>20 fotos por mês<br />foto de produto + ensaio de pessoa</>} cta="Assinar Simples" />
+              <PlanCard kicker="MÉDIO" price="R$ 147" suffix="/mês" desc={<>60 fotos por mês<br />todos os estilos · fila prioritária</>} cta="Assinar Médio" featured />
+              <PlanCard kicker="GRANDE" price="R$ 267" suffix="/mês" desc={<>180 fotos por mês<br />direção de arte Swell · suporte direto</>} cta="Assinar Grande" />
             </div>
             <div style={{ ...mono(10, 0.16), color: foam(0.4), textAlign: "center" }}>VOCÊ JÁ GEROU {usedTotal} FOTO{usedTotal === 1 ? "" : "S"} NESTA CONTA</div>
           </div>

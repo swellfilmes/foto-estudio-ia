@@ -19,7 +19,7 @@ function resolvePlan(productId?: string, productName?: string): { plan: string; 
   }
   const n = (productName || "").toLowerCase();
   let plan: "essencial" | "pro" | "marca" | null = null;
-  if (/(avan|máx|max|marca|premium|top)/.test(n)) plan = "marca";
+  if (/(grande|avan|máx|max|marca|premium|top)/.test(n)) plan = "marca";
   else if (/(m[eé]d|pro\b|profis)/.test(n)) plan = "pro";
   else if (/(simpl|essenc|b[aá]sic|start|inicial)/.test(n)) plan = "essencial";
   return plan ? { plan, quota: PLAN_QUOTAS[plan] } : null;
