@@ -84,12 +84,12 @@ const TESTIMONIALS = [
 ];
 
 const FAQS = [
-  { q: "Preciso saber mexer com IA?", a: "Não. Você sobe a foto do produto e a IA preenche tudo sozinha — cenário, luz, ângulo. Você só confirma." },
-  { q: "O produto fica idêntico mesmo? Rótulo, cor, formato?", a: "Sim. A fidelidade ao original é o coração do Swell Studio: rótulo, textura e formato são preservados a partir das fotos que você envia." },
-  { q: "Quantas fotos eu recebo?", a: "Depende do plano: 35 fotos/mês no Simples, 80 no Médio e 180 no Grande. Cada foto é uma imagem gerada — você escolhe quantas gerar por vez, de 1 a 5." },
-  { q: "Posso cancelar?", a: "Sim, cancele quando quiser, direto pela Kiwify, sem multa. E tem 7 dias de garantia: se nesse período você gerou poucas fotos (até 10) e não curtiu o resultado, devolvemos o valor. É pra você testar de verdade, com segurança." },
-  { q: "Serve pro meu negócio?", a: "Se você vende produto — bebida, alimento, cosmético, artesanal, moda — é exatamente pra você. E o ensaio de pessoa cobre suas fotos profissionais também." },
-  { q: "Quanto tempo demora?", a: "Cada ensaio fica pronto em 3 a 5 minutos. Sem agenda, sem espera." },
+  { q: "Preciso saber mexer com IA?", a: "Não, zero. Se você manda foto no WhatsApp, você usa o Swell. Tira a foto do produto no celular, sobe aqui, e o resto — cenário, luz, ângulo — fica com a gente." },
+  { q: "O produto fica idêntico mesmo? Rótulo, cor, formato?", a: "Fica. É onde a gente mais capricha: rótulo, cor, textura e formato saem fiéis à foto que você mandou. Muda o cenário ao redor — o seu produto, nunca." },
+  { q: "Quantas fotos eu recebo?", a: "35 por mês no Simples, 80 no Médio e 180 no Grande. Cada foto é uma imagem pronta pra postar, e você decide na hora quantas gerar de cada vez, de 1 a 5." },
+  { q: "Posso cancelar?", a: "Pode, quando quiser, direto na Kiwify e sem multa. E tem 7 dias de garantia: testou pouco (até 10 fotos) e não curtiu, devolvemos o valor. O risco fica com a gente." },
+  { q: "Serve pro meu negócio?", a: "Se você vende produto — bebida, doce, cosmético, roupa, artesanato — serve sim. E com o modo de ensaio de pessoa, dá pra fazer também suas fotos com modelo. Do potinho ao look completo." },
+  { q: "Quanto tempo demora?", a: "Rápido: cada foto sai em 30 a 60 segundos. Sem marcar hora, sem estúdio, sem esperar dias por um fotógrafo." },
 ];
 
 const DATACRAZY_WEBHOOK =
@@ -119,6 +119,7 @@ export default function LandingPage() {
   const [leadCountryCode, setLeadCountryCode] = useState("+55");
   const [leadPhone, setLeadPhone] = useState("");
   const [leadSent, setLeadSent] = useState(false);
+  const [leadError, setLeadError] = useState("");
   const exitShown = useRef(false);
 
   useEffect(() => {
@@ -144,7 +145,12 @@ export default function LandingPage() {
 
   const submitLead = () => {
     const email = leadEmail.trim();
-    if (!email.includes("@")) return;
+    // Validação de verdade — antes só checava "@" e voltava em silêncio (sem avisar nada).
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setLeadError("Ops — digite um e-mail válido (ex.: voce@suamarca.com).");
+      return;
+    }
+    setLeadError("");
     const name = leadName.trim() || email.split("@")[0];
     const params = new URLSearchParams(window.location.search);
     // Captura de lead → automação de CRM (Datacrazy).
@@ -256,13 +262,13 @@ export default function LandingPage() {
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: "clamp(36px, 5vw, 56px)" }}>
             <div style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: "0.24em", color: SW.ember, marginBottom: 18 }}>02 · COMO FUNCIONA</div>
-            <h2 style={sectionH2}>Pronto em minutos<span style={{ color: SW.ember }}>.</span></h2>
+            <h2 style={sectionH2}>Pronto em segundos<span style={{ color: SW.ember }}>.</span></h2>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 18 }}>
             {[
-              { n: "PASSO 01", t: "Suba a foto do produto", d: "Bebida, alimento, cosmético, artesanal — a foto do celular basta. A IA lê rótulo, cor e material.", icon: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></> },
-              { n: "PASSO 02", t: "A IA monta a cena", d: "A direção de arte Swell preenche tudo sozinha — cenário, luz, ângulo. Você só confirma.", icon: <><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.9 4.9 1.4 1.4" /><path d="m17.7 17.7 1.4 1.4" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.3 17.7-1.4 1.4" /><path d="m19.1 4.9-1.4 1.4" /><circle cx="12" cy="12" r="4" /></> },
-              { n: "PASSO 03", t: "Baixe e publique", d: "4 variações profissionais por foto, prontas pra loja, cardápio e feed em 3 a 5 minutos.", icon: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></> },
+              { n: "PASSO 01", t: "Mande a foto do produto", d: "Bebida, doce, cosmético, artesanato — a foto do celular já serve. A gente identifica rótulo, cor e material na hora.", icon: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></> },
+              { n: "PASSO 02", t: "Escolha a cena", d: "Fundo branco, lifestyle, campanha, com modelo — é só clicar. Cenário, luz e ângulo com direção de arte de verdade.", icon: <><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.9 4.9 1.4 1.4" /><path d="m17.7 17.7 1.4 1.4" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.3 17.7-1.4 1.4" /><path d="m19.1 4.9-1.4 1.4" /><circle cx="12" cy="12" r="4" /></> },
+              { n: "PASSO 03", t: "Baixe e venda mais", d: "Suas fotos prontas pra loja, cardápio e feed — cada uma sai em 30 a 60 segundos. É só baixar e postar.", icon: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></> },
             ].map((s) => (
               <div key={s.n} style={{ background: SW.surface, border: `1px solid ${SW.line}`, borderRadius: 22, padding: "clamp(26px, 3vw, 38px)", display: "flex", flexDirection: "column", gap: 16 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -275,7 +281,7 @@ export default function LandingPage() {
             ))}
           </div>
           <div style={{ display: "flex", justifyContent: "center", gap: "clamp(20px, 4vw, 44px)", flexWrap: "wrap", marginTop: "clamp(32px, 4vw, 48px)", fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.18em", color: SW.t40 }}>
-            <span>◇ PRODUTO FIEL AO ORIGINAL</span><span>○ SEUS ARQUIVOS SÃO PRIVADOS</span><span>⚡ RESULTADO EM MINUTOS</span>
+            <span>◇ PRODUTO FIEL AO ORIGINAL</span><span>○ SEUS ARQUIVOS SÃO PRIVADOS</span><span>⚡ RESULTADO EM SEGUNDOS</span>
           </div>
         </div>
       </section>
@@ -291,9 +297,9 @@ export default function LandingPage() {
             <article style={{ background: SW.surface, backdropFilter: "blur(16px)", border: "1px solid rgba(224,116,47,0.45)", borderRadius: 24, padding: "clamp(28px, 3vw, 40px)", display: "flex", flexDirection: "column", gap: 20, boxShadow: "0 0 80px rgba(224,116,47,0.1)" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 8, border: "1px solid rgba(224,116,47,0.4)", borderRadius: 999, padding: "7px 15px" }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: SW.ember }} /><span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.2em", color: SW.ember }}>FOTO DE PRODUTO</span></span>
-                <span style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 15, color: SW.ember }}>4 variações / foto</span>
+                <span style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 15, color: SW.ember }}>pronto em segundos</span>
               </div>
-              <p style={{ fontSize: 15, lineHeight: 1.65, color: SW.t55, margin: 0 }}>Fotografe o produto no celular e suba. A IA lê rótulo, cor e material, preenche a direção de arte sozinha e devolve variações com cara de campanha — e-commerce, lifestyle, macro, na mão.</p>
+              <p style={{ fontSize: 15, lineHeight: 1.65, color: SW.t55, margin: 0 }}>Fotografe o produto no celular e suba. Em segundos você recebe fotos com cara de campanha — fundo branco pra marketplace, lifestyle, macro, na mão — com rótulo, cor e formato fiéis ao original.</p>
               <ChipGroup label="FEITO PRA NICHOS COMO" items={NICHES} />
             </article>
             <article style={{ background: SW.surface, backdropFilter: "blur(16px)", border: `1px solid ${SW.line}`, borderRadius: 24, padding: "clamp(28px, 3vw, 40px)", display: "flex", flexDirection: "column", gap: 20 }}>
@@ -301,7 +307,7 @@ export default function LandingPage() {
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 8, border: "1px solid rgba(244,239,230,0.18)", borderRadius: 999, padding: "7px 15px" }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: SW.t40 }} /><span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.2em", color: SW.t70 }}>ENSAIO DE PESSOA</span></span>
                 <span style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 15, color: SW.ember }}>8 fotos / ensaio</span>
               </div>
-              <p style={{ fontSize: 15, lineHeight: 1.65, color: SW.t55, margin: 0 }}>Também incluso: suba de 1 a 3 fotos de referência e receba um ensaio completo — pra foto de perfil, LinkedIn e a cara da sua marca. A IA preserva o seu rosto.</p>
+              <p style={{ fontSize: 15, lineHeight: 1.65, color: SW.t55, margin: 0 }}>Também incluso: mande de 1 a 3 fotos suas e receba um ensaio completo — pra foto de perfil, LinkedIn e a cara da sua marca. Seu rosto sai fiel, sempre você.</p>
               <ChipGroup label="CATÁLOGO DE ESTILOS" items={STYLES} />
             </article>
           </div>
@@ -460,10 +466,11 @@ export default function LandingPage() {
                   <span style={{ fontFamily: FONT.mono, fontSize: 14, color: SW.t40 }}>♦</span>
                   <input value={leadName} onChange={(e) => setLeadName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") submitLead(); }} placeholder="Seu nome" type="text" autoComplete="name" style={{ flex: 1, background: "none", border: "none", padding: "15px 0", color: SW.text, fontSize: 15, outline: "none", fontFamily: FONT.body, minWidth: 0 }} />
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(244,239,230,0.05)", border: "1px solid rgba(244,239,230,0.12)", borderRadius: 14, padding: "0 18px", marginBottom: 14 }}>
-                  <span style={{ fontFamily: FONT.mono, fontSize: 14, color: SW.t40 }}>@</span>
-                  <input value={leadEmail} onChange={(e) => setLeadEmail(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") submitLead(); }} placeholder="voce@suamarca.com" type="email" autoComplete="email" style={{ flex: 1, background: "none", border: "none", padding: "15px 0", color: SW.text, fontSize: 15, outline: "none", fontFamily: FONT.body, minWidth: 0 }} />
+                <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(244,239,230,0.05)", border: `1px solid ${leadError ? "rgba(178,59,46,0.6)" : "rgba(244,239,230,0.12)"}`, borderRadius: 14, padding: "0 18px", marginBottom: leadError ? 8 : 14 }}>
+                  <span style={{ fontFamily: FONT.mono, fontSize: 14, color: leadError ? "#E8836F" : SW.t40 }}>@</span>
+                  <input value={leadEmail} onChange={(e) => { setLeadEmail(e.target.value); if (leadError) setLeadError(""); }} onKeyDown={(e) => { if (e.key === "Enter") submitLead(); }} placeholder="voce@suamarca.com" type="email" autoComplete="email" style={{ flex: 1, background: "none", border: "none", padding: "15px 0", color: SW.text, fontSize: 15, outline: "none", fontFamily: FONT.body, minWidth: 0 }} />
                 </div>
+                {leadError && <div style={{ color: "#E8836F", fontSize: 12.5, lineHeight: 1.4, marginBottom: 14, paddingLeft: 4 }}>{leadError}</div>}
                 <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(244,239,230,0.05)", border: "1px solid rgba(244,239,230,0.12)", borderRadius: 14, padding: "0 14px", width: 96, flexShrink: 0 }}>
                     <span style={{ fontFamily: FONT.mono, fontSize: 14, color: SW.t40 }}>☎</span>
