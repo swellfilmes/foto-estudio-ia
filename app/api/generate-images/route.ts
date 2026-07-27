@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionEmail } from "@/lib/session";
+import { getUsageContext, debitPhoto, refundPhoto } from "@/lib/db";
 
 // Modelo do Magnific. "nano-banana-pro" = qualidade máxima (mais créditos, ~mais lento).
 // Alternativa mais barata/rápida: "nano-banana-pro-flash".
@@ -20,6 +22,10 @@ export async function POST(req: NextRequest) {
   const key = process.env.MAGNIFIC_API_KEY;
   if (!key) return NextResponse.json({ error: "API key do Magnific não configurada" }, { status: 500 });
 
+  // Paywall: guardamos se debitamos pra poder estornar se a geração falhar na hora.
+  const payEmail = getSessionEmail(req);
+  let debited = false;
+
   try {
     const {
       prompt,
@@ -33,6 +39,26 @@ export async function POST(req: NextRequest) {
     } = await req.json();
 
     if (!prompt) return NextResponse.json({ error: "Prompt obrigatório" }, { status: 400 });
+
+    // ── Paywall: debita 1 foto da cota do usuário, de forma atômica ──
+    // Sem sessão ou cota null (ativo ainda sem plano) = libera (fail-open). Erro de banco também libera.
+    if (payEmail) {
+      try {
+        const usage = await getUsageContext(payEmail);
+        if (usage.quota != null) {
+          const ok = await debitPhoto(payEmail, usage.quota);
+          if (!ok) {
+            return NextResponse.json(
+              { error: "limite_atingido", plano_atual: usage.plan, usado: usage.used, cota: usage.quota },
+              { status: 402 }
+            );
+          }
+          debited = true;
+        }
+      } catch (e) {
+        console.error("[generate-images] paywall indisponível — liberando p/ não bloquear pagante:", e);
+      }
+    }
 
     // Magnific limita o prompt a 3000 caracteres — trava de segurança pra nunca dar 400.
     const MAX_PROMPT = 3000;
@@ -85,6 +111,8 @@ export async function POST(req: NextRequest) {
     const data = await res.json();
     if (!res.ok) {
       console.error("Magnific error:", data);
+      // Falhou na hora → estorna a foto debitada (não cobra por geração que nem começou)
+      if (debited && payEmail) { try { await refundPhoto(payEmail); } catch { /* ignora */ } }
       const detail = data?.invalid_params?.[0]?.reason;
       const msg = data?.message
         ? (detail ? `${data.message}: ${detail}` : data.message)
@@ -96,6 +124,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ task_id: taskId, raw: data });
   } catch (error) {
     console.error("Erro generate-images:", error);
+    if (debited && payEmail) { try { await refundPhoto(payEmail); } catch { /* ignora */ } }
     return NextResponse.json({ error: "Erro ao gerar imagens" }, { status: 500 });
   }
 }

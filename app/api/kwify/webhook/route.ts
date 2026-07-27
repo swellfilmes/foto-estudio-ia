@@ -1,6 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-import { markCanceled, upsertSubscriber, getSubscriber } from "@/lib/db";
+import { markCanceled, upsertSubscriber, getSubscriber, PLAN_QUOTAS } from "@/lib/db";
 import { sendWelcomeSubscriber } from "@/lib/email";
+
+// ── Mapa oferta da Kiwify → plano ────────────────────────────────────────────
+// PREENCHER com os product_id REAIS das 3 ofertas (aparecem no log abaixo após uma
+// compra teste: "[kwify/webhook] event: ..."). Enquanto vazio, cai no fallback por nome.
+const KIWIFY_PLAN_BY_PRODUCT_ID: Record<string, "essencial" | "pro" | "marca"> = {
+  // "prod_xxx_simples":  "essencial",
+  // "prod_yyy_medio":    "pro",
+  // "prod_zzz_avancado": "marca",
+};
+
+// Resolve o plano a partir do product_id (preferido) ou do nome da oferta (fallback).
+function resolvePlan(productId?: string, productName?: string): { plan: string; quota: number } | null {
+  if (productId && KIWIFY_PLAN_BY_PRODUCT_ID[productId]) {
+    const plan = KIWIFY_PLAN_BY_PRODUCT_ID[productId];
+    return { plan, quota: PLAN_QUOTAS[plan] };
+  }
+  const n = (productName || "").toLowerCase();
+  let plan: "essencial" | "pro" | "marca" | null = null;
+  if (/(avan|máx|max|marca|premium|top)/.test(n)) plan = "marca";
+  else if (/(m[eé]d|pro\b|profis)/.test(n)) plan = "pro";
+  else if (/(simpl|essenc|b[aá]sic|start|inicial)/.test(n)) plan = "essencial";
+  return plan ? { plan, quota: PLAN_QUOTAS[plan] } : null;
+}
 
 // Kwify assina o webhook via query param `?signature=<token>` (configurado no painel).
 // Aceita header como fallback.
@@ -102,6 +125,10 @@ export async function POST(req: NextRequest) {
       console.error("[kwify/webhook] falha ao checar assinante existente:", e);
     }
 
+    const matched = resolvePlan(o.Product?.product_id, o.Product?.product_name);
+    if (!matched) {
+      console.warn("[kwify/webhook] produto não mapeado p/ plano:", o.Product?.product_id, o.Product?.product_name);
+    }
     await upsertSubscriber({
       email,
       name,
@@ -109,6 +136,8 @@ export async function POST(req: NextRequest) {
       source: "kwify",
       kwify_customer_id: kwifyCustomerId,
       subscription_ends_at: nextPayment, // opcional; útil pra dashboards
+      plan: matched?.plan ?? null,          // COALESCE no upsert: não apaga plano existente se vier vazio
+      photo_quota: matched?.quota ?? null,
     });
 
     // E-mail de boas-vindas apenas na primeira ativação (não em renovações).

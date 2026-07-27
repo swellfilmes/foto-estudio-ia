@@ -24,7 +24,18 @@ export type Subscriber = {
   subscription_ends_at: string | null;
   last_event_at: string | null;
   created_at: string;
+  plan: string | null;         // 'essencial' | 'pro' | 'marca' | 'trial'
+  photo_quota: number | null;  // fotos/mês do plano (null = sem trava, fail-open)
 };
+
+// Cota de fotos por mês de cada plano (travado pela dona — tudo Nano Banana Pro)
+export const PLAN_QUOTAS: Record<string, number> = {
+  essencial: 30,
+  pro: 90,
+  marca: 240,
+};
+// Teste grátis: fotos liberadas pra experimentar
+export const TRIAL_QUOTA = 3;
 
 let schemaReady: Promise<void> | null = null;
 
@@ -45,6 +56,9 @@ export function ensureSchema(): Promise<void> {
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
       `;
+      // Plano e cota vivem na linha do usuário (idempotente)
+      await sql`ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS plan TEXT`;
+      await sql`ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS photo_quota INT`;
     })().catch((e) => {
       schemaReady = null;
       throw e;
@@ -58,7 +72,8 @@ export async function getSubscriber(email: string): Promise<Subscriber | null> {
   const sql = client();
   const rows = (await sql`
     SELECT email, name, status, source, kwify_customer_id,
-           trial_ends_at, subscription_ends_at, last_event_at, created_at
+           trial_ends_at, subscription_ends_at, last_event_at, created_at,
+           plan, photo_quota
     FROM subscribers WHERE email = ${email.toLowerCase()}
   `) as Subscriber[];
   return rows[0] ?? null;
@@ -90,6 +105,8 @@ export type UpsertInput = {
   kwify_customer_id?: string | null;
   trial_ends_at?: Date | null;
   subscription_ends_at?: Date | null;
+  plan?: string | null;
+  photo_quota?: number | null;
 };
 
 export async function upsertSubscriber(input: UpsertInput): Promise<void> {
@@ -99,7 +116,7 @@ export async function upsertSubscriber(input: UpsertInput): Promise<void> {
   await sql`
     INSERT INTO subscribers (
       email, name, status, source, kwify_customer_id,
-      trial_ends_at, subscription_ends_at, last_event_at
+      trial_ends_at, subscription_ends_at, plan, photo_quota, last_event_at
     ) VALUES (
       ${email},
       ${input.name ?? null},
@@ -108,6 +125,8 @@ export async function upsertSubscriber(input: UpsertInput): Promise<void> {
       ${input.kwify_customer_id ?? null},
       ${input.trial_ends_at ? input.trial_ends_at.toISOString() : null},
       ${input.subscription_ends_at ? input.subscription_ends_at.toISOString() : null},
+      ${input.plan ?? null},
+      ${input.photo_quota ?? null},
       NOW()
     )
     ON CONFLICT (email) DO UPDATE SET
@@ -117,6 +136,8 @@ export async function upsertSubscriber(input: UpsertInput): Promise<void> {
       kwify_customer_id = COALESCE(EXCLUDED.kwify_customer_id, subscribers.kwify_customer_id),
       trial_ends_at = COALESCE(EXCLUDED.trial_ends_at, subscribers.trial_ends_at),
       subscription_ends_at = COALESCE(EXCLUDED.subscription_ends_at, subscribers.subscription_ends_at),
+      plan = COALESCE(EXCLUDED.plan, subscribers.plan),
+      photo_quota = COALESCE(EXCLUDED.photo_quota, subscribers.photo_quota),
       last_event_at = NOW()
   `;
 }
@@ -316,6 +337,101 @@ export async function renameProject(id: number, email: string, name: string): Pr
   await ensureProjectsSchema();
   const sql = client();
   await sql`UPDATE projects SET name = ${name}, updated_at = NOW() WHERE id = ${id} AND email = ${email.toLowerCase()}`;
+}
+
+// ── Uso mensal de fotos (paywall) ────────────────────────────────────────────
+let usageSchemaReady: Promise<void> | null = null;
+
+export function ensureUsageSchema(): Promise<void> {
+  if (!usageSchemaReady) {
+    const sql = client();
+    usageSchemaReady = (async () => {
+      await sql`
+        CREATE TABLE IF NOT EXISTS usage (
+          email TEXT NOT NULL,
+          year_month TEXT NOT NULL,
+          photos_used INT NOT NULL DEFAULT 0,
+          PRIMARY KEY (email, year_month)
+        )
+      `;
+    })().catch((e) => {
+      usageSchemaReady = null;
+      throw e;
+    });
+  }
+  return usageSchemaReady;
+}
+
+// Ciclo = mês calendário (UTC). year_month novo = uso zera sozinho.
+function yearMonth(d = new Date()): string {
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+export type UsageContext = { plan: string | null; quota: number | null; used: number; remaining: number | null };
+
+// Resolve a cota do usuário. quota null = SEM trava (fail-open: ativo sem plano mapeado ainda,
+// pra não bloquear cliente pagante durante o rollout do webhook).
+// E-mails do dono/equipe que geram sem trava (setar OWNER_EMAILS na Vercel, separados por vírgula)
+function isOwner(email: string): boolean {
+  const list = (process.env.OWNER_EMAILS || "").toLowerCase().split(/[,\s]+/).filter(Boolean);
+  return list.includes(email.toLowerCase());
+}
+
+export async function getUsageContext(email: string): Promise<UsageContext> {
+  const e = email.toLowerCase();
+  if (isOwner(e)) return { plan: "dono", quota: null, used: 0, remaining: null };
+  const sub = await getSubscriber(e);
+  let plan: string | null = sub?.plan ?? null;
+  let quota: number | null;
+  if (sub?.photo_quota != null) {
+    quota = sub.photo_quota;
+  } else if (sub?.status === "active") {
+    quota = null; // ativo, mas o webhook ainda não gravou o plano → libera
+  } else {
+    quota = TRIAL_QUOTA; // trial ou sem registro
+    if (!plan) plan = "trial";
+  }
+  const used = await getUsed(e);
+  const remaining = quota == null ? null : Math.max(0, quota - used);
+  return { plan, quota, used, remaining };
+}
+
+export async function getUsed(email: string): Promise<number> {
+  await ensureUsageSchema();
+  const sql = client();
+  const rows = (await sql`
+    SELECT photos_used FROM usage
+    WHERE email = ${email.toLowerCase()} AND year_month = ${yearMonth()}
+  `) as { photos_used: number }[];
+  return rows[0]?.photos_used ?? 0;
+}
+
+// Debita 1 foto de forma ATÔMICA (aguenta as N fotos disparadas em paralelo pela UI).
+// Retorna true se debitou; false se a cota estourou. quota null = sem trava → sempre true.
+export async function debitPhoto(email: string, quota: number | null): Promise<boolean> {
+  if (quota == null) return true;
+  if (quota <= 0) return false;
+  await ensureUsageSchema();
+  const sql = client();
+  const rows = (await sql`
+    INSERT INTO usage (email, year_month, photos_used)
+    VALUES (${email.toLowerCase()}, ${yearMonth()}, 1)
+    ON CONFLICT (email, year_month) DO UPDATE
+      SET photos_used = usage.photos_used + 1
+      WHERE usage.photos_used < ${quota}
+    RETURNING photos_used
+  `) as { photos_used: number }[];
+  return rows.length > 0;
+}
+
+// Estorna 1 foto — usado quando a geração falha na hora e não deve custar crédito.
+export async function refundPhoto(email: string): Promise<void> {
+  await ensureUsageSchema();
+  const sql = client();
+  await sql`
+    UPDATE usage SET photos_used = GREATEST(0, photos_used - 1)
+    WHERE email = ${email.toLowerCase()} AND year_month = ${yearMonth()}
+  `;
 }
 
 // Usado por eventos de cancelamento/reembolso — precisa poder ZERAR datas.

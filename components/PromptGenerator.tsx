@@ -170,6 +170,9 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
   const [aspect, setAspect] = useState<string>("auto");
   // Contador REAL de fotos já geradas (persistente — não zera ao trocar de ensaio)
   const [usedTotal, setUsedTotal] = useState(0);
+  // Cota do plano (paywall) + popup de upsell
+  const [usage, setUsage] = useState<{ plan: string | null; quota: number | null; used: number; remaining: number | null } | null>(null);
+  const [upsellOpen, setUpsellOpen] = useState(false);
 
   // ── Projeto (produto salvo = fotos-referência + análise + suas gerações) ──
   const [projectName, setProjectName] = useState<string>("");
@@ -218,6 +221,17 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
       .catch(() => { /* silencioso */ });
     return () => { alive = false; };
   }, []);
+
+  // Cota real do plano (paywall)
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/usage").then((r) => r.json()).then((d) => { if (alive) setUsage(d); }).catch(() => { /* silencioso */ });
+    return () => { alive = false; };
+  }, []);
+
+  function refreshUsage() {
+    fetch("/api/usage").then((r) => r.json()).then(setUsage).catch(() => { /* silencioso */ });
+  }
 
   // Carrega o histórico permanente (por e-mail) quando a Galeria abre
   useEffect(() => {
@@ -417,11 +431,14 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
   }
 
   async function generateStyle(style: StyleOption, note?: string, prebuiltPrompt?: string, isBase = false) {
+    // Paywall (pré-checagem): se a cota já zerou, mostra o upsell e nem começa a gerar
+    if (usage?.quota != null && (usage.remaining ?? 0) <= 0) { setUpsellOpen(true); return; }
     const id = ++batchSeq.current;
     const asm = assembleScene(style.key, product, 0, brandDirection);
     setBatches((prev) => [...prev, { id, style, images: [], loading: true, note, review: asm.needsReview, isBase, startedAt: Date.now() }]);
     void ensureProject(); // começa a salvar as referências em paralelo (não trava a geração)
-    const count = variations;          // quantas fotos a pessoa escolheu neste clique
+    // quantas fotos: o que a pessoa pediu, mas no máximo o que resta da cota
+    const count = usage?.quota != null ? Math.min(variations, Math.max(1, usage.remaining ?? variations)) : variations;
     const chosenAspect = aspect;       // proporção escolhida (ou "auto")
     try {
       let prompts: string[];
@@ -450,8 +467,11 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
         }).then((r) => r.json())
       );
       const tasks = await Promise.all(reqs);
+      const limited = tasks.some((t) => t?.error === "limite_atingido");
+      if (limited) { setUpsellOpen(true); refreshUsage(); }
       const taskIds = tasks.map((t) => t?.task_id).filter(Boolean) as string[];
       if (taskIds.length === 0) {
+        if (limited) { updateBatch(id, { loading: false, error: "Você atingiu o limite de fotos do seu plano." }); return; }
         const msg = tasks.find((t) => t?.error)?.error;
         throw new Error(msg || "Falha na geração — verifique a chave/créditos do Magnific");
       }
@@ -479,6 +499,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
       if (collected.length === 0) throw new Error("Nenhuma imagem gerada");
       updateBatch(id, { loading: false });
       setUsedTotal((n) => n + collected.length); // contador real e persistente
+      refreshUsage(); // atualiza a cota do plano (used/remaining)
 
       // Salva no histórico permanente por e-mail + linka ao projeto (best-effort, não trava a UI)
       const projectId = await ensureProject();
@@ -551,6 +572,8 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
   const needMorePhotos = photos.length > 0 && photos.length < SUGGESTED_MIN_PHOTOS;
   const queueCount = batches.filter((b) => b.loading).length;
   const creditsUsed = usedTotal;
+  const hasQuota = usage?.quota != null;
+  const quotaLow = hasQuota && (usage!.remaining ?? 0) <= 3;
   const progressPct = (b?: { startedAt: number }) =>
     b && now > 0 ? `${Math.min(92, Math.max(6, Math.round(((now - b.startedAt) / 50000) * 100)))}%` : "6%";
 
@@ -607,14 +630,18 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
           <button onClick={() => setBrandOpen(true)} style={navBtn}>{brand.name ? `● ${brand.name}` : "Minha marca"}</button>
         </nav>
         <button
-          onClick={() => setPricingOpen(true)}
-          title="Créditos e planos"
+          onClick={() => (quotaLow ? setUpsellOpen(true) : setPricingOpen(true))}
+          title="Suas fotos e planos"
           style={{
-            display: "flex", alignItems: "center", gap: 9, background: ember(0.1), border: `1px solid ${ember(0.35)}`,
-            color: EMBER, borderRadius: 999, padding: "7px 14px", ...mono(11, 0.12), cursor: "pointer",
+            display: "flex", alignItems: "center", gap: 9,
+            background: quotaLow ? "rgba(178,59,46,0.14)" : ember(0.1),
+            border: `1px solid ${quotaLow ? "rgba(178,59,46,0.5)" : ember(0.35)}`,
+            color: quotaLow ? "#E8836F" : EMBER, borderRadius: 999, padding: "7px 14px", ...mono(11, 0.12), cursor: "pointer",
           }}
         >
-          {usedTotal} FOTO{usedTotal === 1 ? "" : "S"} GERADA{usedTotal === 1 ? "" : "S"}
+          {hasQuota
+            ? `${usage!.used}/${usage!.quota} FOTOS`
+            : `${usedTotal} FOTO${usedTotal === 1 ? "" : "S"} GERADA${usedTotal === 1 ? "" : "S"}`}
         </button>
         <a href="/api/logout" title="Sair" style={{
           display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34,
@@ -1131,6 +1158,30 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
               <PlanCard kicker="MARCA" price="R$ 299" suffix="/mês" desc={<>240 fotos por mês<br />direção de arte Swell · suporte direto</>} cta="Falar com a gente" />
             </div>
             <div style={{ ...mono(10, 0.16), color: foam(0.4), textAlign: "center" }}>VOCÊ JÁ GEROU {usedTotal} FOTO{usedTotal === 1 ? "" : "S"} NESTA CONTA</div>
+          </div>
+        </div>
+      )}
+
+      {/* Upsell — quando a cota do plano acaba */}
+      {upsellOpen && (
+        <div onClick={() => setUpsellOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 75, background: "rgba(10,9,8,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, animation: "riseIn 300ms ease both" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "min(440px, 100%)", background: "rgba(20,17,15,0.96)", border: `1px solid ${ember(0.45)}`, borderRadius: 22, padding: 32, boxShadow: "0 50px 140px rgba(0,0,0,0.7)", textAlign: "center", boxSizing: "border-box" }}>
+            <div style={{ width: 56, height: 56, borderRadius: 16, background: ember(0.14), border: `1px solid ${ember(0.4)}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+              <Zap size={24} color={EMBER} />
+            </div>
+            <div style={{ ...display, fontSize: 25, lineHeight: 1.05, marginBottom: 12 }}>Você usou todas<br />as suas fotos<span style={{ color: EMBER }}>.</span></div>
+            <p style={{ fontSize: 14, color: foam(0.6), lineHeight: 1.6, margin: "0 0 24px" }}>
+              {usage?.quota != null
+                ? `Seu plano inclui ${usage.quota} fotos por mês e você já usou todas. `
+                : "Você chegou ao limite do seu teste grátis. "}
+              Suba de plano pra continuar gerando agora mesmo.
+            </p>
+            <button onClick={() => { setUpsellOpen(false); setPricingOpen(true); }} style={{ ...gradientBtn, width: "100%", padding: 15, fontSize: 15, marginBottom: 12 }}>
+              Ver planos →
+            </button>
+            <button onClick={() => setUpsellOpen(false)} style={{ background: "none", border: "none", color: foam(0.5), fontSize: 13, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>
+              Agora não
+            </button>
           </div>
         </div>
       )}
