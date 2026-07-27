@@ -114,6 +114,7 @@ const StepIcon = ({ d }: { d: React.ReactNode }) => (
 export default function LandingPage() {
   const [open, setOpen] = useState<number>(-1);
   const [showExit, setShowExit] = useState(false);
+  const [leadName, setLeadName] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
   const [leadSent, setLeadSent] = useState(false);
   const exitShown = useRef(false);
@@ -142,6 +143,7 @@ export default function LandingPage() {
   const submitLead = () => {
     const email = leadEmail.trim();
     if (!email.includes("@")) return;
+    const name = leadName.trim() || email.split("@")[0];
     const params = new URLSearchParams(window.location.search);
     // Captura de lead → automação de CRM (Datacrazy).
     fetch(DATACRAZY_WEBHOOK, {
@@ -149,7 +151,7 @@ export default function LandingPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         email,
-        name: email.split("@")[0],
+        name,
         phone: "",
         source: "landing-swell-studio",
         origem: "landing-swell-studio",
@@ -450,10 +452,14 @@ export default function LandingPage() {
               <>
                 <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.22em", color: SW.ember, marginBottom: 16 }}>ANTES DE IR</div>
                 <div style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(26px, 4vw, 34px)", letterSpacing: "-0.03em", lineHeight: 1, marginBottom: 12 }}>Leve seu teste grátis<span style={{ color: SW.ember }}>.</span></div>
-                <p style={{ fontSize: 14, lineHeight: 1.65, color: SW.t55, margin: "0 0 24px" }}>Deixe seu e-mail e receba o acesso ao teste — sem cartão, sem compromisso.</p>
+                <p style={{ fontSize: 14, lineHeight: 1.65, color: SW.t55, margin: "0 0 24px" }}>Deixe seu nome e e-mail e receba o acesso ao teste — sem cartão, sem compromisso.</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(244,239,230,0.05)", border: "1px solid rgba(244,239,230,0.12)", borderRadius: 14, padding: "0 18px", marginBottom: 12 }}>
+                  <span style={{ fontFamily: FONT.mono, fontSize: 14, color: SW.t40 }}>♦</span>
+                  <input value={leadName} onChange={(e) => setLeadName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") submitLead(); }} placeholder="Seu nome" type="text" autoComplete="name" style={{ flex: 1, background: "none", border: "none", padding: "15px 0", color: SW.text, fontSize: 15, outline: "none", fontFamily: FONT.body, minWidth: 0 }} />
+                </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(244,239,230,0.05)", border: "1px solid rgba(244,239,230,0.12)", borderRadius: 14, padding: "0 18px", marginBottom: 14 }}>
                   <span style={{ fontFamily: FONT.mono, fontSize: 14, color: SW.t40 }}>@</span>
-                  <input value={leadEmail} onChange={(e) => setLeadEmail(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") submitLead(); }} placeholder="voce@suamarca.com" type="email" style={{ flex: 1, background: "none", border: "none", padding: "15px 0", color: SW.text, fontSize: 15, outline: "none", fontFamily: FONT.body, minWidth: 0 }} />
+                  <input value={leadEmail} onChange={(e) => setLeadEmail(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") submitLead(); }} placeholder="voce@suamarca.com" type="email" autoComplete="email" style={{ flex: 1, background: "none", border: "none", padding: "15px 0", color: SW.text, fontSize: 15, outline: "none", fontFamily: FONT.body, minWidth: 0 }} />
                 </div>
                 <button onClick={submitLead} className="sw-cta" style={{ width: "100%", background: EMBER_GRAD, border: "none", color: "#0A0908", borderRadius: 14, padding: 16, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: FONT.body, boxShadow: "0 12px 40px rgba(224,116,47,0.25)" }}>Quero meu teste grátis</button>
                 <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: "0.18em", color: SW.t40, textAlign: "center", marginTop: 14 }}>SEM CARTÃO · SEM SPAM</div>
