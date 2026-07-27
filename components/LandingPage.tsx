@@ -93,7 +93,7 @@ const FAQS = [
 ];
 
 const DATACRAZY_WEBHOOK =
-  "https://api.datacrazy.io/v1/crm/api/crm/flows/webhooks/e7db5d4e-a2e8-42c8-b044-691d3b24fdff/f97d248a-d070-427e-9dc9-fe3656a88105";
+  "https://api.datacrazy.io/v1/crm/api/crm/integrations/webhook/business/a1391dce-2771-4a48-b4d8-6743f67ef8c6";
 
 /* ===================== ícones ===================== */
 const Arrow = ({ size = 16 }: { size?: number }) => (
