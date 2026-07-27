@@ -87,7 +87,7 @@ const FAQS = [
   { q: "Preciso saber mexer com IA?", a: "Não. Você sobe a foto do produto e a IA preenche tudo sozinha — cenário, luz, ângulo. Você só confirma." },
   { q: "O produto fica idêntico mesmo? Rótulo, cor, formato?", a: "Sim. A fidelidade ao original é o coração do Swell Studio: rótulo, textura e formato são preservados a partir das fotos que você envia." },
   { q: "Quantas fotos eu recebo?", a: "Depende do plano: 35 fotos/mês no Simples, 80 no Médio e 180 no Grande. Cada foto é uma imagem gerada — você escolhe quantas gerar por vez, de 1 a 5." },
-  { q: "Posso cancelar?", a: "Sim, a qualquer momento. E você tem 7 dias de garantia em qualquer plano — não gostou, devolvemos." },
+  { q: "Posso cancelar?", a: "Sim, cancele quando quiser, direto pela Kiwify, sem multa. E tem 7 dias de garantia: se nesse período você gerou poucas fotos (até 10) e não curtiu o resultado, devolvemos o valor. É pra você testar de verdade, com segurança." },
   { q: "Serve pro meu negócio?", a: "Se você vende produto — bebida, alimento, cosmético, artesanal, moda — é exatamente pra você. E o ensaio de pessoa cobre suas fotos profissionais também." },
   { q: "Quanto tempo demora?", a: "Cada ensaio fica pronto em 3 a 5 minutos. Sem agenda, sem espera." },
 ];
@@ -399,7 +399,7 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
-          <div style={{ textAlign: "center", marginTop: 26, fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.16em", color: SW.t45 }}>7 DIAS DE GARANTIA EM TODOS OS PLANOS — NÃO GOSTOU, DEVOLVEMOS.</div>
+          <div style={{ textAlign: "center", marginTop: 26, fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.16em", color: SW.t45 }}>7 DIAS DE GARANTIA — GEROU POUCO E NÃO CURTIU? DEVOLVEMOS.</div>
         </div>
       </section>
 
