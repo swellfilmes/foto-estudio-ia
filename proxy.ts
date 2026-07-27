@@ -12,7 +12,7 @@ export function proxy(request: NextRequest) {
   const hasSubscriber = request.cookies.has(SUBSCRIBER_COOKIE);
   if (!hasLead && !hasSubscriber) {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = "/entrar";
     url.searchParams.set("next", request.nextUrl.pathname);
     return NextResponse.redirect(url);
   }

@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
 }
 
 function redirectWithMsg(req: NextRequest, code: string) {
-  const url = new URL("/", req.url);
+  const url = new URL("/entrar", req.url);
   url.searchParams.set("erro", code);
   return NextResponse.redirect(url);
 }
