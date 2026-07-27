@@ -34,7 +34,7 @@ type Plan = {
   label: string;
   price: string;
   photos: string;
-  perFoto: string;
+  highlight: string;
   featured: boolean;
   border: string;
   shadow: string;
@@ -48,20 +48,20 @@ type Plan = {
 const PLANS: Plan[] = [
   {
     url: "https://pay.kiwify.com.br/Acv9bKu" + utm("plano_simples"),
-    name: "SIMPLES", label: "Simples", price: "R$67", photos: "35", perFoto: "R$1,91",
+    name: "SIMPLES", label: "Simples", price: "R$67", photos: "35", highlight: "Ideal pra começar",
     featured: false, border: "rgba(244,239,230,0.1)", shadow: "none", nameColor: SW.t45,
     btnBg: "none", btnBorder: "1px solid rgba(244,239,230,0.18)", btnColor: SW.text, btnShadow: "none",
   },
   {
     url: "https://pay.kiwify.com.br/Q2dYAL2" + utm("plano_medio"),
-    name: "MÉDIO", label: "Médio", price: "R$147", photos: "80", perFoto: "R$1,84",
+    name: "MÉDIO", label: "Médio", price: "R$147", photos: "80", highlight: "2× mais fotos que o Simples",
     featured: true, border: "rgba(224,116,47,0.5)",
     shadow: "0 0 100px rgba(224,116,47,0.12), 0 30px 90px rgba(0,0,0,0.5)", nameColor: SW.ember,
     btnBg: EMBER_GRAD, btnBorder: "none", btnColor: "#0A0908", btnShadow: "0 12px 40px rgba(224,116,47,0.25)",
   },
   {
     url: "https://pay.kiwify.com.br/5Q3p3nP" + utm("plano_grande"),
-    name: "GRANDE", label: "Grande", price: "R$267", photos: "180", perFoto: "R$1,48",
+    name: "GRANDE", label: "Grande", price: "R$267", photos: "180", highlight: "5× mais fotos que o Simples",
     featured: false, border: "rgba(244,239,230,0.1)", shadow: "none", nameColor: SW.t45,
     btnBg: "none", btnBorder: "1px solid rgba(244,239,230,0.18)", btnColor: SW.text, btnShadow: "none",
   },
@@ -390,7 +390,7 @@ export default function LandingPage() {
                   </div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: SW.ember, marginBottom: 22 }}>{pl.photos} fotos por mês</div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 26 }}>
-                    {["Foto de produto + ensaio de pessoa", "Todos os estilos do catálogo", `${pl.perFoto} por foto`, "Cancele quando quiser"].map((feat) => (
+                    {["Foto de produto + ensaio de pessoa", "Todos os estilos do catálogo", pl.highlight, "Cancele quando quiser"].map((feat) => (
                       <div key={feat} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, fontWeight: 600, color: SW.t80 }}><span style={{ color: SW.ember, display: "grid", placeItems: "center" }}><Check /></span><span>{feat}</span></div>
                     ))}
                   </div>
