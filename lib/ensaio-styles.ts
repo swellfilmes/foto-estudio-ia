@@ -31,7 +31,7 @@ export const IDENTITY_LOCK = `Follow the reference photo(s) closely and preserve
 export const UNIVERSAL_ANTI = `Photorealistic photography. Natural skin texture with visible pores and micro-imperfections, no plastic skin, no over-retouching. Real hair with texture. Genuine unposed micro-moment expression (glancing, mid-breath, half-smile), never a stiff stock-photo pose. Subtle sensor grain. NOT CGI, NOT 3D render, NOT illustration, no oversmooth surfaces, no artificial lighting without direction, no watermark, no text overlay.`;
 
 // NEGATIVE base — sempre presente.
-export const UNIVERSAL_NEGATIVE = `plastic skin, oversmooth, over-retouched, cartoon, 3D render, CGI, illustration, stiff pose, stock-photo smile, distorted face, extra fingers, deformed hands, watermark, text on image, blurry, low quality, altered facial features, different person, wrong identity`;
+export const UNIVERSAL_NEGATIVE = `plastic skin, oversmooth, over-retouched, waxy doll skin, cartoon, 3D render, CGI, illustration, stiff pose, stock-photo smile, distorted face, asymmetric eyes, crossed eyes, malformed iris, uncanny valley face, extra fingers, missing fingers, fused fingers, six fingers, deformed hands, mangled hands, extra limbs, deformed ears, malformed teeth, unnatural neck, warped body proportions, watermark, text on image, blurry, low quality, altered facial features, different person, wrong identity`;
 
 export const ENSAIO_STYLES: EnsaioStyle[] = [
   {

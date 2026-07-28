@@ -277,7 +277,7 @@ export default function EnsaioStudio({ onBack }: { onBack?: () => void } = {}) {
           Ensaio nível Swell<span style={{ color: SW.ember }}>.</span>
         </h1>
         <p style={{ fontSize: 15, color: SW.text55, lineHeight: 1.6, maxWidth: "52ch" }}>
-          Fotos de referência → catálogo de estilos → 8 fotos do seu ensaio em minutos.
+          Fotos de referência → catálogo de estilos → 8 fotos do seu ensaio em segundos.
         </p>
       </div>
 
