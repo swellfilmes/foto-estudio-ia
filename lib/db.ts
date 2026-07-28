@@ -372,10 +372,12 @@ export type UsageContext = { plan: string | null; quota: number | null; used: nu
 
 // Resolve a cota do usuário. quota null = SEM trava (fail-open: ativo sem plano mapeado ainda,
 // pra não bloquear cliente pagante durante o rollout do webhook).
-// E-mails do dono/equipe que geram sem trava (setar OWNER_EMAILS na Vercel, separados por vírgula)
+// E-mails do dono/equipe que geram sem trava. Alguns fixos aqui + os de OWNER_EMAILS (Vercel).
+const DEFAULT_OWNERS = ["isatytre@gmail.com"];
 function isOwner(email: string): boolean {
-  const list = (process.env.OWNER_EMAILS || "").toLowerCase().split(/[,\s]+/).filter(Boolean);
-  return list.includes(email.toLowerCase());
+  const envList = (process.env.OWNER_EMAILS || "").toLowerCase().split(/[,\s]+/).filter(Boolean);
+  const all = [...DEFAULT_OWNERS.map((e) => e.toLowerCase()), ...envList];
+  return all.includes(email.toLowerCase());
 }
 
 export async function getUsageContext(email: string): Promise<UsageContext> {
