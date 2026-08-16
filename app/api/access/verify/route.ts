@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSubscriber, hasActiveAccess } from "@/lib/db";
+import { getSubscriber, hasActiveAccess, isOwner } from "@/lib/db";
 import { verifyAccessToken } from "@/lib/access-token";
 
 const COOKIE_NAME = "swell-subscriber";
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   }
 
   const sub = await getSubscriber(email);
-  if (!hasActiveAccess(sub)) {
+  if (!hasActiveAccess(sub) && !isOwner(email)) {
     return redirectWithMsg(req, "acesso-expirado");
   }
 

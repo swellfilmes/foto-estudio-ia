@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSubscriber, hasActiveAccess } from "@/lib/db";
+import { getSubscriber, hasActiveAccess, isOwner } from "@/lib/db";
 import { signAccessToken } from "@/lib/access-token";
 import { sendMagicLink } from "@/lib/email";
 
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
 
   // Resposta uniforme mesmo quando não existe/expirado: evita enumeração de e-mails.
   // Mas só disparamos e-mail se tiver acesso válido.
-  if (hasActiveAccess(sub)) {
+  if (hasActiveAccess(sub) || isOwner(email)) {
     try {
       const token = await signAccessToken(email);
       const link = `${baseUrl(req)}/api/access/verify?token=${encodeURIComponent(token)}`;
