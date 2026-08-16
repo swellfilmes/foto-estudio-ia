@@ -119,7 +119,8 @@ function SignInInner() {
             <div style={{ fontSize: 34, marginBottom: 12 }}>✉️</div>
             <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 22, marginBottom: 8 }}>Verifique seu e-mail</div>
             <div style={{ fontSize: 13, color: SW.t55, lineHeight: 1.6, marginBottom: 20 }}>
-              Se <strong style={{ color: SW.text }}>{email}</strong> tem uma assinatura ativa, você recebeu um link de acesso. Ele vale por 15 minutos.
+              Se <strong style={{ color: SW.text }}>{email}</strong> tem uma assinatura ativa, você recebeu um link de acesso. Ele vale por 15 minutos.<br /><br />
+              Não chegou em 1 minuto? Veja a caixa de <strong style={{ color: SW.text }}>spam</strong>, ou fale com a gente em <a href="mailto:contato@swellfilmes.com.br" style={{ color: SW.ember }}>contato@swellfilmes.com.br</a>.
             </div>
             <button type="button" onClick={() => { setMagicSent(false); setEmail(""); }} style={{ background: "none", color: SW.t55, border: `1px solid ${SW.line}`, borderRadius: 12, padding: "11px 18px", fontSize: 13, cursor: "pointer", fontFamily: FONT.body }}>
               Usar outro e-mail
