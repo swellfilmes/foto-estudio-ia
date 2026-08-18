@@ -1474,8 +1474,8 @@ function ProfilePanel({ usage }: { usage: { email?: string | null; plan: string 
             <div style={{ fontSize: 13, color: FOAM, fontWeight: 600, marginBottom: 8 }}>Cancelar seu plano?</div>
             <div style={{ fontSize: 12, color: foam(0.55), lineHeight: 1.65, marginBottom: 14 }}>
               Você continua com acesso até o fim do ciclo já pago. Duas formas:<br /><br />
-              <strong style={{ color: foam(0.78) }}>1.</strong> No e-mail <strong style={{ color: foam(0.78) }}>“Pagamento de assinatura aprovado”</strong> da Kiwify, toque em <strong style={{ color: foam(0.78) }}>“Gerenciar assinatura”</strong> e cancele — é na hora.<br /><br />
-              <strong style={{ color: foam(0.78) }}>2.</strong> Ou peça que a gente cancele pra você:
+              <strong style={{ color: foam(0.78) }}>1.</strong> No e-mail <strong style={{ color: foam(0.78) }}>“Pagamento de assinatura aprovado”</strong> da Kiwify, toque em <strong style={{ color: foam(0.78) }}>“Gerenciar assinatura”</strong> e cancele — é na hora, <strong style={{ color: foam(0.78) }}>sem login nem conta</strong>.<br /><br />
+              <strong style={{ color: foam(0.78) }}>2.</strong> Perdeu o e-mail? A gente cancela pra você:
             </div>
             <a href={cancelMailto} style={{ display: "block", textAlign: "center", background: "#B23B2E", color: FOAM, borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 700, textDecoration: "none", marginBottom: 8 }}>Solicitar cancelamento</a>
             <button onClick={() => setCancelStep(false)} style={{ width: "100%", background: "none", border: "none", color: foam(0.5), fontSize: 12, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>Voltar</button>
