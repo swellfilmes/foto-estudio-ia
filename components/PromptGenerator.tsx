@@ -6,7 +6,7 @@ import { assembleScene, BrandDirection } from "@/lib/scene-blocks";
 import {
   ArrowRight, ArrowUp, Camera, Check, Clapperboard, Coffee, Download, Film, Gem, Hand,
   Image as ImageIcon, Layers, LayoutGrid, Lock, LogOut, Plus, Search, Smartphone,
-  Sparkles, ThumbsDown, ThumbsUp, X, Zap, type LucideIcon,
+  Sparkles, ThumbsDown, ThumbsUp, User, X, Zap, type LucideIcon,
 } from "lucide-react";
 
 // ── Design do protótipo (Claude Design) — Estúdio Swell ──────────────────────
@@ -171,8 +171,9 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
   // Contador REAL de fotos já geradas (persistente — não zera ao trocar de ensaio)
   const [usedTotal, setUsedTotal] = useState(0);
   // Cota do plano (paywall) + popup de upsell
-  const [usage, setUsage] = useState<{ plan: string | null; quota: number | null; used: number; remaining: number | null } | null>(null);
+  const [usage, setUsage] = useState<{ email?: string | null; plan: string | null; quota: number | null; used: number; remaining: number | null } | null>(null);
   const [upsellOpen, setUpsellOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   // ── Projeto (produto salvo = fotos-referência + análise + suas gerações) ──
   const [projectName, setProjectName] = useState<string>("");
@@ -628,6 +629,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
           <button onClick={reset} style={navBtn}>Novo ensaio</button>
           <button onClick={() => setGalleryOpen(true)} style={navBtn}>Galeria</button>
           <button onClick={() => setBrandOpen(true)} style={navBtn}>{brand.name ? `● ${brand.name}` : "Minha marca"}</button>
+          <button onClick={() => setProfileOpen(true)} style={navBtn}>Conta</button>
         </nav>
         <button
           onClick={() => (quotaLow ? setUpsellOpen(true) : setPricingOpen(true))}
@@ -643,12 +645,12 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
             ? `${usage!.used}/${usage!.quota} FOTOS`
             : `${usedTotal} FOTO${usedTotal === 1 ? "" : "S"} GERADA${usedTotal === 1 ? "" : "S"}`}
         </button>
-        <a href="/api/logout" title="Sair" style={{
+        <button onClick={() => setProfileOpen(true)} title="Sua conta" style={{
           display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34,
-          border: `1px solid ${foam(0.14)}`, color: foam(0.55), borderRadius: "50%", textDecoration: "none",
+          border: `1px solid ${foam(0.14)}`, background: foam(0.04), color: foam(0.65), borderRadius: "50%", cursor: "pointer",
         }}>
-          <LogOut size={14} />
-        </a>
+          <User size={15} />
+        </button>
       </div>
     </header>
   );
@@ -1142,6 +1144,12 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
         </Drawer>
       )}
 
+      {profileOpen && (
+        <Drawer kicker="SUA CONTA" title="Perfil" onClose={() => setProfileOpen(false)}>
+          <ProfilePanel usage={usage} />
+        </Drawer>
+      )}
+
       {pricingOpen && (
         <div onClick={() => setPricingOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 70, background: "rgba(10,9,8,0.6)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, animation: "riseIn 350ms ease both" }}>
           <div onClick={(e) => e.stopPropagation()} style={{ width: "min(720px, 100%)", background: "rgba(20,17,15,0.9)", backdropFilter: "blur(30px)", WebkitBackdropFilter: "blur(30px)", border: `1px solid ${foam(0.12)}`, borderRadius: 22, padding: 32, boxShadow: "0 50px 140px rgba(0,0,0,0.7)", boxSizing: "border-box" }}>
@@ -1404,6 +1412,76 @@ function BrandForm({ brand, onSave }: { brand: BrandProfile; onSave: (b: BrandPr
       <button onClick={() => onSave(draft)} style={{ width: "100%", background: EMBER, border: "none", color: INK, borderRadius: 12, padding: 14, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>
         Salvar minha marca
       </button>
+    </div>
+  );
+}
+
+// ── Perfil / Conta (gaveta) ──────────────────────────────────────────────────
+const PLAN_LABELS: Record<string, string> = { essencial: "Simples", pro: "Médio", marca: "Grande", trial: "Teste grátis", dono: "Acesso de dono" };
+
+function ProfilePanel({ usage }: { usage: { email?: string | null; plan: string | null; quota: number | null; used: number; remaining: number | null } | null }) {
+  const [name, setName] = useState("");
+  const [saved, setSaved] = useState(false);
+  const [cancelStep, setCancelStep] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => { try { setName(localStorage.getItem("swell-profile-name") || ""); } catch { /* ignora */ } }, 0);
+    return () => clearTimeout(t);
+  }, []);
+
+  function saveName() {
+    try { localStorage.setItem("swell-profile-name", name.trim()); } catch { /* ignora */ }
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1500);
+  }
+
+  const email = usage?.email || "";
+  const planLabel = usage?.plan ? (PLAN_LABELS[usage.plan] || usage.plan) : "—";
+  // Cancelamento é confirmado pela equipe via Kiwify (mantém acesso até o fim do ciclo).
+  // TODO(João): se a Kiwify tiver um link de autoatendimento de cancelamento, trocar o mailto por ele.
+  const cancelMailto = `mailto:contato@swellfilmes.com.br?subject=${encodeURIComponent("Cancelamento de plano")}&body=${encodeURIComponent(`Quero cancelar meu plano.\n\nMeu e-mail de acesso: ${email}`)}`;
+  const label: React.CSSProperties = { ...mono(10, 0.22), color: foam(0.45), marginBottom: 9 };
+
+  return (
+    <div>
+      <div style={label}>E-MAIL DA CONTA</div>
+      <div style={{ fontSize: 14, color: FOAM, marginBottom: 24, wordBreak: "break-all" }}>{email || "—"}</div>
+
+      <div style={label}>SEU PLANO</div>
+      <div style={{ border: `1px solid ${foam(0.1)}`, borderRadius: 14, padding: "14px 16px", marginBottom: 26 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: EMBER }}>{planLabel}</div>
+        <div style={{ fontSize: 12, color: foam(0.55), marginTop: 4 }}>
+          {usage?.quota != null
+            ? `${usage.used}/${usage.quota} fotos usadas este mês`
+            : `${usage?.used ?? 0} foto${(usage?.used ?? 0) === 1 ? "" : "s"} geradas`}
+        </div>
+      </div>
+
+      <div style={label}>SEU NOME</div>
+      <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Como quer ser chamada"
+        style={{ width: "100%", background: foam(0.05), border: `1px solid ${foam(0.12)}`, borderRadius: 12, padding: "12px 14px", color: FOAM, fontSize: 14, outline: "none", boxSizing: "border-box", fontFamily: "'Hanken Grotesk', sans-serif", marginBottom: 10 }} />
+      <button onClick={saveName} style={{ width: "100%", background: foam(0.06), border: `1px solid ${foam(0.15)}`, color: FOAM, borderRadius: 10, padding: 11, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif", marginBottom: 28 }}>
+        {saved ? "Salvo ✓" : "Salvar nome"}
+      </button>
+
+      <div style={{ borderTop: `1px solid ${foam(0.08)}`, paddingTop: 22 }}>
+        {!cancelStep ? (
+          <button onClick={() => setCancelStep(true)} style={{ width: "100%", background: "none", border: `1px solid ${foam(0.15)}`, color: foam(0.6), borderRadius: 10, padding: 12, fontSize: 13, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>
+            Cancelar plano
+          </button>
+        ) : (
+          <div style={{ border: "1px solid rgba(178,59,46,0.35)", borderRadius: 12, padding: 16, background: "rgba(178,59,46,0.06)" }}>
+            <div style={{ fontSize: 13, color: FOAM, fontWeight: 600, marginBottom: 8 }}>Cancelar seu plano?</div>
+            <div style={{ fontSize: 12, color: foam(0.55), lineHeight: 1.6, marginBottom: 14 }}>Você continua com acesso até o fim do ciclo já pago. É só confirmar abaixo que a gente processa o cancelamento.</div>
+            <a href={cancelMailto} style={{ display: "block", textAlign: "center", background: "#B23B2E", color: FOAM, borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 700, textDecoration: "none", marginBottom: 8 }}>Solicitar cancelamento</a>
+            <button onClick={() => setCancelStep(false)} style={{ width: "100%", background: "none", border: "none", color: foam(0.5), fontSize: 12, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>Voltar</button>
+          </div>
+        )}
+      </div>
+
+      <a href="/api/logout" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 20, color: foam(0.5), fontSize: 13, textDecoration: "none" }}>
+        <LogOut size={14} /> Sair da conta
+      </a>
     </div>
   );
 }
