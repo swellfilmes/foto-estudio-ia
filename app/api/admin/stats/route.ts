@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionEmail } from "@/lib/session";
-import { isOwner, getSubscriberStats, getSubscriber, hasActiveAccess } from "@/lib/db";
+import { isOwner, isAdminKey, getSubscriberStats, getSubscriber, hasActiveAccess } from "@/lib/db";
 
-// Painel de dono — números do negócio. Só o e-mail de dono (logado) enxerga.
+// Painel de dono — números do negócio. Abre pro e-mail de dono logado OU via ?key=.
 export async function GET(req: NextRequest) {
   const email = getSessionEmail(req);
-  if (!email || !isOwner(email)) {
+  const ok = (email && isOwner(email)) || isAdminKey(req.nextUrl.searchParams.get("key"));
+  if (!ok) {
     return NextResponse.json(
-      { error: "acesso restrito ao dono — entre no app com o e-mail de dono e recarregue esta página." },
+      { error: "acesso restrito — logue com o e-mail de dono, ou adicione &key=<sua-chave> na URL." },
       { status: 403 }
     );
   }

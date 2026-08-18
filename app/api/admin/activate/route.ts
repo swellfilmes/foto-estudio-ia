@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionEmail } from "@/lib/session";
-import { isOwner, upsertSubscriber, getSubscriber, hasActiveAccess, PLAN_QUOTAS } from "@/lib/db";
+import { isOwner, isAdminKey, upsertSubscriber, getSubscriber, hasActiveAccess, PLAN_QUOTAS } from "@/lib/db";
 
 // Ativa um assinante NA MÃO (só dono). Rede de segurança: se a compra não caiu pelo
 // webhook, o dono libera o acesso na hora. Também serve pra cortesias/testers.
@@ -13,8 +13,9 @@ const PLAN_ALIAS: Record<string, "essencial" | "pro" | "marca"> = {
 
 export async function GET(req: NextRequest) {
   const owner = getSessionEmail(req);
-  if (!owner || !isOwner(owner)) {
-    return NextResponse.json({ error: "só o dono pode ativar." }, { status: 403 });
+  const ok = (owner && isOwner(owner)) || isAdminKey(req.nextUrl.searchParams.get("key"));
+  if (!ok) {
+    return NextResponse.json({ error: "acesso restrito — logue como dono ou adicione &key=<sua-chave>." }, { status: 403 });
   }
 
   const email = (req.nextUrl.searchParams.get("email") || "").trim().toLowerCase();

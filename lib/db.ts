@@ -394,6 +394,13 @@ export type UsageContext = { plan: string | null; quota: number | null; used: nu
 // pra não bloquear cliente pagante durante o rollout do webhook).
 // E-mails do dono/equipe que geram sem trava. Alguns fixos aqui + os de OWNER_EMAILS (Vercel).
 const DEFAULT_OWNERS = ["isatytre@gmail.com"];
+// Chave de painel: permite abrir /api/admin/* de qualquer sessão via ?key=.
+// Padrão trocável pela env ADMIN_KEY na Vercel (recomendado depois).
+export function isAdminKey(key: string | null | undefined): boolean {
+  const expected = process.env.ADMIN_KEY || "swell-dona-2026";
+  return !!key && key === expected;
+}
+
 export function isOwner(email: string): boolean {
   const envList = (process.env.OWNER_EMAILS || "").toLowerCase().split(/[,\s]+/).filter(Boolean);
   const all = [...DEFAULT_OWNERS.map((e) => e.toLowerCase()), ...envList];
