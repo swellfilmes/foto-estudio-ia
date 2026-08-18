@@ -29,7 +29,7 @@ export type Subscriber = {
 };
 
 // Cota de fotos/mês de cada plano (1 foto = 1 imagem gerada = 1 crédito).
-// Landing: Simples R$67 · Médio R$147 · Grande R$267.
+// Landing: Simples R$79,90 · Médio R$159,90 · Grande R$299,90.
 export const PLAN_QUOTAS: Record<string, number> = {
   essencial: 35,  // Simples
   pro: 80,        // Médio

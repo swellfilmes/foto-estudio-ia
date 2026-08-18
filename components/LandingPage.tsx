@@ -48,20 +48,20 @@ type Plan = {
 const PLANS: Plan[] = [
   {
     url: "https://pay.kiwify.com.br/Acv9bKu" + utm("plano_simples"),
-    name: "SIMPLES", label: "Simples", price: "R$67", photos: "35", highlight: "Ideal pra começar",
+    name: "SIMPLES", label: "Simples", price: "R$79,90", photos: "35", highlight: "Ideal pra começar",
     featured: false, border: "rgba(244,239,230,0.1)", shadow: "none", nameColor: SW.t45,
     btnBg: "none", btnBorder: "1px solid rgba(244,239,230,0.18)", btnColor: SW.text, btnShadow: "none",
   },
   {
     url: "https://pay.kiwify.com.br/Q2dYAL2" + utm("plano_medio"),
-    name: "MÉDIO", label: "Médio", price: "R$147", photos: "80", highlight: "2× mais fotos que o Simples",
+    name: "MÉDIO", label: "Médio", price: "R$159,90", photos: "80", highlight: "2× mais fotos que o Simples",
     featured: true, border: "rgba(224,116,47,0.5)",
     shadow: "0 0 100px rgba(224,116,47,0.12), 0 30px 90px rgba(0,0,0,0.5)", nameColor: SW.ember,
     btnBg: EMBER_GRAD, btnBorder: "none", btnColor: "#0A0908", btnShadow: "0 12px 40px rgba(224,116,47,0.25)",
   },
   {
     url: "https://pay.kiwify.com.br/5Q3p3nP" + utm("plano_grande"),
-    name: "GRANDE", label: "Grande", price: "R$267", photos: "180", highlight: "5× mais fotos que o Simples",
+    name: "GRANDE", label: "Grande", price: "R$299,90", photos: "180", highlight: "5× mais fotos que o Simples",
     featured: false, border: "rgba(244,239,230,0.1)", shadow: "none", nameColor: SW.t45,
     btnBg: "none", btnBorder: "1px solid rgba(244,239,230,0.18)", btnColor: SW.text, btnShadow: "none",
   },
@@ -225,7 +225,7 @@ export default function LandingPage() {
             <h1 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(44px, 5.6vw, 76px)", lineHeight: 0.95, letterSpacing: "-0.035em", margin: "0 0 20px" }}>Seu produto.<br /><span style={{ color: SW.t45 }}>Pronto para vender</span><span style={{ color: SW.ember }}>.</span></h1>
             <p style={{ fontSize: 16, lineHeight: 1.65, color: SW.t55, margin: "0 0 40px", maxWidth: "48ch" }}>Suba a foto do seu produto tirada no celular. Receba fotos com cara de campanha — rótulo fiel, luz de estúdio, direção de arte Swell. Sem fotógrafo, sem marcar hora.</p>
             <div style={{ display: "flex", alignItems: "center", gap: 22, flexWrap: "wrap" }}>
-              <a href="#planos" onClick={scrollToPlans} className="sw-cta" style={{ background: EMBER_GRAD, color: "#0A0908", borderRadius: 14, padding: "17px 30px", fontSize: 15, fontWeight: 700, fontFamily: FONT.body, display: "inline-flex", alignItems: "center", gap: 10, boxShadow: "0 12px 40px rgba(224,116,47,0.25)" }}>Começar agora — a partir de R$67/mês<Arrow /></a>
+              <a href="#planos" onClick={scrollToPlans} className="sw-cta" style={{ background: EMBER_GRAD, color: "#0A0908", borderRadius: 14, padding: "17px 30px", fontSize: 15, fontWeight: 700, fontFamily: FONT.body, display: "inline-flex", alignItems: "center", gap: 10, boxShadow: "0 12px 40px rgba(224,116,47,0.25)" }}>Começar agora — a partir de R$79,90/mês<Arrow /></a>
               <button onClick={() => setShowExit(true)} style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 3, background: "none", border: "none", cursor: "pointer", padding: 0, textAlign: "left", fontFamily: FONT.body }}>
                 <span style={{ fontSize: 14, fontWeight: 700, color: SW.text, borderBottom: "1px solid rgba(224,116,47,0.6)", paddingBottom: 2 }}>Teste grátis</span>
                 <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.18em", color: SW.t45 }}>SEM CARTÃO</span>
@@ -448,7 +448,7 @@ export default function LandingPage() {
         <div style={{ maxWidth: 820, margin: "0 auto", position: "relative" }}>
           <img src="/assets/swell-studio-logo.png" alt="Swell Studio" style={{ height: 52, width: "auto", display: "block", margin: "0 auto 30px" }} />
           <h2 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(40px, 5.4vw, 68px)", letterSpacing: "-0.035em", lineHeight: 0.95, margin: "0 0 34px" }}>Seu produto.<br /><span style={{ color: SW.t45 }}>Pronto para vender</span><span style={{ color: SW.ember }}>.</span></h2>
-          <a href="#planos" onClick={scrollToPlans} className="sw-cta" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: EMBER_GRAD, color: "#0A0908", borderRadius: 14, padding: "17px 32px", fontSize: 15, fontWeight: 700, fontFamily: FONT.body, boxShadow: "0 12px 40px rgba(224,116,47,0.25)" }}>Começar agora — a partir de R$67/mês<Arrow /></a>
+          <a href="#planos" onClick={scrollToPlans} className="sw-cta" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: EMBER_GRAD, color: "#0A0908", borderRadius: 14, padding: "17px 32px", fontSize: 15, fontWeight: 700, fontFamily: FONT.body, boxShadow: "0 12px 40px rgba(224,116,47,0.25)" }}>Começar agora — a partir de R$79,90/mês<Arrow /></a>
           <div style={{ marginTop: 30, fontFamily: FONT.mono, fontSize: 11, letterSpacing: "0.16em" }}>
             <a href="mailto:contato@swellfilmes.com.br" style={{ color: SW.t45 }}>CONTATO@SWELLFILMES.COM.BR</a>
           </div>
