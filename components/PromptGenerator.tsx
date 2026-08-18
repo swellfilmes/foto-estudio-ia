@@ -174,6 +174,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
   const [usage, setUsage] = useState<{ email?: string | null; plan: string | null; quota: number | null; used: number; remaining: number | null } | null>(null);
   const [upsellOpen, setUpsellOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [lightbox, setLightbox] = useState<{ src: string; name: string } | null>(null);
 
   // ── Projeto (produto salvo = fotos-referência + análise + suas gerações) ──
   const [projectName, setProjectName] = useState<string>("");
@@ -915,10 +916,8 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                   <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 6 }}>
                     {projectGens.flatMap((g) =>
                       g.images.map((src, i) => (
-                        <a key={`${g.id}-${i}`} href={`/api/download?u=${encodeURIComponent(src)}&name=swell-${g.style}-${i + 1}.jpg`} title={`${g.label || g.style} · baixar`} style={{ flexShrink: 0 }}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={src} alt="" style={{ width: 92, height: 116, objectFit: "cover", borderRadius: 12, border: `1px solid ${foam(0.1)}`, display: "block" }} />
-                        </a>
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img key={`${g.id}-${i}`} src={src} alt="" onClick={() => setLightbox({ src, name: `swell-${g.style}-${i + 1}.jpg` })} title="Ampliar" style={{ flexShrink: 0, width: 92, height: 116, objectFit: "cover", borderRadius: 12, border: `1px solid ${foam(0.1)}`, display: "block", cursor: "zoom-in" }} />
                       ))
                     )}
                   </div>
@@ -1052,7 +1051,8 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                   onNo={() => updateBatch(batch.id, { feedback: "no" })}
                   onFeedbackText={(v) => updateBatch(batch.id, { feedbackText: v })}
                   onPrepareRedo={() => prepareRedo(batch)} onConfirmRedo={() => confirmRedo(batch)}
-                  onEditRedo={() => updateBatch(batch.id, { redo: undefined })} />
+                  onEditRedo={() => updateBatch(batch.id, { redo: undefined })}
+                  onExpand={(src, name) => setLightbox({ src, name })} />
               ))}
             </>
           )}
@@ -1126,10 +1126,8 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>{g.label || g.style}</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {g.images.map((src, i) => (
-                  <a key={i} href={`/api/download?u=${encodeURIComponent(src)}&name=swell-${g.style}-${i + 1}.jpg`}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={src} alt="" style={{ width: 56, height: 70, objectFit: "cover", borderRadius: 8, border: `1px solid ${foam(0.1)}`, display: "block" }} />
-                  </a>
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={i} src={src} alt="" onClick={() => setLightbox({ src, name: `swell-${g.style}-${i + 1}.jpg` })} title="Ampliar" style={{ width: 56, height: 70, objectFit: "cover", borderRadius: 8, border: `1px solid ${foam(0.1)}`, display: "block", cursor: "zoom-in" }} />
                 ))}
               </div>
               <div style={{ fontSize: 11, color: foam(0.4), marginTop: 8 }}>{g.images.length} foto{g.images.length === 1 ? "" : "s"} · salvas pra sempre</div>
@@ -1167,6 +1165,19 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
             </div>
             <div style={{ ...mono(10, 0.16), color: foam(0.4), textAlign: "center" }}>VOCÊ JÁ GEROU {usedTotal} FOTO{usedTotal === 1 ? "" : "S"} NESTA CONTA</div>
           </div>
+        </div>
+      )}
+
+      {/* Lightbox — clicar na foto amplia, com botão de baixar */}
+      {lightbox && (
+        <div onClick={() => setLightbox(null)} style={{ position: "fixed", inset: 0, zIndex: 80, background: "rgba(6,5,4,0.92)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "clamp(16px, 4vw, 48px)", gap: 20, animation: "riseIn 250ms ease both" }}>
+          <button onClick={() => setLightbox(null)} title="Fechar" style={{ position: "absolute", top: 18, right: 18, ...closeBtn }}><X size={16} /></button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={lightbox.src} alt="" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "min(1100px, 92vw)", maxHeight: "76vh", objectFit: "contain", borderRadius: 12, boxShadow: "0 40px 120px rgba(0,0,0,0.6)" }} />
+          <a href={`/api/download?u=${encodeURIComponent(lightbox.src)}&name=${encodeURIComponent(lightbox.name)}`} onClick={(e) => e.stopPropagation()}
+            style={{ ...gradientBtn, display: "inline-flex", alignItems: "center", gap: 9, padding: "14px 28px", fontSize: 14, textDecoration: "none" }}>
+            <Download size={16} />Baixar foto
+          </a>
         </div>
       )}
 
@@ -1232,7 +1243,7 @@ function StyleThumb({ styleKey, Icon }: { styleKey: string; Icon: LucideIcon }) 
 }
 
 // ── Lote de geração (grid + feedback) ────────────────────────────────────────
-function BatchBlock({ batch, msgIdx, progressPct, onRetry, onYes, onNo, onFeedbackText, onPrepareRedo, onConfirmRedo, onEditRedo }: {
+function BatchBlock({ batch, msgIdx, progressPct, onRetry, onYes, onNo, onFeedbackText, onPrepareRedo, onConfirmRedo, onEditRedo, onExpand }: {
   batch: Batch;
   msgIdx: number;
   progressPct: (b?: { startedAt: number }) => string;
@@ -1243,6 +1254,7 @@ function BatchBlock({ batch, msgIdx, progressPct, onRetry, onYes, onNo, onFeedba
   onPrepareRedo: () => void;
   onConfirmRedo: () => void;
   onEditRedo: () => void;
+  onExpand: (src: string, name: string) => void;
 }) {
   const BIcon = batch.style.icon;
   const showFeedback = !batch.loading && !batch.error && batch.images.length > 0 && batch.feedback !== "redone";
@@ -1270,7 +1282,7 @@ function BatchBlock({ batch, msgIdx, progressPct, onRetry, onYes, onNo, onFeedba
           {batch.images.map((src, i) => (
             <div key={i} style={{ position: "relative", borderRadius: 16, overflow: "hidden", border: `1px solid ${foam(0.1)}`, background: "#14110F", animation: "riseIn 700ms cubic-bezier(0.22,1,0.36,1) both" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt={`${batch.style.label} ${i + 1}`} style={{ width: "100%", display: "block" }} />
+              <img src={src} alt={`${batch.style.label} ${i + 1}`} onClick={() => onExpand(src, `swell-${batch.style.key}-${i + 1}.jpg`)} title="Ampliar" style={{ width: "100%", display: "block", cursor: "zoom-in" }} />
               <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", background: "linear-gradient(180deg, rgba(10,9,8,0) 0%, rgba(10,9,8,0.85) 100%)" }}>
                 <span style={{ ...mono(9, 0.16), color: foam(0.75) }}>VAR {String(i + 1).padStart(2, "0")}</span>
                 <a href={`/api/download?u=${encodeURIComponent(src)}&name=swell-${batch.style.key}-${i + 1}.jpg`}

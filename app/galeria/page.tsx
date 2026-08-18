@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, Download, FolderOpen, Plus } from "lucide-react";
+import { ArrowLeft, Download, FolderOpen, Plus, X } from "lucide-react";
 
 const EMBER = "#E0742F";
 const FOAM = "#F4EFE6";
@@ -46,6 +46,7 @@ export default function GaleriaPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [email, setEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lightbox, setLightbox] = useState<{ src: string; name: string } | null>(null);
 
   useEffect(() => {
     document.title = "Galeria — Swell Studio";
@@ -140,7 +141,7 @@ export default function GaleriaPage() {
                   {g.images.map((src, i) => (
                     <div key={i} style={{ position: "relative", borderRadius: 16, overflow: "hidden", border: `1px solid ${foam(0.1)}`, background: "#14110F" }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={src} alt="" style={{ width: "100%", display: "block" }} />
+                      <img src={src} alt="" onClick={() => setLightbox({ src, name: `swell-${g.style}-${i + 1}.jpg` })} title="Ampliar" style={{ width: "100%", display: "block", cursor: "zoom-in" }} />
                       <a href={`/api/download?u=${encodeURIComponent(src)}&name=swell-${g.style}-${i + 1}.jpg`}
                         style={{ position: "absolute", bottom: 10, right: 10, display: "flex", alignItems: "center", gap: 5, background: "rgba(10,9,8,0.7)", backdropFilter: "blur(8px)", color: FOAM, borderRadius: 8, padding: "6px 11px", fontSize: 11, fontWeight: 600, textDecoration: "none" }}>
                         <Download size={11} />Baixar
@@ -159,6 +160,18 @@ export default function GaleriaPage() {
           </div>
         )}
       </main>
+
+      {lightbox && (
+        <div onClick={() => setLightbox(null)} style={{ position: "fixed", inset: 0, zIndex: 80, background: "rgba(6,5,4,0.92)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "clamp(16px, 4vw, 48px)", gap: 20 }}>
+          <button onClick={() => setLightbox(null)} title="Fechar" style={{ position: "absolute", top: 18, right: 18, width: 36, height: 36, borderRadius: "50%", background: foam(0.08), border: `1px solid ${foam(0.15)}`, color: FOAM, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={16} /></button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={lightbox.src} alt="" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "min(1100px, 92vw)", maxHeight: "76vh", objectFit: "contain", borderRadius: 12, boxShadow: "0 40px 120px rgba(0,0,0,0.6)" }} />
+          <a href={`/api/download?u=${encodeURIComponent(lightbox.src)}&name=${encodeURIComponent(lightbox.name)}`} onClick={(e) => e.stopPropagation()}
+            style={{ display: "inline-flex", alignItems: "center", gap: 9, background: EMBER, color: "#0A0908", borderRadius: 12, padding: "14px 28px", fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
+            <Download size={16} />Baixar foto
+          </a>
+        </div>
+      )}
     </div>
   );
 }
