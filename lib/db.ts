@@ -107,13 +107,15 @@ export async function getSubscriberStats() {
   const trial = (await sql`SELECT COUNT(*)::int AS n FROM subscribers WHERE status = 'trial'`) as { n: number }[];
   const byStatus = (await sql`SELECT status, COUNT(*)::int AS n FROM subscribers GROUP BY status ORDER BY n DESC`) as { status: string; n: number }[];
   const byPlan = (await sql`SELECT COALESCE(plan, '(sem plano)') AS plan, COUNT(*)::int AS n FROM subscribers WHERE status = 'active' GROUP BY plan ORDER BY n DESC`) as { plan: string; n: number }[];
-  const recent = (await sql`SELECT email, status, plan, created_at FROM subscribers ORDER BY created_at DESC LIMIT 10`) as { email: string; status: string; plan: string | null; created_at: string }[];
+  const recent = (await sql`SELECT email, status, plan, source, kwify_customer_id, created_at FROM subscribers ORDER BY created_at DESC LIMIT 15`) as { email: string; status: string; plan: string | null; source: string; kwify_customer_id: string | null; created_at: string }[];
+  const vindosDaKiwify = (await sql`SELECT COUNT(*)::int AS n FROM subscribers WHERE source = 'kwify'`) as { n: number }[];
   return {
     assinantesAtivos: active[0]?.n ?? 0,
     emTeste: trial[0]?.n ?? 0,
     totalCadastros: total[0]?.n ?? 0,
     porStatus: byStatus,
     porPlano: byPlan,
+    vindosDaKiwify: vindosDaKiwify[0]?.n ?? 0,
     ultimos: recent,
   };
 }
