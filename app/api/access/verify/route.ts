@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSubscriber, hasActiveAccess, isOwner } from "@/lib/db";
-import { verifyAccessToken } from "@/lib/access-token";
+import { verifyAccessToken, signSessionToken } from "@/lib/access-token";
 
 const COOKIE_NAME = "swell-subscriber";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 dias
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
   const res = NextResponse.redirect(dest);
   res.cookies.set({
     name: COOKIE_NAME,
-    value: Buffer.from(email).toString("base64url"), // guarda o e-mail p/ histórico por usuário
+    value: await signSessionToken(email), // token ASSINADO — não dá pra forjar a sessão
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

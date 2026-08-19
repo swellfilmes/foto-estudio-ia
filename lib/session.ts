@@ -1,20 +1,15 @@
 import type { NextRequest } from "next/server";
+import { verifySessionToken } from "@/lib/access-token";
 
-// Descobre o e-mail da pessoa logada a partir dos cookies de sessão.
-// Ambos guardam o e-mail em base64url: swell-subscriber (assinante) e swell-lead (teste).
-function decodeEmail(v?: string): string | null {
-  if (!v) return null;
-  try {
-    const s = Buffer.from(v, "base64url").toString("utf-8").trim().toLowerCase();
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) ? s : null;
-  } catch {
-    return null;
-  }
-}
+const SESSION_COOKIE = "swell-subscriber";
 
-export function getSessionEmail(req: NextRequest): string | null {
-  return (
-    decodeEmail(req.cookies.get("swell-subscriber")?.value) ||
-    decodeEmail(req.cookies.get("swell-lead")?.value)
-  );
+// Descobre o e-mail da pessoa logada a partir do cookie de sessão.
+// O cookie guarda um TOKEN ASSINADO (JWT) — verificamos a assinatura antes de
+// confiar no e-mail. Sem isso, qualquer um poderia forjar o cookie e se passar
+// por outro usuário. Retorna null se o token for inválido/expirado/ausente.
+export async function getSessionEmail(req: NextRequest): Promise<string | null> {
+  const token = req.cookies.get(SESSION_COOKIE)?.value;
+  if (!token) return null;
+  const email = await verifySessionToken(token);
+  return email ? email.toLowerCase() : null;
 }

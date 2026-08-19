@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   if (!key) return NextResponse.json({ error: "API key do Magnific não configurada" }, { status: 500 });
 
   // Paywall: guardamos se debitamos pra poder estornar se a geração falhar na hora.
-  const payEmail = getSessionEmail(req);
+  const payEmail = await getSessionEmail(req);
   let debited = false;
 
   try {

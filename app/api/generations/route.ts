@@ -5,7 +5,7 @@ import { persistImage } from "@/lib/blob-store";
 
 // GET — histórico da pessoa logada (por e-mail da sessão)
 export async function GET(req: NextRequest) {
-  const email = getSessionEmail(req);
+  const email = await getSessionEmail(req);
   if (!email) return NextResponse.json({ email: null, generations: [] });
   try {
     const generations = await listGenerations(email);
@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
 
 // POST — salva um lote gerado: baixa as imagens do Magnific → Blob permanente → banco
 export async function POST(req: NextRequest) {
-  const email = getSessionEmail(req);
+  const email = await getSessionEmail(req);
   if (!email) return NextResponse.json({ error: "sem sessão" }, { status: 401 });
   try {
     const { style, label, images, note, projectId } = await req.json();

@@ -23,7 +23,7 @@ async function urlToBase64(url: string): Promise<string | null> {
 
 // GET — sem ?id: lista os projetos do usuário. Com ?id: detalhe (refs em base64 + gerações).
 export async function GET(req: NextRequest) {
-  const email = getSessionEmail(req);
+  const email = await getSessionEmail(req);
   if (!email) return NextResponse.json({ email: null, projects: [] });
 
   const idParam = req.nextUrl.searchParams.get("id");
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
 
 // POST — cria um projeto: sobe as fotos-referência (base64) pro Blob e grava a análise.
 export async function POST(req: NextRequest) {
-  const email = getSessionEmail(req);
+  const email = await getSessionEmail(req);
   if (!email) return NextResponse.json({ error: "sem sessão" }, { status: 401 });
   try {
     const { name, category, color, material, size, refImagesBase64 } = await req.json();
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
 
 // PATCH — renomeia o projeto (?id=123, body { name }).
 export async function PATCH(req: NextRequest) {
-  const email = getSessionEmail(req);
+  const email = await getSessionEmail(req);
   if (!email) return NextResponse.json({ error: "sem sessão" }, { status: 401 });
   try {
     const id = Number(req.nextUrl.searchParams.get("id"));

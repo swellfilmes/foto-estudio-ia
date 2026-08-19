@@ -36,3 +36,31 @@ export async function verifyAccessToken(token: string): Promise<string | null> {
     return null;
   }
 }
+
+// ── Token de SESSÃO (cookie de "quem é você") ────────────────────────────────
+// Diferente do magic link: vale 30 dias e tem audience própria. É ASSINADO —
+// impede forjar o cookie de sessão e se passar por outro usuário.
+const SESSION_AUDIENCE = "swell-lens-session";
+const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 dias
+
+export async function signSessionToken(email: string): Promise<string> {
+  return await new SignJWT({ email: email.toLowerCase() })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuer(ISSUER)
+    .setAudience(SESSION_AUDIENCE)
+    .setIssuedAt()
+    .setExpirationTime(`${SESSION_TTL_SECONDS}s`)
+    .sign(secret());
+}
+
+export async function verifySessionToken(token: string): Promise<string | null> {
+  try {
+    const { payload } = await jwtVerify(token, secret(), {
+      issuer: ISSUER,
+      audience: SESSION_AUDIENCE,
+    });
+    return typeof payload.email === "string" ? payload.email : null;
+  } catch {
+    return null;
+  }
+}

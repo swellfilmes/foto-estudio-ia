@@ -12,7 +12,7 @@ const PLAN_ALIAS: Record<string, "essencial" | "pro" | "marca"> = {
 };
 
 export async function GET(req: NextRequest) {
-  const owner = getSessionEmail(req);
+  const owner = await getSessionEmail(req);
   const ok = (owner && isOwner(owner)) || isAdminKey(req.nextUrl.searchParams.get("key"));
   if (!ok) {
     return NextResponse.json({ error: "acesso restrito — logue como dono ou adicione &key=<sua-chave>." }, { status: 403 });

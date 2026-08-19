@@ -5,7 +5,7 @@ import { getUsageContext } from "@/lib/db";
 // GET — cota real do usuário logado: { plan, quota, used, remaining }.
 // quota/remaining = null significa "sem trava" (ativo ainda sem plano mapeado).
 export async function GET(req: NextRequest) {
-  const email = getSessionEmail(req);
+  const email = await getSessionEmail(req);
   if (!email) return NextResponse.json({ email: null, plan: null, quota: null, used: 0, remaining: null });
   try {
     const usage = await getUsageContext(email);

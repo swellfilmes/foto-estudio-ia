@@ -399,7 +399,10 @@ const DEFAULT_OWNERS = ["isatytre@gmail.com"];
 // Chave de painel: permite abrir /api/admin/* de qualquer sessão via ?key=.
 // Padrão trocável pela env ADMIN_KEY na Vercel (recomendado depois).
 export function isAdminKey(key: string | null | undefined): boolean {
-  const expected = process.env.ADMIN_KEY || "swell-dona-2026";
+  const expected = process.env.ADMIN_KEY;
+  // Sem chave forte configurada (>=16 chars) → acesso por ?key= fica DESATIVADO.
+  // O dono continua entrando pelo painel via login (sessão assinada).
+  if (!expected || expected.length < 16) return false;
   return !!key && key === expected;
 }
 

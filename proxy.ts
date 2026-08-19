@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { verifySessionToken } from "@/lib/access-token";
 
-const LEAD_COOKIE = "swell-lead";
-const SUBSCRIBER_COOKIE = "swell-subscriber";
+const SESSION_COOKIE = "swell-subscriber";
 
-export function proxy(request: NextRequest) {
-  // /studio libera pra quem tem qualquer um dos dois:
-  //   - lead (teste grátis por e-mail)
-  //   - subscriber (assinatura ativa)
-  const hasLead = request.cookies.has(LEAD_COOKIE);
-  const hasSubscriber = request.cookies.has(SUBSCRIBER_COOKIE);
-  if (!hasLead && !hasSubscriber) {
+// Portão do /studio e /galeria: só passa quem tem um cookie de sessão com
+// ASSINATURA VÁLIDA. Antes bastava o cookie existir (forjável) — agora o token
+// é verificado; cookie inválido/expirado/forjado é tratado como "sem sessão".
+export async function proxy(request: NextRequest) {
+  const token = request.cookies.get(SESSION_COOKIE)?.value;
+  const email = token ? await verifySessionToken(token) : null;
+  if (!email) {
     const url = request.nextUrl.clone();
     url.pathname = "/entrar";
     url.searchParams.set("next", request.nextUrl.pathname);

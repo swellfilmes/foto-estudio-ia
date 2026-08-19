@@ -4,7 +4,7 @@ import { isOwner, isAdminKey, getSubscriberStats, getSubscriber, hasActiveAccess
 
 // Painel de dono — números do negócio. Abre pro e-mail de dono logado OU via ?key=.
 export async function GET(req: NextRequest) {
-  const email = getSessionEmail(req);
+  const email = await getSessionEmail(req);
   const ok = (email && isOwner(email)) || isAdminKey(req.nextUrl.searchParams.get("key"));
   if (!ok) {
     return NextResponse.json(
