@@ -81,6 +81,15 @@ const FAQS = [
   { q: "O teste é grátis mesmo?", a: "Sim: 5 fotos, sem cartão. Depois você escolhe um plano se quiser continuar." },
 ];
 
+// Reações REAIS de clientes (WhatsApp / Instagram) — recriadas como balões, não print.
+type Reaction = { text: string; react: string | null; via: string };
+const REACTIONS: Reaction[] = [
+  { text: "A arte ficou cachorrada", react: "❤️", via: "CLIENTE · WHATSAPP" },
+  { text: "Tá lindo de mais", react: "❤️", via: "CLIENTE · WHATSAPP" },
+  { text: "Outro nível aí 👏🏻👏🏻", react: null, via: "@JORGEALC20 · INSTAGRAM" },
+  { text: "Me arrepiei… olha isso", react: "😍", via: "CLIENTE · WHATSAPP" },
+];
+
 const DATACRAZY_WEBHOOK =
   "https://api.datacrazy.io/v1/crm/api/crm/integrations/webhook/business/a1391dce-2771-4a48-b4d8-6743f67ef8c6";
 
@@ -345,6 +354,24 @@ export default function LandingPage() {
           <h2 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(30px, 8vw, 46px)", lineHeight: 0.95, letterSpacing: "-0.035em", margin: 0 }}>Tirei no celular.<br />Virou isso<span style={{ color: SW.ember }}>.</span></h2>
         </div>
         <ProofRail />
+      </section>
+
+      {/* ============ REAÇÕES REAIS ============ */}
+      <section style={{ borderTop: `1px solid ${SW.line}`, padding: "clamp(40px, 6vw, 72px) clamp(16px, 4vw, 40px)" }}>
+        <div style={{ maxWidth: 760, margin: "0 auto" }}>
+          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember, marginBottom: 10 }}>QUEM VIU, FALOU</div>
+          <h2 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(26px, 6.5vw, 40px)", lineHeight: 0.97, letterSpacing: "-0.03em", margin: "0 0 28px" }}>Reação de quem recebeu<span style={{ color: SW.ember }}>.</span></h2>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
+            {REACTIONS.map((r, i) => (
+              <div key={i} style={{ position: "relative", flex: "1 1 240px", background: SW.surface, border: `1px solid ${SW.line2}`, borderRadius: "16px 16px 16px 4px", padding: "16px 18px", display: "flex", flexDirection: "column", gap: 12 }}>
+                {r.react && <span style={{ position: "absolute", right: 14, top: 14, fontSize: 16, lineHeight: 1 }}>{r.react}</span>}
+                <p style={{ margin: 0, paddingRight: r.react ? 26 : 0, fontSize: 16.5, lineHeight: 1.4, color: SW.text, fontWeight: 500 }}>{r.text}</p>
+                <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: "0.14em", color: SW.t40 }}>{r.via}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: "0.14em", color: SW.t35, marginTop: 22 }}>MENSAGENS REAIS DE CLIENTES</div>
+        </div>
       </section>
 
       {/* ============ 02 · COMO FUNCIONA ============ */}
