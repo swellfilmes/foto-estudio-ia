@@ -111,10 +111,10 @@ function BeforeAfter() {
     <div ref={ref} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
       style={{ position: "relative", aspectRatio: "4/5", width: "100%", borderRadius: 4, overflow: "hidden", background: SW.surface, border: "1px solid rgba(244,239,230,0.1)", touchAction: "none", cursor: "ew-resize", userSelect: "none", boxShadow: "0 40px 110px rgba(0,0,0,0.6)" }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/assets/opt/luminaria-antes.jpg" alt="Produto fotografado no celular" draggable={false} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none" }} />
+      <img src="/assets/opt/luminaria-depois.jpg" alt="Mesmo produto em foto de campanha Swell" draggable={false} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none" }} />
       <div style={{ position: "absolute", inset: 0, clipPath: `inset(0 ${100 - reveal}% 0 0)` }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/assets/opt/luminaria-depois.jpg" alt="Mesmo produto em foto de campanha Swell" draggable={false} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none" }} />
+        <img src="/assets/opt/luminaria-antes.jpg" alt="Produto fotografado no celular" draggable={false} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none" }} />
       </div>
       <div style={{ position: "absolute", top: 0, bottom: 0, left: `${reveal}%`, width: 1.5, background: SW.ember, pointerEvents: "none", boxShadow: "0 0 24px rgba(224,116,47,0.55)" }}>
         <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 46, height: 46, borderRadius: 999, background: SW.ember, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 30px rgba(0,0,0,0.5)" }}>
