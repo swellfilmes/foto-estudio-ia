@@ -76,7 +76,7 @@ const STEPS = [
 
 const FAQS = [
   { q: "Meu produto fica idêntico?", a: "Sim. Rótulo, cor e formato são preservados a partir da foto que você envia. Só o cenário e a luz mudam." },
-  { q: "Preciso saber mexer em nada?", a: "Não. Você sobe a foto e a direção de arte é preenchida sozinha. Você só confirma." },
+  { q: "Preciso saber editar ou mexer em programa?", a: "Não, nada. Você sobe a foto do produto, escolhe a cena e pronto — luz, cenário e ângulo ficam por nossa conta. Você só baixa e posta." },
   { q: "Quanto tempo demora?", a: "Cerca de 40 segundos por foto de produto. Ensaio de pessoa, 3 a 5 minutos." },
   { q: "O teste é grátis mesmo?", a: "Sim: 5 fotos, sem cartão. Depois você escolhe um plano se quiser continuar." },
 ];
