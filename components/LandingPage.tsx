@@ -86,10 +86,19 @@ const DATACRAZY_WEBHOOK =
 
 /* ===================== Meta Pixel (eventos de conversão) ===================== */
 type Fbq = (...args: unknown[]) => void;
-function track(event: string, params?: Record<string, unknown>) {
+// `eventId` liga este disparo ao gêmeo que sai do servidor (API de Conversões).
+// A Meta recebe os dois e conta uma vez só.
+function track(event: string, params?: Record<string, unknown>, eventId?: string) {
   if (typeof window === "undefined") return;
   const fbq = (window as unknown as { fbq?: Fbq }).fbq;
-  if (fbq) fbq("track", event, params);
+  if (fbq) fbq("track", event, params, eventId ? { eventID: eventId } : undefined);
+}
+function newEventId(prefix: string): string {
+  const rand =
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return `${prefix}.${rand}`;
 }
 // "R$159,90" → 159.9
 function priceToNumber(price: string): number {
@@ -251,10 +260,11 @@ export default function LandingPage() {
     // Confirma o e-mail e libera o teste: cria o trial e manda o link mágico (Resend).
     // O acesso só abre quando a pessoa clica no link — evita e-mail falso pegando 5 fotos.
     try {
+      const leadEventId = newEventId("lead");
       const r = await fetch("/api/lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, source: "landing-swell-studio" }),
+        body: JSON.stringify({ name, email, source: "landing-swell-studio", eventId: leadEventId }),
       });
       const data = await r.json().catch(() => ({}));
       if (!r.ok) {
@@ -266,7 +276,8 @@ export default function LandingPage() {
         setLeadStatus("blocked");
       } else {
         setLeadStatus("sent");
-        track("Lead", { content_name: "teste-gratis" }); // conversão do teste grátis
+        // conversão do teste grátis — o servidor manda o gêmeo com o mesmo leadEventId
+        track("Lead", { content_name: "teste-gratis" }, leadEventId);
       }
     } catch {
       setLeadError("Sem conexão. Tenta de novo em instantes.");
@@ -310,7 +321,8 @@ export default function LandingPage() {
         <div className="swl-rise" style={{ maxWidth: 560, margin: "0 auto", display: "flex", flexDirection: "column", gap: "clamp(22px, 4vw, 30px)" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 14, textAlign: "center" }}>
             <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.t42 }}>FOTO DE PRODUTO COM IA</div>
-            <h1 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(42px, 12vw, 66px)", lineHeight: 0.92, letterSpacing: "-0.04em", margin: 0, textWrap: "balance" }}>Foto de celular virou foto de estúdio<br />em 1 minuto<span style={{ color: SW.ember }}>.</span></h1>
+            <h1 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(38px, 10.5vw, 60px)", lineHeight: 0.94, letterSpacing: "-0.04em", margin: 0, textWrap: "balance" }}>Cansada de foto feia<br />travando sua venda<span style={{ color: SW.ember }}>?</span></h1>
+            <p style={{ fontSize: "clamp(16px, 4.5vw, 19px)", lineHeight: 1.4, color: SW.t72, margin: 0, textWrap: "balance" }}>Sua foto de celular vira <strong style={{ color: SW.text, fontWeight: 700 }}>foto de estúdio em 1 minuto</strong>.</p>
           </div>
 
           <BeforeAfter />
@@ -319,7 +331,9 @@ export default function LandingPage() {
             <button onClick={openLead} className="swl-cta" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 4, padding: "20px 28px", fontFamily: FONT.body, fontSize: 17, fontWeight: 800, letterSpacing: "-0.015em", cursor: "pointer", boxShadow: "0 16px 50px rgba(224,116,47,0.26)" }}>
               Transformar minha foto agora<Arrow />
             </button>
-            <div style={{ fontFamily: FONT.mono, fontSize: 10.5, letterSpacing: "0.18em", color: SW.t42 }}>5 FOTOS · SEM CARTÃO</div>
+            <p style={{ fontSize: 13.5, lineHeight: 1.5, color: SW.t55, margin: 0, textAlign: "center", maxWidth: "38ch" }}>
+              Sobe a foto do produto <span style={{ color: SW.ember }}>→</span> recebe <strong style={{ color: SW.text, fontWeight: 700 }}>4 versões profissionais em ~2 min</strong>. Grátis pra testar, sem cartão.
+            </p>
           </div>
         </div>
       </section>
