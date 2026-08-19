@@ -84,6 +84,19 @@ const FAQS = [
 const DATACRAZY_WEBHOOK =
   "https://api.datacrazy.io/v1/crm/api/crm/integrations/webhook/business/a1391dce-2771-4a48-b4d8-6743f67ef8c6";
 
+/* ===================== Meta Pixel (eventos de conversão) ===================== */
+type Fbq = (...args: unknown[]) => void;
+function track(event: string, params?: Record<string, unknown>) {
+  if (typeof window === "undefined") return;
+  const fbq = (window as unknown as { fbq?: Fbq }).fbq;
+  if (fbq) fbq("track", event, params);
+}
+// "R$159,90" → 159.9
+function priceToNumber(price: string): number {
+  const n = Number(price.replace(/[^\d,]/g, "").replace(",", "."));
+  return Number.isFinite(n) ? n : 0;
+}
+
 /* ===================== ícones ===================== */
 const Arrow = ({ size = 19 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
@@ -253,6 +266,7 @@ export default function LandingPage() {
         setLeadStatus("blocked");
       } else {
         setLeadStatus("sent");
+        track("Lead", { content_name: "teste-gratis" }); // conversão do teste grátis
       }
     } catch {
       setLeadError("Sem conexão. Tenta de novo em instantes.");
@@ -397,7 +411,7 @@ export default function LandingPage() {
                   <div>{p.highlight}</div>
                   <div>Produto e pessoa inclusos</div>
                 </div>
-                <a href={p.url} className="swl-cta" style={{ display: "flex", alignItems: "center", justifyContent: "center", background: p.btnBg, border: p.btnBorder, color: p.btnColor, borderRadius: 4, padding: "15px 20px", fontFamily: FONT.body, fontSize: 15, fontWeight: 800, letterSpacing: "-0.01em", boxShadow: p.btnShadow, textDecoration: "none" }}>Assinar {p.label}</a>
+                <a href={p.url} onClick={() => track("InitiateCheckout", { content_name: p.label, value: priceToNumber(p.price), currency: "BRL" })} className="swl-cta" style={{ display: "flex", alignItems: "center", justifyContent: "center", background: p.btnBg, border: p.btnBorder, color: p.btnColor, borderRadius: 4, padding: "15px 20px", fontFamily: FONT.body, fontSize: 15, fontWeight: 800, letterSpacing: "-0.01em", boxShadow: p.btnShadow, textDecoration: "none" }}>Assinar {p.label}</a>
               </div>
             ))}
           </div>
