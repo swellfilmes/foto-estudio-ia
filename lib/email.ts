@@ -177,3 +177,30 @@ export function buildTrialWelcomeEmail(params: { name?: string | null; siteUrl?:
 export async function sendTrialWelcome(params: { email: string; name?: string | null; siteUrl?: string }) {
   await deliver({ email: params.email, ...buildTrialWelcomeEmail(params) });
 }
+
+// ── 4) Link do teste grátis (confirma o e-mail e libera as 5 fotos) ───────────
+export function buildTrialAccessEmail(params: { link: string; name?: string | null }): BuiltEmail {
+  const { link, name } = params;
+  const fn = firstName(name);
+  const greet = fn ? `Oi, ${fn}!` : "Oi!";
+  return {
+    subject: "Libere seu teste grátis do Swell Studio",
+    html: renderEmail({
+      preheader: "Confirme seu e-mail e libere 5 fotos grátis — o link vale 15 minutos.",
+      kicker: "Teste grátis",
+      heading: `${greet} Falta um clique.`,
+      bodyHtml:
+        `Confirme que este e-mail é seu e libere suas <strong style="color:${C.text}">5 fotos grátis</strong>. ` +
+        `O link abre o estúdio direto e vale por <strong style="color:${C.text}">15 minutos</strong>.`,
+      ctaLabel: "Liberar minhas 5 fotos",
+      ctaLink: link,
+      ctaHint: `Se o botão não funcionar, copie e cole no navegador:<br><span style="color:#8A847A;word-break:break-all">${link}</span>`,
+      footerNote: "Não pediu esse teste? Pode ignorar — sem esse link ninguém entra.",
+    }),
+    text: `${greet}\n\nConfirme seu e-mail e libere 5 fotos grátis no Swell Studio (o link vale 15 minutos):\n\n${link}\n\nNão pediu? Ignore este e-mail.\n\nSwell Filmes`,
+  };
+}
+
+export async function sendTrialAccessLink(params: { email: string; link: string; name?: string | null }) {
+  await deliver({ email: params.email, ...buildTrialAccessEmail(params) });
+}

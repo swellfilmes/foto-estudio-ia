@@ -40,6 +40,7 @@ function SignInInner() {
     const erro = search.get("erro");
     if (erro === "link-invalido") setError("Link expirado ou inválido. Peça um novo abaixo.");
     else if (erro === "acesso-expirado") setError("Sua assinatura não está mais ativa.");
+    else if (erro === "teste-ja-usado") setError("Este aparelho já usou o teste grátis. Entre com o e-mail que você usou, ou escolha um plano.");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

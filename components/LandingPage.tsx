@@ -191,7 +191,8 @@ export default function LandingPage() {
   const [open, setOpen] = useState<number>(-1);
   const [showLead, setShowLead] = useState(false);
   const [leadEmail, setLeadEmail] = useState("");
-  const [leadSent, setLeadSent] = useState(false);
+  const [leadStatus, setLeadStatus] = useState<"idle" | "sent" | "blocked">("idle");
+  const [leadMsg, setLeadMsg] = useState("");
   const [leadError, setLeadError] = useState("");
   const exitShown = useRef(false);
 
@@ -199,7 +200,7 @@ export default function LandingPage() {
     document.title = "Swell Studio — Foto de estúdio, do seu celular";
     try { exitShown.current = localStorage.getItem("swl-exit-shown") === "1"; } catch {}
     const onMouseOut = (e: MouseEvent) => {
-      if (exitShown.current || showLead || leadSent) return;
+      if (exitShown.current || showLead || leadStatus !== "idle") return;
       if (e.clientY <= 8 && !e.relatedTarget) {
         exitShown.current = true;
         try { localStorage.setItem("swl-exit-shown", "1"); } catch {}
@@ -208,7 +209,7 @@ export default function LandingPage() {
     };
     document.addEventListener("mouseout", onMouseOut);
     return () => document.removeEventListener("mouseout", onMouseOut);
-  }, [showLead, leadSent]);
+  }, [showLead, leadStatus]);
 
   const submitLead = async () => {
     const email = leadEmail.trim();
@@ -234,15 +235,28 @@ export default function LandingPage() {
         created_at: new Date().toISOString(),
       }),
     }).catch(() => {});
-    // Libera o teste DE VERDADE: cria o trial, seta o cookie de acesso e dispara o e-mail (Resend).
+    // Confirma o e-mail e libera o teste: cria o trial e manda o link mágico (Resend).
+    // O acesso só abre quando a pessoa clica no link — evita e-mail falso pegando 5 fotos.
     try {
-      await fetch("/api/lead", {
+      const r = await fetch("/api/lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, source: "landing-swell-studio" }),
       });
-    } catch { /* acesso/e-mail é best-effort; a captura no CRM já foi feita acima */ }
-    setLeadSent(true);
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        setLeadError(typeof data?.error === "string" ? data.error : "Não conseguimos enviar agora. Tenta de novo em instantes.");
+        return;
+      }
+      if (data?.status === "blocked") {
+        setLeadMsg(typeof data?.message === "string" ? data.message : "Você já usou o teste grátis neste aparelho.");
+        setLeadStatus("blocked");
+      } else {
+        setLeadStatus("sent");
+      }
+    } catch {
+      setLeadError("Sem conexão. Tenta de novo em instantes.");
+    }
   };
 
   const openLead = () => setShowLead(true);
@@ -440,25 +454,35 @@ export default function LandingPage() {
             <button onClick={() => setShowLead(false)} style={{ position: "absolute", top: 12, right: 12, background: "none", border: "none", color: SW.t40, cursor: "pointer", padding: 6, lineHeight: 0 }}>
               <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
             </button>
-            {!leadSent ? (
+            {leadStatus === "idle" ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.22em", color: SW.ember }}>TESTE GRÁTIS</div>
                 <h3 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(26px, 7vw, 34px)", lineHeight: 0.95, letterSpacing: "-0.035em", margin: 0 }}>5 fotos, sem cartão.</h3>
-                <p style={{ fontSize: 15, lineHeight: 1.55, color: SW.t55, margin: 0 }}>Deixa seu e-mail — a gente manda seu acesso.</p>
+                <p style={{ fontSize: 15, lineHeight: 1.55, color: SW.t55, margin: 0 }}>Deixa seu e-mail — a gente manda um link pra liberar.</p>
                 <input value={leadEmail} onChange={(e) => { setLeadEmail(e.target.value); if (leadError) setLeadError(""); }} onKeyDown={(e) => { if (e.key === "Enter") submitLead(); }} type="email" autoComplete="email" placeholder="seu@email.com" autoFocus
                   style={{ width: "100%", background: SW.bg, border: `1px solid ${leadError ? "rgba(232,131,111,0.7)" : "rgba(244,239,230,0.16)"}`, borderRadius: 3, padding: "15px 16px", color: SW.text, fontFamily: FONT.body, fontSize: 16, outline: "none" }} />
                 {leadError && <div style={{ color: "#E8836F", fontSize: 12.5, lineHeight: 1.4, marginTop: -6 }}>{leadError}</div>}
                 <button onClick={submitLead} className="swl-cta" style={{ width: "100%", background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 3, padding: 17, fontFamily: FONT.body, fontSize: 16, fontWeight: 800, cursor: "pointer" }}>Quero testar</button>
                 <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: "0.14em", color: SW.t35, textAlign: "center" }}>SEM SPAM · CANCELA QUANDO QUISER</div>
               </div>
-            ) : (
+            ) : leadStatus === "sent" ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 14, alignItems: "center", textAlign: "center", padding: "12px 0" }}>
                 <div style={{ width: 52, height: 52, borderRadius: 999, background: "rgba(224,116,47,0.12)", border: "1px solid rgba(224,116,47,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <svg width={26} height={26} viewBox="0 0 24 24" fill="none" stroke={SW.ember} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                  <svg width={26} height={26} viewBox="0 0 24 24" fill="none" stroke={SW.ember} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><polyline points="22 6 12 13 2 6" /></svg>
                 </div>
-                <h3 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: 26, letterSpacing: "-0.03em", margin: 0 }}>Recebido.</h3>
-                <p style={{ fontSize: 15, lineHeight: 1.55, color: SW.t55, margin: 0 }}>Seu acesso chega no e-mail em instantes.</p>
-                <a href="/studio" className="swl-cta" style={{ width: "100%", textAlign: "center", background: EMBER_GRAD, color: "#0A0908", borderRadius: 3, padding: 15, fontFamily: FONT.body, fontSize: 15, fontWeight: 800, textDecoration: "none", marginTop: 4 }}>Abrir o estúdio agora →</a>
+                <h3 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: 26, letterSpacing: "-0.03em", margin: 0 }}>Confira seu e-mail.</h3>
+                <p style={{ fontSize: 15, lineHeight: 1.55, color: SW.t55, margin: 0 }}>Mandamos um link pra <strong style={{ color: SW.text }}>{leadEmail}</strong> — clica nele pra liberar suas 5 fotos.</p>
+                <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: "0.14em", color: SW.t35 }}>ÀS VEZES CAI EM PROMOÇÕES / SPAM</div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 14, alignItems: "center", textAlign: "center", padding: "12px 0" }}>
+                <div style={{ width: 52, height: 52, borderRadius: 999, background: "rgba(244,239,230,0.06)", border: `1px solid ${SW.line2}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <svg width={26} height={26} viewBox="0 0 24 24" fill="none" stroke={SW.ember} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                </div>
+                <h3 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: 24, letterSpacing: "-0.03em", margin: 0 }}>Teste já usado.</h3>
+                <p style={{ fontSize: 15, lineHeight: 1.55, color: SW.t55, margin: 0 }}>{leadMsg}</p>
+                <a href="#planos" onClick={() => setShowLead(false)} className="swl-cta" style={{ width: "100%", textAlign: "center", background: EMBER_GRAD, color: "#0A0908", borderRadius: 3, padding: 15, fontFamily: FONT.body, fontSize: 15, fontWeight: 800, textDecoration: "none", marginTop: 4 }}>Ver planos</a>
+                <a href="/entrar" style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.14em", color: SW.t45, textDecoration: "none" }}>JÁ TENHO ACESSO — ENTRAR</a>
               </div>
             )}
           </div>
