@@ -47,20 +47,20 @@ type Plan = {
 
 const PLANS: Plan[] = [
   {
-    url: "https://pay.kiwify.com.br/Acv9bKu" + utm("plano_simples"),
+    url: "https://pay.kiwify.com.br/iT4Cc0s" + utm("plano_simples"),
     name: "SIMPLES", label: "Simples", price: "R$79,90", photos: "35", highlight: "Ideal pra começar",
     featured: false, border: "rgba(244,239,230,0.1)", shadow: "none", nameColor: SW.t45,
     btnBg: "none", btnBorder: "1px solid rgba(244,239,230,0.18)", btnColor: SW.text, btnShadow: "none",
   },
   {
-    url: "https://pay.kiwify.com.br/Q2dYAL2" + utm("plano_medio"),
+    url: "https://pay.kiwify.com.br/J6cjEFC" + utm("plano_medio"),
     name: "MÉDIO", label: "Médio", price: "R$159,90", photos: "80", highlight: "2× mais fotos que o Simples",
     featured: true, border: "rgba(224,116,47,0.5)",
     shadow: "0 0 100px rgba(224,116,47,0.12), 0 30px 90px rgba(0,0,0,0.5)", nameColor: SW.ember,
     btnBg: EMBER_GRAD, btnBorder: "none", btnColor: "#0A0908", btnShadow: "0 12px 40px rgba(224,116,47,0.25)",
   },
   {
-    url: "https://pay.kiwify.com.br/5Q3p3nP" + utm("plano_grande"),
+    url: "https://pay.kiwify.com.br/xB1SN3A" + utm("plano_grande"),
     name: "GRANDE", label: "Grande", price: "R$299,90", photos: "180", highlight: "5× mais fotos que o Simples",
     featured: false, border: "rgba(244,239,230,0.1)", shadow: "none", nameColor: SW.t45,
     btnBg: "none", btnBorder: "1px solid rgba(244,239,230,0.18)", btnColor: SW.text, btnShadow: "none",
