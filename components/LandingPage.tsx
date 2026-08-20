@@ -522,8 +522,10 @@ export default function LandingPage() {
         .swl-ghost:hover { color: ${SW.emberHi}; }
         .swl-sticky, .swl-stickypad { display: none; }
         @media (max-width: 640px) { .swl-sticky { display: block; } .swl-stickypad { display: block; } }
-        @keyframes swlPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,138,61,0.5), 0 16px 44px rgba(224,116,47,0.45); } 50% { box-shadow: 0 0 0 10px rgba(255,138,61,0), 0 18px 64px rgba(255,138,61,0.72); } }
+        @keyframes swlPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,120,26,0.55), 0 16px 44px rgba(255,106,20,0.5); } 50% { box-shadow: 0 0 0 11px rgba(255,120,26,0), 0 20px 70px rgba(255,120,26,0.8); } }
         .swl-pulse { animation: swlPulse 2s ease-in-out infinite; }
+        @keyframes swlFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        .swl-float { animation: swlFloat 3s ease-in-out infinite; }
         @media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
       `}</style>
 
@@ -566,9 +568,11 @@ export default function LandingPage() {
                 type="email" autoComplete="email" inputMode="email" placeholder={t.hero.emailPlaceholder} aria-label="e-mail"
                 style={{ width: "100%", background: "rgba(244,239,230,0.06)", border: `1.5px solid ${leadError ? "rgba(232,131,111,0.85)" : "rgba(224,116,47,0.55)"}`, borderRadius: 4, padding: "18px 18px", color: SW.text, fontFamily: FONT.body, fontSize: 16.5, outline: "none", textAlign: "center" }}
               />
-              <button type="submit" className="swl-cta swl-pulse" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: "linear-gradient(180deg, #FF8C3F 0%, #E0651A 100%)", color: "#0A0908", border: "none", borderRadius: 4, padding: "20px 28px", fontFamily: FONT.body, fontSize: 17.5, fontWeight: 800, letterSpacing: "-0.015em", cursor: "pointer" }}>
-                {t.hero.cta}<Arrow />
-              </button>
+              <div className="swl-float" style={{ width: "100%" }}>
+                <button type="submit" className="swl-cta swl-pulse" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: "linear-gradient(180deg, #FF7A1F 0%, #E85E12 100%)", color: "#0A0908", border: "none", borderRadius: 4, padding: "20px 28px", fontFamily: FONT.body, fontSize: 17.5, fontWeight: 800, letterSpacing: "-0.015em", cursor: "pointer" }}>
+                  {t.hero.cta}<Arrow />
+                </button>
+              </div>
               {leadError && <div style={{ color: "#E8836F", fontSize: 13, lineHeight: 1.4, textAlign: "center" }}>{leadError}</div>}
               <div style={{ fontFamily: FONT.mono, fontSize: 10.5, letterSpacing: "0.16em", color: SW.t45, textAlign: "center", marginTop: 2 }}>{t.hero.reassure}</div>
             </form>
