@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import type { CSSProperties } from "react";
 
 /* ===================== tokens (Swell Studio — design v3) ===================== */
 const SW = {
@@ -28,75 +27,195 @@ const FONT = {
 };
 const EMBER_GRAD = "linear-gradient(180deg, #EE8440 0%, #D96A24 100%)";
 
-/* ===================== dados ===================== */
+/* ===================== idiomas ===================== */
+type Lang = "pt" | "es" | "en";
+const LANGS: { code: Lang; label: string }[] = [
+  { code: "pt", label: "PT" },
+  { code: "es", label: "ES" },
+  { code: "en", label: "EN" },
+];
+
+function detectLang(): Lang {
+  try {
+    const saved = localStorage.getItem("swl-lang");
+    if (saved === "pt" || saved === "es" || saved === "en") return saved;
+  } catch {}
+  const nav = (typeof navigator !== "undefined" ? navigator.language : "pt").toLowerCase();
+  if (nav.startsWith("es")) return "es";
+  if (nav.startsWith("en")) return "en";
+  return "pt";
+}
+
+/* ===================== conteúdo por idioma ===================== */
+const pt = {
+  docTitle: "Swell Studio — Foto de estúdio, do seu celular",
+  nav: { login: "Entrar", tryFree: "Testar grátis" },
+  hero: {
+    kicker: "FOTO DE PRODUTO COM IA",
+    h1a: "Cansada de foto feia", h1b: "travando sua venda",
+    subPre: "Sua foto de celular vira ", subStrong: "foto de estúdio em 1 minuto", subPost: ".",
+    emailPlaceholder: "Seu melhor e-mail",
+    cta: "Testar grátis — 5 fotos",
+    processPre: "Sobe a foto", processStrong: "4 versões em ~2 min", processPost: ", sem cartão.",
+    urgency: "Cada dia de foto fraca é venda que escapa — testa hoje.",
+  },
+  ba: { before: "ANTES · CELULAR", after: "DEPOIS · SWELL", drag: "ARRASTA PRA VER", beforeShort: "ANTES", afterShort: "DEPOIS" },
+  sent: { title: "Confira seu e-mail.", body: (e: string) => <>Mandamos um link pra <strong style={{ color: SW.text }}>{e}</strong> — clica nele pra liberar suas 5 fotos.</>, spam: "ÀS VEZES CAI EM PROMOÇÕES / SPAM" },
+  blocked: { title: "Teste já usado.", used: "Você já testou com esse e-mail. Pra continuar, escolha um plano — a partir de R$79,90.", device: "Este aparelho já usou o teste grátis. Entre com o e-mail que você usou, ou escolha um plano.", seePlans: "Ver planos", alreadyHave: "JÁ TENHO ACESSO — ENTRAR" },
+  err: { invalid: "Ops — digite um e-mail válido (ex.: voce@suamarca.com).", send: "Não conseguimos enviar agora. Tenta de novo em instantes.", conn: "Sem conexão. Tenta de novo em instantes." },
+  proof: { kicker: "01 — PROVA", h2a: "Tirei no celular.", h2b: "Virou isso", labels: ["BEBIDA", "CALÇADO", "ACESSÓRIO", "VESTUÁRIO"], disclaimer: "MENSAGENS REAIS DE CLIENTES" },
+  reactions: { kicker: "QUEM VIU, FALOU", h2: "Reação de quem recebeu", items: [
+    { text: "A arte ficou cachorrada", via: "CLIENTE · WHATSAPP" },
+    { text: "Tá lindo de mais", via: "CLIENTE · WHATSAPP" },
+    { text: "Outro nível aí 👏🏻👏🏻", via: "CLIENTE · INSTAGRAM" },
+    { text: "Me arrepiei… olha isso", via: "CLIENTE · WHATSAPP" },
+  ] },
+  how: { kicker: "02 — COMO FUNCIONA", steps: ["Sobe a foto", "Escolhe a cena", "Baixa e posta"] },
+  fidelity: { kicker: "03 — FIDELIDADE", h2a: "Seu produto, idêntico.", h2b: "Só o cenário muda", body: "Rótulo, cor e formato preservados. Direção de arte de uma produtora audiovisual — não é filtro." },
+  modes: { kicker: "04 — DOIS MODOS", productT: "Produto", productD: "1 foto do celular → 4 variações de campanha.", personT: "Pessoa", personD: "3 selfies → 8 fotos de ensaio editorial." },
+  plans: { kicker: "05 — PLANOS", perMonth: "/mês", photosWord: "fotos", perMonthWord: "por mês", included: "Produto e pessoa inclusos", subscribe: "Assinar", mostPopular: "MAIS POPULAR", guarantee: "7 DIAS DE GARANTIA · CANCELA QUANDO QUISER",
+    items: [
+      { name: "SIMPLES", label: "Simples", highlight: "Ideal pra começar" },
+      { name: "MÉDIO", label: "Médio", highlight: "2× mais fotos que o Simples" },
+      { name: "GRANDE", label: "Grande", highlight: "5× mais fotos que o Simples" },
+    ] },
+  faq: { kicker: "06 — DÚVIDAS", items: [
+    { q: "Meu produto fica idêntico?", a: "Sim. Rótulo, cor e formato são preservados a partir da foto que você envia. Só o cenário e a luz mudam." },
+    { q: "Preciso saber editar ou mexer em programa?", a: "Não, nada. Você sobe a foto do produto, escolhe a cena e pronto — luz, cenário e ângulo ficam por nossa conta. Você só baixa e posta." },
+    { q: "Quanto tempo demora?", a: "Cerca de 40 segundos por foto de produto. Ensaio de pessoa, 3 a 5 minutos." },
+    { q: "O teste é grátis mesmo?", a: "Sim: 5 fotos, sem cartão. Depois você escolhe um plano se quiser continuar." },
+  ] },
+  finalCta: { h2a: "Seu produto merece", h2b: "foto boa", cta: "Testar grátis", sub: "5 FOTOS · SEM CARTÃO" },
+  modal: { kicker: "TESTE GRÁTIS", title: "5 fotos, sem cartão.", body: "Deixa seu e-mail — a gente manda um link pra liberar.", placeholder: "seu@email.com", cta: "Quero testar", nospam: "SEM SPAM · CANCELA QUANDO QUISER" },
+  sticky: "Testar grátis — 5 fotos, sem cartão",
+};
+type Content = typeof pt;
+
+const es: Content = {
+  docTitle: "Swell Studio — Foto de estudio, desde tu celular",
+  nav: { login: "Entrar", tryFree: "Probar gratis" },
+  hero: {
+    kicker: "FOTOS DE PRODUCTO CON IA",
+    h1a: "¿Cansada de fotos feas", h1b: "que frenan tus ventas",
+    subPre: "Tu foto de celular se vuelve ", subStrong: "foto de estudio en 1 minuto", subPost: ".",
+    emailPlaceholder: "Tu mejor e-mail",
+    cta: "Probar gratis — 5 fotos",
+    processPre: "Sube la foto", processStrong: "4 versiones en ~2 min", processPost: ", sin tarjeta.",
+    urgency: "Cada día con fotos flojas es una venta que se escapa — prueba hoy.",
+  },
+  ba: { before: "ANTES · CELULAR", after: "DESPUÉS · SWELL", drag: "ARRASTRA PARA VER", beforeShort: "ANTES", afterShort: "DESPUÉS" },
+  sent: { title: "Revisa tu e-mail.", body: (e: string) => <>Enviamos un enlace a <strong style={{ color: SW.text }}>{e}</strong> — haz clic para liberar tus 5 fotos.</>, spam: "A VECES CAE EN PROMOCIONES / SPAM" },
+  blocked: { title: "Prueba ya usada.", used: "Ya probaste con este e-mail. Para seguir, elige un plan — desde R$79,90.", device: "Este dispositivo ya usó la prueba gratis. Entra con el e-mail que usaste, o elige un plan.", seePlans: "Ver planes", alreadyHave: "YA TENGO ACCESO — ENTRAR" },
+  err: { invalid: "Ups — escribe un e-mail válido (ej.: tu@tumarca.com).", send: "No pudimos enviar ahora. Inténtalo de nuevo en un momento.", conn: "Sin conexión. Inténtalo de nuevo en un momento." },
+  proof: { kicker: "01 — PRUEBA", h2a: "Foto del celular.", h2b: "Se volvió esto", labels: ["BEBIDA", "CALZADO", "ACCESORIO", "ROPA"], disclaimer: "MENSAJES REALES DE CLIENTES" },
+  reactions: { kicker: "QUIEN LO VIO, LO DIJO", h2: "Reacción de quien recibió", items: [
+    { text: "El arte quedó brutal", via: "CLIENTE · WHATSAPP" },
+    { text: "Quedó lindísimo", via: "CLIENTE · WHATSAPP" },
+    { text: "Otro nivel 👏🏻👏🏻", via: "CLIENTE · INSTAGRAM" },
+    { text: "Me dio escalofríos… mira esto", via: "CLIENTE · WHATSAPP" },
+  ] },
+  how: { kicker: "02 — CÓMO FUNCIONA", steps: ["Sube la foto", "Elige la escena", "Descarga y publica"] },
+  fidelity: { kicker: "03 — FIDELIDAD", h2a: "Tu producto, idéntico.", h2b: "Solo cambia el escenario", body: "Etiqueta, color y forma preservados. Dirección de arte de una productora audiovisual — no es un filtro." },
+  modes: { kicker: "04 — DOS MODOS", productT: "Producto", productD: "1 foto del celular → 4 variaciones de campaña.", personT: "Persona", personD: "3 selfies → 8 fotos de sesión editorial." },
+  plans: { kicker: "05 — PLANES", perMonth: "/mes", photosWord: "fotos", perMonthWord: "al mes", included: "Producto y persona incluidos", subscribe: "Suscribir", mostPopular: "MÁS POPULAR", guarantee: "7 DÍAS DE GARANTÍA · CANCELA CUANDO QUIERAS",
+    items: [
+      { name: "SIMPLE", label: "Simple", highlight: "Ideal para empezar" },
+      { name: "MEDIO", label: "Medio", highlight: "2× más fotos que el Simple" },
+      { name: "GRANDE", label: "Grande", highlight: "5× más fotos que el Simple" },
+    ] },
+  faq: { kicker: "06 — DUDAS", items: [
+    { q: "¿Mi producto queda idéntico?", a: "Sí. Etiqueta, color y forma se preservan a partir de la foto que envías. Solo cambian el escenario y la luz." },
+    { q: "¿Necesito saber editar o usar programas?", a: "No, nada. Subes la foto del producto, eliges la escena y listo — luz, escenario y ángulo van por nuestra cuenta. Solo descargas y publicas." },
+    { q: "¿Cuánto tarda?", a: "Cerca de 40 segundos por foto de producto. Sesión de persona, de 3 a 5 minutos." },
+    { q: "¿La prueba es gratis de verdad?", a: "Sí: 5 fotos, sin tarjeta. Después eliges un plan si quieres continuar." },
+  ] },
+  finalCta: { h2a: "Tu producto merece", h2b: "buena foto", cta: "Probar gratis", sub: "5 FOTOS · SIN TARJETA" },
+  modal: { kicker: "PRUEBA GRATIS", title: "5 fotos, sin tarjeta.", body: "Deja tu e-mail — te enviamos un enlace para liberar.", placeholder: "tu@email.com", cta: "Quiero probar", nospam: "SIN SPAM · CANCELA CUANDO QUIERAS" },
+  sticky: "Probar gratis — 5 fotos, sin tarjeta",
+};
+
+const en: Content = {
+  docTitle: "Swell Studio — Studio photos, from your phone",
+  nav: { login: "Log in", tryFree: "Try free" },
+  hero: {
+    kicker: "AI PRODUCT PHOTOGRAPHY",
+    h1a: "Ugly photos", h1b: "killing your sales",
+    subPre: "Your phone photo becomes a ", subStrong: "studio photo in 1 minute", subPost: ".",
+    emailPlaceholder: "Your best email",
+    cta: "Try free — 5 photos",
+    processPre: "Upload your photo", processStrong: "4 versions in ~2 min", processPost: ", no card.",
+    urgency: "Every day with weak photos is a sale slipping away — try today.",
+  },
+  ba: { before: "BEFORE · PHONE", after: "AFTER · SWELL", drag: "DRAG TO SEE", beforeShort: "BEFORE", afterShort: "AFTER" },
+  sent: { title: "Check your email.", body: (e: string) => <>We sent a link to <strong style={{ color: SW.text }}>{e}</strong> — click it to unlock your 5 photos.</>, spam: "SOMETIMES LANDS IN PROMOTIONS / SPAM" },
+  blocked: { title: "Trial already used.", used: "You already tried with this email. To continue, pick a plan — from R$79.90.", device: "This device already used the free trial. Log in with the email you used, or pick a plan.", seePlans: "See plans", alreadyHave: "I ALREADY HAVE ACCESS — LOG IN" },
+  err: { invalid: "Oops — enter a valid email (e.g. you@yourbrand.com).", send: "We couldn't send right now. Try again in a moment.", conn: "No connection. Try again in a moment." },
+  proof: { kicker: "01 — PROOF", h2a: "Shot on a phone.", h2b: "Became this", labels: ["DRINK", "FOOTWEAR", "ACCESSORY", "APPAREL"], disclaimer: "REAL MESSAGES FROM CLIENTS" },
+  reactions: { kicker: "PEOPLE WHO SAW IT", h2: "What people said", items: [
+    { text: "The art came out killer", via: "CLIENT · WHATSAPP" },
+    { text: "This looks amazing", via: "CLIENT · WHATSAPP" },
+    { text: "Next level 👏🏻👏🏻", via: "CLIENT · INSTAGRAM" },
+    { text: "Got chills… look at this", via: "CLIENT · WHATSAPP" },
+  ] },
+  how: { kicker: "02 — HOW IT WORKS", steps: ["Upload the photo", "Pick the scene", "Download & post"] },
+  fidelity: { kicker: "03 — FIDELITY", h2a: "Your product, identical.", h2b: "Only the scene changes", body: "Label, color and shape preserved. Art direction from a film studio — not a filter." },
+  modes: { kicker: "04 — TWO MODES", productT: "Product", productD: "1 phone photo → 4 campaign variations.", personT: "Person", personD: "3 selfies → 8 editorial shoot photos." },
+  plans: { kicker: "05 — PLANS", perMonth: "/mo", photosWord: "photos", perMonthWord: "per month", included: "Product and person included", subscribe: "Subscribe", mostPopular: "MOST POPULAR", guarantee: "7-DAY GUARANTEE · CANCEL ANYTIME",
+    items: [
+      { name: "SIMPLE", label: "Simple", highlight: "Perfect to start" },
+      { name: "MEDIUM", label: "Medium", highlight: "2× more photos than Simple" },
+      { name: "LARGE", label: "Large", highlight: "5× more photos than Simple" },
+    ] },
+  faq: { kicker: "06 — FAQ", items: [
+    { q: "Does my product stay identical?", a: "Yes. Label, color and shape are preserved from the photo you send. Only the scene and lighting change." },
+    { q: "Do I need to know editing or software?", a: "No, nothing. You upload the product photo, pick the scene, and that's it — light, scene and angle are on us. You just download and post." },
+    { q: "How long does it take?", a: "About 40 seconds per product photo. A person shoot, 3 to 5 minutes." },
+    { q: "Is the trial really free?", a: "Yes: 5 photos, no card. Then you pick a plan if you want to continue." },
+  ] },
+  finalCta: { h2a: "Your product deserves", h2b: "a good photo", cta: "Try free", sub: "5 PHOTOS · NO CARD" },
+  modal: { kicker: "FREE TRIAL", title: "5 photos, no card.", body: "Leave your email — we'll send a link to unlock.", placeholder: "you@email.com", cta: "I want to try", nospam: "NO SPAM · CANCEL ANYTIME" },
+  sticky: "Try free — 5 photos, no card",
+};
+
+const CONTENT: Record<Lang, Content> = { pt, es, en };
+
+/* ===================== dados (estáveis) ===================== */
 const utm = (content: string) =>
   "?utm_source=landing&utm_medium=cta&utm_campaign=swell_studio&utm_content=" + content;
 
-type Plan = {
-  url: string; name: string; label: string; price: string; photos: string; highlight: string;
-  featured: boolean; border: string; shadow: string; nameColor: string;
-  btnBg: string; btnBorder: string; btnColor: string; btnShadow: string;
-};
-
-const PLANS: Plan[] = [
-  {
-    url: "https://pay.kiwify.com.br/iT4Cc0s" + utm("plano_simples"),
-    name: "SIMPLES", label: "Simples", price: "R$79,90", photos: "35", highlight: "Ideal pra começar",
+// Preço/checkout/estilo são estáveis; nome/label/highlight vêm do idioma.
+const PLAN_BASE = [
+  { url: "https://pay.kiwify.com.br/iT4Cc0s" + utm("plano_simples"), price: "R$79,90", photos: "35",
     featured: false, border: "rgba(244,239,230,0.1)", shadow: "none", nameColor: SW.t45,
-    btnBg: "none", btnBorder: "1px solid rgba(244,239,230,0.18)", btnColor: SW.text, btnShadow: "none",
-  },
-  {
-    url: "https://pay.kiwify.com.br/J6cjEFC" + utm("plano_medio"),
-    name: "MÉDIO", label: "Médio", price: "R$159,90", photos: "80", highlight: "2× mais fotos que o Simples",
-    featured: true, border: "rgba(224,116,47,0.5)",
-    shadow: "0 0 90px rgba(224,116,47,0.1), 0 24px 70px rgba(0,0,0,0.45)", nameColor: SW.ember,
-    btnBg: EMBER_GRAD, btnBorder: "none", btnColor: "#0A0908", btnShadow: "0 12px 36px rgba(224,116,47,0.24)",
-  },
-  {
-    url: "https://pay.kiwify.com.br/xB1SN3A" + utm("plano_grande"),
-    name: "GRANDE", label: "Grande", price: "R$299,90", photos: "180", highlight: "5× mais fotos que o Simples",
+    btnBg: "none", btnBorder: "1px solid rgba(244,239,230,0.18)", btnColor: SW.text, btnShadow: "none" },
+  { url: "https://pay.kiwify.com.br/J6cjEFC" + utm("plano_medio"), price: "R$159,90", photos: "80",
+    featured: true, border: "rgba(224,116,47,0.5)", shadow: "0 0 90px rgba(224,116,47,0.1), 0 24px 70px rgba(0,0,0,0.45)", nameColor: SW.ember,
+    btnBg: EMBER_GRAD, btnBorder: "none", btnColor: "#0A0908", btnShadow: "0 12px 36px rgba(224,116,47,0.24)" },
+  { url: "https://pay.kiwify.com.br/xB1SN3A" + utm("plano_grande"), price: "R$299,90", photos: "180",
     featured: false, border: "rgba(244,239,230,0.1)", shadow: "none", nameColor: SW.t45,
-    btnBg: "none", btnBorder: "1px solid rgba(244,239,230,0.18)", btnColor: SW.text, btnShadow: "none",
-  },
+    btnBg: "none", btnBorder: "1px solid rgba(244,239,230,0.18)", btnColor: SW.text, btnShadow: "none" },
 ];
 
-type Proof = { antes: string; depois: string; altA: string; altB: string; label: string };
-const PROOFS: Proof[] = [
-  { antes: "/assets/opt/suco-antes.jpg", depois: "/assets/opt/suco-depois.jpg", altA: "Suco em lata fotografado no celular", altB: "Suco em lata em estúdio Swell", label: "BEBIDA" },
-  { antes: "/assets/opt/tenis-antes.jpg", depois: "/assets/opt/tenis-depois.jpg", altA: "Tênis fotografado no celular", altB: "Tênis em campanha Swell", label: "CALÇADO" },
-  { antes: "/assets/opt/relogio-antes.jpg", depois: "/assets/opt/relogio-depois.jpg", altA: "Relógio fotografado no celular", altB: "Relógio em cena premium Swell", label: "ACESSÓRIO" },
-  { antes: "/assets/opt/camisa-antes.jpg", depois: "/assets/opt/camisa-depois.jpg", altA: "Camisa fitness fotografada no celular", altB: "Camisa fitness em campanha Swell", label: "VESTUÁRIO" },
+const PROOF_IMG = [
+  { antes: "/assets/opt/suco-antes.jpg", depois: "/assets/opt/suco-depois.jpg" },
+  { antes: "/assets/opt/tenis-antes.jpg", depois: "/assets/opt/tenis-depois.jpg" },
+  { antes: "/assets/opt/relogio-antes.jpg", depois: "/assets/opt/relogio-depois.jpg" },
+  { antes: "/assets/opt/camisa-antes.jpg", depois: "/assets/opt/camisa-depois.jpg" },
 ];
 
-const STEPS = [
-  { n: "01", t: "Sobe a foto", icon: <><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3.2" /></> },
-  { n: "02", t: "Escolhe a cena", icon: <><rect x="2" y="4" width="20" height="16" rx="2" /><line x1="7" y1="4" x2="7" y2="20" /><line x1="17" y1="4" x2="17" y2="20" /></> },
-  { n: "03", t: "Baixa e posta", icon: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="3" x2="12" y2="15" /></> },
+const STEP_ICONS = [
+  <><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3.2" /></>,
+  <><rect x="2" y="4" width="20" height="16" rx="2" /><line x1="7" y1="4" x2="7" y2="20" /><line x1="17" y1="4" x2="17" y2="20" /></>,
+  <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="3" x2="12" y2="15" /></>,
 ];
 
-const FAQS = [
-  { q: "Meu produto fica idêntico?", a: "Sim. Rótulo, cor e formato são preservados a partir da foto que você envia. Só o cenário e a luz mudam." },
-  { q: "Preciso saber editar ou mexer em programa?", a: "Não, nada. Você sobe a foto do produto, escolhe a cena e pronto — luz, cenário e ângulo ficam por nossa conta. Você só baixa e posta." },
-  { q: "Quanto tempo demora?", a: "Cerca de 40 segundos por foto de produto. Ensaio de pessoa, 3 a 5 minutos." },
-  { q: "O teste é grátis mesmo?", a: "Sim: 5 fotos, sem cartão. Depois você escolhe um plano se quiser continuar." },
-];
-
-// Reações REAIS de clientes (WhatsApp / Instagram) — recriadas como balões, não print.
-type Reaction = { text: string; react: string | null; via: string };
-const REACTIONS: Reaction[] = [
-  { text: "A arte ficou cachorrada", react: "❤️", via: "CLIENTE · WHATSAPP" },
-  { text: "Tá lindo de mais", react: "❤️", via: "CLIENTE · WHATSAPP" },
-  { text: "Outro nível aí 👏🏻👏🏻", react: null, via: "CLIENTE · INSTAGRAM" },
-  { text: "Me arrepiei… olha isso", react: "😍", via: "CLIENTE · WHATSAPP" },
-];
+const REACT_EMOJI: (string | null)[] = ["❤️", "❤️", null, "😍"];
 
 const DATACRAZY_WEBHOOK =
   "https://api.datacrazy.io/v1/crm/api/crm/integrations/webhook/business/a1391dce-2771-4a48-b4d8-6743f67ef8c6";
 
 /* ===================== Meta Pixel (eventos de conversão) ===================== */
 type Fbq = (...args: unknown[]) => void;
-// `eventId` liga este disparo ao gêmeo que sai do servidor (API de Conversões).
-// A Meta recebe os dois e conta uma vez só.
 function track(event: string, params?: Record<string, unknown>, eventId?: string) {
   if (typeof window === "undefined") return;
   const fbq = (window as unknown as { fbq?: Fbq }).fbq;
@@ -109,7 +228,6 @@ function newEventId(prefix: string): string {
       : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   return `${prefix}.${rand}`;
 }
-// "R$159,90" → 159.9
 function priceToNumber(price: string): number {
   const n = Number(price.replace(/[^\d,]/g, "").replace(",", "."));
   return Number.isFinite(n) ? n : 0;
@@ -123,7 +241,7 @@ const Arrow = ({ size = 19 }: { size?: number }) => (
 );
 
 /* ===================== slider antes/depois (v3) ===================== */
-function BeforeAfter() {
+function BeforeAfter({ t }: { t: Content["ba"] }) {
   const [reveal, setReveal] = useState(52);
   const [touched, setTouched] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -142,20 +260,20 @@ function BeforeAfter() {
     <div ref={ref} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
       style={{ position: "relative", aspectRatio: "4/5", width: "100%", borderRadius: 4, overflow: "hidden", background: SW.surface, border: "1px solid rgba(244,239,230,0.1)", touchAction: "none", cursor: "ew-resize", userSelect: "none", boxShadow: "0 40px 110px rgba(0,0,0,0.6)" }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/assets/opt/luminaria-depois.jpg" alt="Mesmo produto em foto de campanha Swell" draggable={false} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none" }} />
+      <img src="/assets/opt/luminaria-depois.jpg" alt="" draggable={false} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none" }} />
       <div style={{ position: "absolute", inset: 0, clipPath: `inset(0 ${100 - reveal}% 0 0)` }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/assets/opt/luminaria-antes.jpg" alt="Produto fotografado no celular" draggable={false} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none" }} />
+        <img src="/assets/opt/luminaria-antes.jpg" alt="" draggable={false} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none" }} />
       </div>
       <div style={{ position: "absolute", top: 0, bottom: 0, left: `${reveal}%`, width: 1.5, background: SW.ember, pointerEvents: "none", boxShadow: "0 0 24px rgba(224,116,47,0.55)" }}>
         <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 46, height: 46, borderRadius: 999, background: SW.ember, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 30px rgba(0,0,0,0.5)" }}>
           <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#0A0908" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><polyline points="9 6 4 12 9 18" /><polyline points="15 6 20 12 15 18" /></svg>
         </div>
       </div>
-      <span style={{ position: "absolute", left: 12, top: 12, fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: "0.16em", color: SW.t72, background: "rgba(10,9,8,0.55)", padding: "5px 9px", pointerEvents: "none" }}>ANTES · CELULAR</span>
-      <span style={{ position: "absolute", right: 12, top: 12, fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: "0.16em", color: SW.ember, background: "rgba(10,9,8,0.55)", padding: "5px 9px", pointerEvents: "none" }}>DEPOIS · SWELL</span>
+      <span style={{ position: "absolute", left: 12, top: 12, fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: "0.16em", color: SW.t72, background: "rgba(10,9,8,0.55)", padding: "5px 9px", pointerEvents: "none" }}>{t.before}</span>
+      <span style={{ position: "absolute", right: 12, top: 12, fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: "0.16em", color: SW.ember, background: "rgba(10,9,8,0.55)", padding: "5px 9px", pointerEvents: "none" }}>{t.after}</span>
       <span style={{ position: "absolute", left: "50%", bottom: 14, transform: "translateX(-50%)", display: "flex", alignItems: "center", gap: 7, fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: "0.14em", color: SW.t62, background: "rgba(10,9,8,0.6)", padding: "6px 12px", pointerEvents: "none", opacity: touched ? 0 : 1, transition: "opacity 300ms cubic-bezier(0.22,1,0.36,1)" }}>
-        ARRASTA PRA VER
+        {t.drag}
         <span style={{ display: "inline-flex", animation: "swlNudge 1.6s cubic-bezier(0.22,1,0.36,1) infinite" }}>
           <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
         </span>
@@ -164,8 +282,8 @@ function BeforeAfter() {
   );
 }
 
-/* ===================== carrossel da prova (rolagem contínua, pausa no toque) ===================== */
-function ProofRail() {
+/* ===================== carrossel da prova ===================== */
+function ProofRail({ labels, before, after }: { labels: string[]; before: string; after: string }) {
   const railRef = useRef<HTMLDivElement>(null);
   const paused = useRef(false);
   useEffect(() => {
@@ -190,7 +308,7 @@ function ProofRail() {
   }, []);
   const pause = () => { paused.current = true; };
   const resume = () => { paused.current = false; };
-  const items = PROOFS.concat(PROOFS);
+  const items = PROOF_IMG.concat(PROOF_IMG);
   return (
     <div ref={railRef} className="swl-rail"
       onPointerDown={pause} onPointerUp={resume} onPointerLeave={resume} onPointerCancel={resume}
@@ -201,16 +319,16 @@ function ProofRail() {
           <div style={{ display: "flex", gap: 6 }}>
             <div style={{ position: "relative", flex: 1, aspectRatio: "3/4", overflow: "hidden", background: SW.surface, border: "1px solid rgba(244,239,230,0.09)", borderRadius: 3 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.antes} alt={p.altA} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-              <span style={{ position: "absolute", left: 8, top: 8, fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: "0.14em", color: SW.t62, background: "rgba(10,9,8,0.5)", padding: "4px 7px" }}>ANTES</span>
+              <img src={p.antes} alt="" loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              <span style={{ position: "absolute", left: 8, top: 8, fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: "0.14em", color: SW.t62, background: "rgba(10,9,8,0.5)", padding: "4px 7px" }}>{before}</span>
             </div>
             <div style={{ position: "relative", flex: 1, aspectRatio: "3/4", overflow: "hidden", background: SW.surface, border: "1px solid rgba(224,116,47,0.4)", borderRadius: 3 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.depois} alt={p.altB} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-              <span style={{ position: "absolute", left: 8, top: 8, fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: "0.14em", color: SW.ember, background: "rgba(10,9,8,0.5)", padding: "4px 7px" }}>DEPOIS</span>
+              <img src={p.depois} alt="" loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              <span style={{ position: "absolute", left: 8, top: 8, fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: "0.14em", color: SW.ember, background: "rgba(10,9,8,0.5)", padding: "4px 7px" }}>{after}</span>
             </div>
           </div>
-          <figcaption style={{ fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: "0.18em", color: SW.t38 }}>{p.label}</figcaption>
+          <figcaption style={{ fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: "0.18em", color: SW.t38 }}>{labels[i % labels.length]}</figcaption>
         </figure>
       ))}
     </div>
@@ -219,6 +337,7 @@ function ProofRail() {
 
 /* ===================== componente ===================== */
 export default function LandingPage() {
+  const [lang, setLang] = useState<Lang>("pt");
   const [open, setOpen] = useState<number>(-1);
   const [showLead, setShowLead] = useState(false);
   const [leadEmail, setLeadEmail] = useState("");
@@ -227,8 +346,15 @@ export default function LandingPage() {
   const [leadError, setLeadError] = useState("");
   const exitShown = useRef(false);
 
+  const t = CONTENT[lang];
+
+  // Detecta o idioma no cliente (evita mismatch de hidratação: SSR sempre em PT).
+  useEffect(() => { setLang(detectLang()); }, []);
+  useEffect(() => { document.title = CONTENT[lang].docTitle; }, [lang]);
+
+  const changeLang = (l: Lang) => { setLang(l); try { localStorage.setItem("swl-lang", l); } catch {} };
+
   useEffect(() => {
-    document.title = "Swell Studio — Foto de estúdio, do seu celular";
     try { exitShown.current = localStorage.getItem("swl-exit-shown") === "1"; } catch {}
     const onMouseOut = (e: MouseEvent) => {
       if (exitShown.current || showLead || leadStatus !== "idle") return;
@@ -245,7 +371,7 @@ export default function LandingPage() {
   const submitLead = async () => {
     const email = leadEmail.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setLeadError("Ops — digite um e-mail válido (ex.: voce@suamarca.com).");
+      setLeadError(t.err.invalid);
       return;
     }
     setLeadError("");
@@ -258,7 +384,7 @@ export default function LandingPage() {
       body: JSON.stringify({
         email, name, country_code: "", phone: "",
         source: "landing-swell-studio", origem: "landing-swell-studio", evento: "teste-gratis",
-        page: window.location.href,
+        page: window.location.href, lang,
         utm_source: params.get("utm_source") || "landing",
         utm_medium: params.get("utm_medium") || "cta",
         utm_campaign: params.get("utm_campaign") || "swell_studio",
@@ -267,7 +393,6 @@ export default function LandingPage() {
       }),
     }).catch(() => {});
     // Confirma o e-mail e libera o teste: cria o trial e manda o link mágico (Resend).
-    // O acesso só abre quando a pessoa clica no link — evita e-mail falso pegando 5 fotos.
     try {
       const leadEventId = newEventId("lead");
       const r = await fetch("/api/lead", {
@@ -277,23 +402,23 @@ export default function LandingPage() {
       });
       const data = await r.json().catch(() => ({}));
       if (!r.ok) {
-        setLeadError(typeof data?.error === "string" ? data.error : "Não conseguimos enviar agora. Tenta de novo em instantes.");
+        setLeadError(typeof data?.error === "string" ? data.error : t.err.send);
         return;
       }
       if (data?.status === "blocked") {
-        setLeadMsg(typeof data?.message === "string" ? data.message : "Você já usou o teste grátis neste aparelho.");
+        setLeadMsg(data?.reason === "device" ? t.blocked.device : t.blocked.used);
         setLeadStatus("blocked");
       } else {
         setLeadStatus("sent");
-        // conversão do teste grátis — o servidor manda o gêmeo com o mesmo leadEventId
         track("Lead", { content_name: "teste-gratis" }, leadEventId);
       }
     } catch {
-      setLeadError("Sem conexão. Tenta de novo em instantes.");
+      setLeadError(t.err.conn);
     }
   };
 
   const openLead = () => setShowLead(true);
+  const proofLabels = t.proof.labels;
 
   return (
     <div style={{ background: SW.bg, minHeight: "100vh", overflowX: "hidden", color: SW.text, fontFamily: FONT.body }}>
@@ -319,12 +444,21 @@ export default function LandingPage() {
 
       {/* ============ HEADER ============ */}
       <header style={{ position: "sticky", top: 0, zIndex: 60, background: "rgba(10,9,8,0.9)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderBottom: `1px solid ${SW.line}` }}>
-        <div style={{ maxWidth: 1180, margin: "0 auto", padding: "11px clamp(16px, 4vw, 40px)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14 }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto", padding: "11px clamp(16px, 4vw, 40px)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/assets/swell-studio-logo.png" alt="Swell Studio" style={{ height: 26, width: "auto", display: "block", flex: "none" }} />
-          <div style={{ display: "flex", alignItems: "center", gap: "clamp(12px, 3vw, 20px)", flex: "none" }}>
-            <a href="/entrar" className="swl-ghost" style={{ fontFamily: FONT.body, fontSize: 13.5, fontWeight: 700, color: SW.t72, textDecoration: "none" }}>Entrar</a>
-            <button onClick={openLead} className="swl-cta" style={{ flex: "none", background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 999, padding: "10px 18px", fontFamily: FONT.body, fontSize: 13.5, fontWeight: 800, letterSpacing: "-0.01em", cursor: "pointer", boxShadow: "0 8px 26px rgba(224,116,47,0.22)" }}>Testar grátis</button>
+          <div style={{ display: "flex", alignItems: "center", gap: "clamp(10px, 2.5vw, 18px)", flex: "none" }}>
+            {/* seletor de idioma */}
+            <div style={{ display: "flex", alignItems: "center", gap: 2, border: `1px solid ${SW.line2}`, borderRadius: 999, padding: 2 }}>
+              {LANGS.map(({ code, label }) => (
+                <button key={code} onClick={() => changeLang(code)} aria-label={label}
+                  style={{ background: lang === code ? "rgba(224,116,47,0.16)" : "transparent", color: lang === code ? SW.ember : SW.t45, border: "none", borderRadius: 999, padding: "5px 9px", fontFamily: FONT.mono, fontSize: 10.5, letterSpacing: "0.06em", fontWeight: lang === code ? 700 : 500, cursor: "pointer" }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <a href="/entrar" className="swl-ghost" style={{ fontFamily: FONT.body, fontSize: 13.5, fontWeight: 700, color: SW.t72, textDecoration: "none" }}>{t.nav.login}</a>
+            <button onClick={openLead} className="swl-cta" style={{ flex: "none", background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 999, padding: "10px 16px", fontFamily: FONT.body, fontSize: 13, fontWeight: 800, letterSpacing: "-0.01em", cursor: "pointer", boxShadow: "0 8px 26px rgba(224,116,47,0.22)" }}>{t.nav.tryFree}</button>
           </div>
         </div>
       </header>
@@ -333,12 +467,12 @@ export default function LandingPage() {
       <section style={{ padding: "clamp(30px, 5vw, 60px) clamp(16px, 4vw, 40px) clamp(40px, 6vw, 70px)" }}>
         <div className="swl-rise" style={{ maxWidth: 560, margin: "0 auto", display: "flex", flexDirection: "column", gap: "clamp(22px, 4vw, 30px)" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 14, textAlign: "center" }}>
-            <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.t42 }}>FOTO DE PRODUTO COM IA</div>
-            <h1 style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: "clamp(28px, 7.5vw, 46px)", lineHeight: 1.06, letterSpacing: "-0.015em", margin: 0 }}>Cansada de foto feia<br />travando sua venda<span style={{ color: SW.ember }}>?</span></h1>
-            <p style={{ fontSize: "clamp(16px, 4.5vw, 19px)", lineHeight: 1.4, color: SW.t72, margin: 0, textWrap: "balance" }}>Sua foto de celular vira <strong style={{ color: SW.text, fontWeight: 700 }}>foto de estúdio em 1 minuto</strong>.</p>
+            <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.t42 }}>{t.hero.kicker}</div>
+            <h1 style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: "clamp(28px, 7.5vw, 46px)", lineHeight: 1.06, letterSpacing: "-0.015em", margin: 0 }}>{t.hero.h1a}<br />{t.hero.h1b}<span style={{ color: SW.ember }}>?</span></h1>
+            <p style={{ fontSize: "clamp(16px, 4.5vw, 19px)", lineHeight: 1.4, color: SW.t72, margin: 0, textWrap: "balance" }}>{t.hero.subPre}<strong style={{ color: SW.text, fontWeight: 700 }}>{t.hero.subStrong}</strong>{t.hero.subPost}</p>
           </div>
 
-          <BeforeAfter />
+          <BeforeAfter t={t.ba} />
 
           {leadStatus === "idle" ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -346,15 +480,15 @@ export default function LandingPage() {
                 value={leadEmail}
                 onChange={(e) => { setLeadEmail(e.target.value); if (leadError) setLeadError(""); }}
                 onKeyDown={(e) => { if (e.key === "Enter") submitLead(); }}
-                type="email" autoComplete="email" inputMode="email" placeholder="Seu melhor e-mail"
+                type="email" autoComplete="email" inputMode="email" placeholder={t.hero.emailPlaceholder}
                 style={{ width: "100%", background: "rgba(244,239,230,0.06)", border: `1.5px solid ${leadError ? "rgba(232,131,111,0.85)" : "rgba(224,116,47,0.55)"}`, borderRadius: 4, padding: "18px 18px", color: SW.text, fontFamily: FONT.body, fontSize: 16.5, outline: "none", textAlign: "center" }}
               />
               <button onClick={submitLead} className="swl-cta swl-pulse" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 4, padding: "20px 28px", fontFamily: FONT.body, fontSize: 17, fontWeight: 800, letterSpacing: "-0.015em", cursor: "pointer" }}>
-                Testar grátis — 5 fotos<Arrow />
+                {t.hero.cta}<Arrow />
               </button>
               {leadError && <div style={{ color: "#E8836F", fontSize: 13, lineHeight: 1.4, textAlign: "center" }}>{leadError}</div>}
               <p style={{ fontSize: 13.5, lineHeight: 1.55, color: SW.t55, margin: "2px auto 0", textAlign: "center", maxWidth: "42ch" }}>
-                Sobe a foto <span style={{ color: SW.ember }}>→</span> <strong style={{ color: SW.text, fontWeight: 700 }}>4 versões em ~2 min</strong>, sem cartão. <span style={{ color: SW.emberHi }}>Cada dia de foto fraca é venda que escapa — testa hoje.</span>
+                {t.hero.processPre} <span style={{ color: SW.ember }}>→</span> <strong style={{ color: SW.text, fontWeight: 700 }}>{t.hero.processStrong}</strong>{t.hero.processPost} <span style={{ color: SW.emberHi }}>{t.hero.urgency}</span>
               </p>
             </div>
           ) : leadStatus === "sent" ? (
@@ -362,15 +496,15 @@ export default function LandingPage() {
               <div style={{ width: 48, height: 48, borderRadius: 999, background: "rgba(224,116,47,0.12)", border: "1px solid rgba(224,116,47,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={SW.ember} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><polyline points="22 6 12 13 2 6" /></svg>
               </div>
-              <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 23, letterSpacing: "-0.02em" }}>Confira seu e-mail.</div>
-              <p style={{ fontSize: 14.5, lineHeight: 1.5, color: SW.t55, margin: 0 }}>Mandamos um link pra <strong style={{ color: SW.text }}>{leadEmail}</strong> — clica nele pra liberar suas 5 fotos.</p>
-              <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: "0.14em", color: SW.t35 }}>ÀS VEZES CAI EM PROMOÇÕES / SPAM</div>
+              <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 23, letterSpacing: "-0.02em" }}>{t.sent.title}</div>
+              <p style={{ fontSize: 14.5, lineHeight: 1.5, color: SW.t55, margin: 0 }}>{t.sent.body(leadEmail)}</p>
+              <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: "0.14em", color: SW.t35 }}>{t.sent.spam}</div>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center", textAlign: "center", background: SW.surface, border: `1px solid ${SW.line2}`, borderRadius: 4, padding: "24px 20px" }}>
-              <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 21, letterSpacing: "-0.02em" }}>Teste já usado.</div>
+              <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 21, letterSpacing: "-0.02em" }}>{t.blocked.title}</div>
               <p style={{ fontSize: 14.5, lineHeight: 1.5, color: SW.t55, margin: 0 }}>{leadMsg}</p>
-              <a href="#planos" className="swl-cta" style={{ width: "100%", textAlign: "center", background: EMBER_GRAD, color: "#0A0908", borderRadius: 4, padding: 15, fontFamily: FONT.body, fontSize: 15, fontWeight: 800, textDecoration: "none", marginTop: 2 }}>Ver planos</a>
+              <a href="#planos" className="swl-cta" style={{ width: "100%", textAlign: "center", background: EMBER_GRAD, color: "#0A0908", borderRadius: 4, padding: 15, fontFamily: FONT.body, fontSize: 15, fontWeight: 800, textDecoration: "none", marginTop: 2 }}>{t.blocked.seePlans}</a>
             </div>
           )}
         </div>
@@ -379,43 +513,43 @@ export default function LandingPage() {
       {/* ============ 01 · PROVA ============ */}
       <section style={{ borderTop: `1px solid ${SW.line}`, padding: "clamp(44px, 7vw, 84px) 0" }}>
         <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 clamp(16px, 4vw, 40px)", display: "flex", flexDirection: "column", gap: 8, marginBottom: 26 }}>
-          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember }}>01 — PROVA</div>
-          <h2 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(30px, 8vw, 46px)", lineHeight: 0.95, letterSpacing: "-0.035em", margin: 0 }}>Tirei no celular.<br />Virou isso<span style={{ color: SW.ember }}>.</span></h2>
+          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember }}>{t.proof.kicker}</div>
+          <h2 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(30px, 8vw, 46px)", lineHeight: 0.95, letterSpacing: "-0.035em", margin: 0 }}>{t.proof.h2a}<br />{t.proof.h2b}<span style={{ color: SW.ember }}>.</span></h2>
         </div>
-        <ProofRail />
+        <ProofRail labels={proofLabels} before={t.ba.beforeShort} after={t.ba.afterShort} />
       </section>
 
       {/* ============ REAÇÕES REAIS ============ */}
       <section style={{ borderTop: `1px solid ${SW.line}`, padding: "clamp(40px, 6vw, 72px) clamp(16px, 4vw, 40px)" }}>
         <div style={{ maxWidth: 760, margin: "0 auto" }}>
-          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember, marginBottom: 10 }}>QUEM VIU, FALOU</div>
-          <h2 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(26px, 6.5vw, 40px)", lineHeight: 0.97, letterSpacing: "-0.03em", margin: "0 0 28px" }}>Reação de quem recebeu<span style={{ color: SW.ember }}>.</span></h2>
+          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember, marginBottom: 10 }}>{t.reactions.kicker}</div>
+          <h2 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(26px, 6.5vw, 40px)", lineHeight: 0.97, letterSpacing: "-0.03em", margin: "0 0 28px" }}>{t.reactions.h2}<span style={{ color: SW.ember }}>.</span></h2>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-            {REACTIONS.map((r, i) => (
+            {t.reactions.items.map((r, i) => (
               <div key={i} style={{ position: "relative", flex: "1 1 240px", background: SW.surface, border: `1px solid ${SW.line2}`, borderRadius: "16px 16px 16px 4px", padding: "16px 18px", display: "flex", flexDirection: "column", gap: 12 }}>
-                {r.react && <span style={{ position: "absolute", right: 14, top: 14, fontSize: 16, lineHeight: 1 }}>{r.react}</span>}
-                <p style={{ margin: 0, paddingRight: r.react ? 26 : 0, fontSize: 16.5, lineHeight: 1.4, color: SW.text, fontWeight: 500 }}>{r.text}</p>
+                {REACT_EMOJI[i] && <span style={{ position: "absolute", right: 14, top: 14, fontSize: 16, lineHeight: 1 }}>{REACT_EMOJI[i]}</span>}
+                <p style={{ margin: 0, paddingRight: REACT_EMOJI[i] ? 26 : 0, fontSize: 16.5, lineHeight: 1.4, color: SW.text, fontWeight: 500 }}>{r.text}</p>
                 <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: "0.14em", color: SW.t40 }}>{r.via}</div>
               </div>
             ))}
           </div>
-          <div style={{ fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: "0.14em", color: SW.t35, marginTop: 22 }}>MENSAGENS REAIS DE CLIENTES</div>
+          <div style={{ fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: "0.14em", color: SW.t35, marginTop: 22 }}>{t.proof.disclaimer}</div>
         </div>
       </section>
 
       {/* ============ 02 · COMO FUNCIONA ============ */}
       <section style={{ borderTop: `1px solid ${SW.line}`, padding: "clamp(44px, 7vw, 84px) clamp(16px, 4vw, 40px)" }}>
         <div style={{ maxWidth: 1180, margin: "0 auto" }}>
-          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember, marginBottom: 26 }}>02 — COMO FUNCIONA</div>
+          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember, marginBottom: 26 }}>{t.how.kicker}</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: "clamp(14px, 2vw, 22px)" }}>
-            {STEPS.map((s) => (
-              <div key={s.n} style={{ display: "flex", alignItems: "center", gap: 18, padding: 22, background: SW.surface, border: `1px solid ${SW.line2}`, borderRadius: 3 }}>
+            {t.how.steps.map((title, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 18, padding: 22, background: SW.surface, border: `1px solid ${SW.line2}`, borderRadius: 3 }}>
                 <div style={{ flex: "none", width: 46, height: 46, borderRadius: 999, background: "rgba(224,116,47,0.1)", border: "1px solid rgba(224,116,47,0.3)", color: SW.ember, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <svg width={21} height={21} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">{s.icon}</svg>
+                  <svg width={21} height={21} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">{STEP_ICONS[i]}</svg>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <div style={{ fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: "0.2em", color: SW.t35 }}>{s.n}</div>
-                  <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 20, letterSpacing: "-0.025em" }}>{s.t}</div>
+                  <div style={{ fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: "0.2em", color: SW.t35 }}>{`0${i + 1}`}</div>
+                  <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 20, letterSpacing: "-0.025em" }}>{title}</div>
                 </div>
               </div>
             ))}
@@ -426,35 +560,35 @@ export default function LandingPage() {
       {/* ============ 03 · FIDELIDADE ============ */}
       <section style={{ borderTop: `1px solid ${SW.line}`, padding: "clamp(50px, 8vw, 96px) clamp(16px, 4vw, 40px)" }}>
         <div style={{ maxWidth: 620, margin: "0 auto", textAlign: "center", display: "flex", flexDirection: "column", gap: 18, alignItems: "center" }}>
-          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember }}>03 — FIDELIDADE</div>
-          <h2 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(30px, 8vw, 48px)", lineHeight: 0.95, letterSpacing: "-0.035em", margin: 0 }}>Seu produto, idêntico.<br />Só o cenário muda<span style={{ color: SW.ember }}>.</span></h2>
-          <p style={{ fontSize: 16, lineHeight: 1.6, color: SW.t55, margin: 0, maxWidth: "44ch" }}>Rótulo, cor e formato preservados. Direção de arte de uma produtora audiovisual — não é filtro.</p>
+          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember }}>{t.fidelity.kicker}</div>
+          <h2 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(30px, 8vw, 48px)", lineHeight: 0.95, letterSpacing: "-0.035em", margin: 0 }}>{t.fidelity.h2a}<br />{t.fidelity.h2b}<span style={{ color: SW.ember }}>.</span></h2>
+          <p style={{ fontSize: 16, lineHeight: 1.6, color: SW.t55, margin: 0, maxWidth: "44ch" }}>{t.fidelity.body}</p>
         </div>
       </section>
 
       {/* ============ 04 · DOIS MODOS ============ */}
       <section style={{ borderTop: `1px solid ${SW.line}`, padding: "clamp(44px, 7vw, 84px) clamp(16px, 4vw, 40px)" }}>
         <div style={{ maxWidth: 1180, margin: "0 auto" }}>
-          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember, marginBottom: 26 }}>04 — DOIS MODOS</div>
+          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember, marginBottom: 26 }}>{t.modes.kicker}</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "clamp(14px, 2vw, 22px)" }}>
             <div style={{ background: SW.surface, border: "1px solid rgba(224,116,47,0.35)", borderRadius: 3, overflow: "hidden" }}>
               <div style={{ aspectRatio: "16/10", overflow: "hidden", background: SW.bg }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/assets/opt/luminaria-depois.jpg" alt="Foto de produto Swell" loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                <img src="/assets/opt/luminaria-depois.jpg" alt="" loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
               </div>
               <div style={{ padding: 22, display: "flex", flexDirection: "column", gap: 7 }}>
-                <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 22, letterSpacing: "-0.03em" }}>Produto</div>
-                <div style={{ fontSize: 15, color: SW.t55 }}>1 foto do celular → 4 variações de campanha.</div>
+                <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 22, letterSpacing: "-0.03em" }}>{t.modes.productT}</div>
+                <div style={{ fontSize: 15, color: SW.t55 }}>{t.modes.productD}</div>
               </div>
             </div>
             <div style={{ background: SW.surface, border: `1px solid ${SW.line2}`, borderRadius: 3, overflow: "hidden" }}>
               <div style={{ aspectRatio: "16/10", overflow: "hidden", background: SW.bg }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/assets/opt/pessoa-depois.jpg" alt="Ensaio de pessoa Swell" loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%", display: "block" }} />
+                <img src="/assets/opt/pessoa-depois.jpg" alt="" loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%", display: "block" }} />
               </div>
               <div style={{ padding: 22, display: "flex", flexDirection: "column", gap: 7 }}>
-                <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 22, letterSpacing: "-0.03em" }}>Pessoa</div>
-                <div style={{ fontSize: 15, color: SW.t55 }}>3 selfies → 8 fotos de ensaio editorial.</div>
+                <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 22, letterSpacing: "-0.03em" }}>{t.modes.personT}</div>
+                <div style={{ fontSize: 15, color: SW.t55 }}>{t.modes.personD}</div>
               </div>
             </div>
           </div>
@@ -464,30 +598,33 @@ export default function LandingPage() {
       {/* ============ 05 · PLANOS ============ */}
       <section id="planos" style={{ borderTop: `1px solid ${SW.line}`, padding: "clamp(44px, 7vw, 84px) clamp(16px, 4vw, 40px)", scrollMarginTop: 70 }}>
         <div style={{ maxWidth: 1180, margin: "0 auto" }}>
-          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember, marginBottom: 26 }}>05 — PLANOS</div>
+          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember, marginBottom: 26 }}>{t.plans.kicker}</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "clamp(14px, 2vw, 20px)", alignItems: "start" }}>
-            {PLANS.map((p) => (
-              <div key={p.name} style={{ position: "relative", background: SW.surface, border: `1px solid ${p.border}`, borderRadius: 3, padding: "26px 22px", display: "flex", flexDirection: "column", gap: 18, boxShadow: p.shadow }}>
-                {p.featured && (
-                  <div style={{ position: "absolute", top: -1, right: -1, background: SW.ember, color: "#0A0908", fontFamily: FONT.mono, fontSize: 9, letterSpacing: "0.16em", padding: "5px 10px" }}>MAIS POPULAR</div>
-                )}
-                <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.2em", color: p.nameColor }}>{p.name}</div>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                  <div style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: 36, letterSpacing: "-0.04em", lineHeight: 1 }}>{p.price}</div>
-                  <div style={{ fontSize: 14, color: SW.t40 }}>/mês</div>
+            {PLAN_BASE.map((p, i) => {
+              const pl = t.plans.items[i];
+              return (
+                <div key={i} style={{ position: "relative", background: SW.surface, border: `1px solid ${p.border}`, borderRadius: 3, padding: "26px 22px", display: "flex", flexDirection: "column", gap: 18, boxShadow: p.shadow }}>
+                  {p.featured && (
+                    <div style={{ position: "absolute", top: -1, right: -1, background: SW.ember, color: "#0A0908", fontFamily: FONT.mono, fontSize: 9, letterSpacing: "0.16em", padding: "5px 10px" }}>{t.plans.mostPopular}</div>
+                  )}
+                  <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.2em", color: p.nameColor }}>{pl.name}</div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                    <div style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: 36, letterSpacing: "-0.04em", lineHeight: 1 }}>{p.price}</div>
+                    <div style={{ fontSize: 14, color: SW.t40 }}>{t.plans.perMonth}</div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 15, color: SW.t62 }}>
+                    <div><strong style={{ color: SW.text, fontWeight: 700 }}>{p.photos} {t.plans.photosWord}</strong> {t.plans.perMonthWord}</div>
+                    <div>{pl.highlight}</div>
+                    <div>{t.plans.included}</div>
+                  </div>
+                  <a href={p.url} onClick={() => track("InitiateCheckout", { content_name: pl.label, value: priceToNumber(p.price), currency: "BRL" })} className="swl-cta" style={{ display: "flex", alignItems: "center", justifyContent: "center", background: p.btnBg, border: p.btnBorder, color: p.btnColor, borderRadius: 4, padding: "15px 20px", fontFamily: FONT.body, fontSize: 15, fontWeight: 800, letterSpacing: "-0.01em", boxShadow: p.btnShadow, textDecoration: "none" }}>{t.plans.subscribe} {pl.label}</a>
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 15, color: SW.t62 }}>
-                  <div><strong style={{ color: SW.text, fontWeight: 700 }}>{p.photos} fotos</strong> por mês</div>
-                  <div>{p.highlight}</div>
-                  <div>Produto e pessoa inclusos</div>
-                </div>
-                <a href={p.url} onClick={() => track("InitiateCheckout", { content_name: p.label, value: priceToNumber(p.price), currency: "BRL" })} className="swl-cta" style={{ display: "flex", alignItems: "center", justifyContent: "center", background: p.btnBg, border: p.btnBorder, color: p.btnColor, borderRadius: 4, padding: "15px 20px", fontFamily: FONT.body, fontSize: 15, fontWeight: 800, letterSpacing: "-0.01em", boxShadow: p.btnShadow, textDecoration: "none" }}>Assinar {p.label}</a>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <div style={{ marginTop: 22, display: "flex", alignItems: "center", gap: 9, fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.16em", color: SW.t40 }}>
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={SW.ember} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
-            7 DIAS DE GARANTIA · CANCELA QUANDO QUISER
+            {t.plans.guarantee}
           </div>
         </div>
       </section>
@@ -495,11 +632,11 @@ export default function LandingPage() {
       {/* ============ 06 · DÚVIDAS ============ */}
       <section style={{ borderTop: `1px solid ${SW.line}`, padding: "clamp(44px, 7vw, 84px) clamp(16px, 4vw, 40px)" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
-          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember, marginBottom: 22 }}>06 — DÚVIDAS</div>
-          {FAQS.map((f, i) => {
+          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember, marginBottom: 22 }}>{t.faq.kicker}</div>
+          {t.faq.items.map((f, i) => {
             const isOpen = open === i;
             return (
-              <div key={f.q} style={{ borderBottom: `1px solid ${SW.line2}` }}>
+              <div key={i} style={{ borderBottom: `1px solid ${SW.line2}` }}>
                 <button onClick={() => setOpen(isOpen ? -1 : i)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, background: "none", border: "none", padding: "20px 0", cursor: "pointer", textAlign: "left", color: SW.text, fontFamily: FONT.body }}>
                   <span style={{ fontSize: 16.5, fontWeight: 700, letterSpacing: "-0.01em" }}>{f.q}</span>
                   <span style={{ flex: "none", color: SW.ember, fontSize: 20, lineHeight: 1 }}>{isOpen ? "−" : "+"}</span>
@@ -516,11 +653,11 @@ export default function LandingPage() {
         <div style={{ maxWidth: 560, margin: "0 auto", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 22 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/assets/swell-studio-logo.png" alt="Swell Studio" style={{ height: 40, width: "auto", display: "block" }} />
-          <h2 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(34px, 10vw, 56px)", lineHeight: 0.93, letterSpacing: "-0.04em", margin: 0 }}>Seu produto merece<br />foto boa<span style={{ color: SW.ember }}>.</span></h2>
+          <h2 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(34px, 10vw, 56px)", lineHeight: 0.93, letterSpacing: "-0.04em", margin: 0 }}>{t.finalCta.h2a}<br />{t.finalCta.h2b}<span style={{ color: SW.ember }}>.</span></h2>
           <button onClick={openLead} className="swl-cta" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 4, padding: "20px 28px", fontFamily: FONT.body, fontSize: 17, fontWeight: 800, letterSpacing: "-0.015em", cursor: "pointer", boxShadow: "0 16px 50px rgba(224,116,47,0.26)" }}>
-            Testar grátis<Arrow />
+            {t.finalCta.cta}<Arrow />
           </button>
-          <div style={{ fontFamily: FONT.mono, fontSize: 10.5, letterSpacing: "0.18em", color: SW.t42 }}>5 FOTOS · SEM CARTÃO</div>
+          <div style={{ fontFamily: FONT.mono, fontSize: 10.5, letterSpacing: "0.18em", color: SW.t42 }}>{t.finalCta.sub}</div>
           <a href="mailto:contato@swellfilmes.com.br" style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.16em", color: SW.t35, marginTop: 10, textDecoration: "none" }}>CONTATO@SWELLFILMES.COM.BR</a>
         </div>
       </section>
@@ -534,10 +671,10 @@ export default function LandingPage() {
       {/* espaço pra barra fixa não cobrir o rodapé no celular */}
       <div className="swl-stickypad" style={{ height: 76 }} aria-hidden />
 
-      {/* ============ BARRA FIXA (mobile) — CTA sempre a um toque ============ */}
+      {/* ============ BARRA FIXA (mobile) ============ */}
       <div className="swl-sticky" style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 70, padding: "10px 14px calc(10px + env(safe-area-inset-bottom))", background: "rgba(10,9,8,0.94)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderTop: `1px solid ${SW.line2}` }}>
-        <button onClick={openLead} className="swl-cta" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 9, background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 4, padding: "16px 20px", fontFamily: FONT.body, fontSize: 16, fontWeight: 800, letterSpacing: "-0.01em", cursor: "pointer", boxShadow: "0 -6px 30px rgba(224,116,47,0.28)" }}>
-          Testar grátis — 5 fotos, sem cartão<Arrow size={17} />
+        <button onClick={openLead} className="swl-cta" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 9, background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 4, padding: "16px 20px", fontFamily: FONT.body, fontSize: 15.5, fontWeight: 800, letterSpacing: "-0.01em", cursor: "pointer", boxShadow: "0 -6px 30px rgba(224,116,47,0.28)" }}>
+          {t.sticky}<Arrow size={17} />
         </button>
       </div>
 
@@ -550,33 +687,33 @@ export default function LandingPage() {
             </button>
             {leadStatus === "idle" ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.22em", color: SW.ember }}>TESTE GRÁTIS</div>
-                <h3 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(26px, 7vw, 34px)", lineHeight: 0.95, letterSpacing: "-0.035em", margin: 0 }}>5 fotos, sem cartão.</h3>
-                <p style={{ fontSize: 15, lineHeight: 1.55, color: SW.t55, margin: 0 }}>Deixa seu e-mail — a gente manda um link pra liberar.</p>
-                <input value={leadEmail} onChange={(e) => { setLeadEmail(e.target.value); if (leadError) setLeadError(""); }} onKeyDown={(e) => { if (e.key === "Enter") submitLead(); }} type="email" autoComplete="email" placeholder="seu@email.com" autoFocus
+                <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.22em", color: SW.ember }}>{t.modal.kicker}</div>
+                <h3 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(26px, 7vw, 34px)", lineHeight: 0.95, letterSpacing: "-0.035em", margin: 0 }}>{t.modal.title}</h3>
+                <p style={{ fontSize: 15, lineHeight: 1.55, color: SW.t55, margin: 0 }}>{t.modal.body}</p>
+                <input value={leadEmail} onChange={(e) => { setLeadEmail(e.target.value); if (leadError) setLeadError(""); }} onKeyDown={(e) => { if (e.key === "Enter") submitLead(); }} type="email" autoComplete="email" placeholder={t.modal.placeholder} autoFocus
                   style={{ width: "100%", background: SW.bg, border: `1px solid ${leadError ? "rgba(232,131,111,0.7)" : "rgba(244,239,230,0.16)"}`, borderRadius: 3, padding: "15px 16px", color: SW.text, fontFamily: FONT.body, fontSize: 16, outline: "none" }} />
                 {leadError && <div style={{ color: "#E8836F", fontSize: 12.5, lineHeight: 1.4, marginTop: -6 }}>{leadError}</div>}
-                <button onClick={submitLead} className="swl-cta" style={{ width: "100%", background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 3, padding: 17, fontFamily: FONT.body, fontSize: 16, fontWeight: 800, cursor: "pointer" }}>Quero testar</button>
-                <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: "0.14em", color: SW.t35, textAlign: "center" }}>SEM SPAM · CANCELA QUANDO QUISER</div>
+                <button onClick={submitLead} className="swl-cta" style={{ width: "100%", background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 3, padding: 17, fontFamily: FONT.body, fontSize: 16, fontWeight: 800, cursor: "pointer" }}>{t.modal.cta}</button>
+                <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: "0.14em", color: SW.t35, textAlign: "center" }}>{t.modal.nospam}</div>
               </div>
             ) : leadStatus === "sent" ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 14, alignItems: "center", textAlign: "center", padding: "12px 0" }}>
                 <div style={{ width: 52, height: 52, borderRadius: 999, background: "rgba(224,116,47,0.12)", border: "1px solid rgba(224,116,47,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <svg width={26} height={26} viewBox="0 0 24 24" fill="none" stroke={SW.ember} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><polyline points="22 6 12 13 2 6" /></svg>
                 </div>
-                <h3 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: 26, letterSpacing: "-0.03em", margin: 0 }}>Confira seu e-mail.</h3>
-                <p style={{ fontSize: 15, lineHeight: 1.55, color: SW.t55, margin: 0 }}>Mandamos um link pra <strong style={{ color: SW.text }}>{leadEmail}</strong> — clica nele pra liberar suas 5 fotos.</p>
-                <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: "0.14em", color: SW.t35 }}>ÀS VEZES CAI EM PROMOÇÕES / SPAM</div>
+                <h3 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: 26, letterSpacing: "-0.03em", margin: 0 }}>{t.sent.title}</h3>
+                <p style={{ fontSize: 15, lineHeight: 1.55, color: SW.t55, margin: 0 }}>{t.sent.body(leadEmail)}</p>
+                <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: "0.14em", color: SW.t35 }}>{t.sent.spam}</div>
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 14, alignItems: "center", textAlign: "center", padding: "12px 0" }}>
                 <div style={{ width: 52, height: 52, borderRadius: 999, background: "rgba(244,239,230,0.06)", border: `1px solid ${SW.line2}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <svg width={26} height={26} viewBox="0 0 24 24" fill="none" stroke={SW.ember} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
                 </div>
-                <h3 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: 24, letterSpacing: "-0.03em", margin: 0 }}>Teste já usado.</h3>
+                <h3 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: 24, letterSpacing: "-0.03em", margin: 0 }}>{t.blocked.title}</h3>
                 <p style={{ fontSize: 15, lineHeight: 1.55, color: SW.t55, margin: 0 }}>{leadMsg}</p>
-                <a href="#planos" onClick={() => setShowLead(false)} className="swl-cta" style={{ width: "100%", textAlign: "center", background: EMBER_GRAD, color: "#0A0908", borderRadius: 3, padding: 15, fontFamily: FONT.body, fontSize: 15, fontWeight: 800, textDecoration: "none", marginTop: 4 }}>Ver planos</a>
-                <a href="/entrar" style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.14em", color: SW.t45, textDecoration: "none" }}>JÁ TENHO ACESSO — ENTRAR</a>
+                <a href="#planos" onClick={() => setShowLead(false)} className="swl-cta" style={{ width: "100%", textAlign: "center", background: EMBER_GRAD, color: "#0A0908", borderRadius: 3, padding: 15, fontFamily: FONT.body, fontSize: 15, fontWeight: 800, textDecoration: "none", marginTop: 4 }}>{t.blocked.seePlans}</a>
+                <a href="/entrar" style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.14em", color: SW.t45, textDecoration: "none" }}>{t.blocked.alreadyHave}</a>
               </div>
             )}
           </div>
