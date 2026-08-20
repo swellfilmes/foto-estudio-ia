@@ -52,7 +52,7 @@ const pt = {
   nav: { login: "Entrar", tryFree: "Testar grátis" },
   hero: {
     kicker: "FOTO DE PRODUTO COM IA",
-    h1a: "Cansada de foto feia", h1b: "travando sua venda",
+    h1a: "Cansado de foto feia", h1b: "travando sua venda",
     subPre: "Sua foto de celular vira ", subStrong: "foto de estúdio em 1 minuto", subPost: ".",
     emailPlaceholder: "Seu melhor e-mail",
     cta: "Testar grátis — 5 fotos",
