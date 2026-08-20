@@ -168,6 +168,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
   // Controles de geração: quantas fotos por clique e a proporção
   const [variations, setVariations] = useState(VARIATIONS_PER_CLICK);
   const [aspect, setAspect] = useState<string>("auto");
+  const [advancedOpen, setAdvancedOpen] = useState(false); // #10 — categoria/cor/material recolhidos
   // Contador REAL de fotos já geradas (persistente — não zera ao trocar de ensaio)
   const [usedTotal, setUsedTotal] = useState(0);
   // Cota do plano (paywall) + popup de upsell
@@ -814,6 +815,15 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                 </div>
 
                 <div style={{ padding: "clamp(24px, 3vw, 36px)" }}>
+                  <button onClick={() => setAdvancedOpen((o) => !o)}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: 12, background: foam(0.03), border: `1px solid ${foam(0.1)}`, borderRadius: 12, padding: "13px 16px", cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif", marginBottom: advancedOpen ? 22 : 0 }}>
+                    <span style={{ display: "flex", flexDirection: "column", gap: 2, textAlign: "left" }}>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: FOAM }}>Ajustes avançados</span>
+                      <span style={{ fontSize: 12, color: foam(0.5) }}>Categoria, cor e material — já preenchidos pela análise. Mexa só se quiser.</span>
+                    </span>
+                    <span style={{ color: EMBER, fontSize: 22, lineHeight: 1 }}>{advancedOpen ? "−" : "+"}</span>
+                  </button>
+                  {advancedOpen && (<>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 10 }}>
                     <div style={{ ...mono(11, 0.22), color: EMBER }}>AJUDE A GENTE A ACERTAR O CENÁRIO</div>
                     <div style={{ ...mono(9, 0.18), color: foam(0.45), border: `1px solid ${foam(0.15)}`, borderRadius: 999, padding: "5px 13px" }}>OPCIONAL</div>
@@ -862,6 +872,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                       ))}
                     </div>
                   </div>
+                  </>)}
 
                   {modelToggle}
 
