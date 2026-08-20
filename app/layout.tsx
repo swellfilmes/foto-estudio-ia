@@ -8,13 +8,16 @@ export const metadata: Metadata = {
   description: "Ensaio com cara de estúdio, sem estúdio. Direção de arte Swell.",
 };
 
-// Pixel do Meta Ads (Swell Studio)
-const META_PIXEL_ID = "1040385058861312";
+// Pixel do Meta Ads (Swell Studio). O mesmo id vai em META_PIXEL_ID (servidor) para a
+// API de Conversões — os dois lados precisam apontar pro MESMO conjunto de dados.
+const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || "1040385058861312";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR">
       <head>
+        {/* Verificação de domínio do Meta (Business Manager) */}
+        <meta name="facebook-domain-verification" content="nhiagrlo3fdccrsed1vtewyxm7qian" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
