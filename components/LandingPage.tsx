@@ -72,6 +72,7 @@ const pt = {
   ] },
   caseStudy: { kicker: "CASO REAL", brand: "Eclesyart · Moda", quote: "Precisava de criativos diversos e o orçamento de fotografia não fechava. Fiz mais de 20 criativos validados no Swell Studio, rodei os anúncios — e o estoque esgotou em 3 semanas.", stats: [{ big: "20+", small: "CRIATIVOS VALIDADOS" }, { big: "3 semanas", small: "ESTOQUE ESGOTADO" }, { big: "R$0", small: "EM SESSÃO DE FOTOS" }] },
   how: { kicker: "02 — COMO FUNCIONA", steps: ["Sobe a foto", "Escolhe a cena", "Baixa e posta"] },
+  tool: { kicker: "POR DENTRO DA FERRAMENTA", h2: "É você no controle, do início ao fim", shots: ["Sobe a foto do produto", "Escolhe a cena e quantas fotos", "Revisa e baixa as versões prontas"] },
   fidelity: { kicker: "03 — FIDELIDADE", h2a: "Seu produto, fiel.", h2b: "Você revisa antes de postar", body: "Rótulo, cor e formato preservados a partir da sua foto. Muda o cenário e a luz — e você escolhe quais fotos usar antes de publicar. Direção de arte de uma produtora audiovisual." },
   modes: { kicker: "04 — DOIS MODOS", productT: "Produto", productD: "1 foto do celular → 4 variações de campanha.", personT: "Pessoa", personD: "3 selfies → 8 fotos de ensaio editorial." },
   plans: { kicker: "04 — PLANOS", perMonth: "/mês", photosWord: "fotos", perMonthWord: "por mês", included: "Todos os estilos inclusos", subscribe: "Assinar", mostPopular: "MAIS POPULAR", guarantee: "7 DIAS DE GARANTIA · CANCELA QUANDO QUISER",
@@ -118,6 +119,7 @@ const es: Content = {
   ] },
   caseStudy: { kicker: "CASO REAL", brand: "Eclesyart · Moda", quote: "Necesitaba creativos variados y el presupuesto de fotografía no daba. Hice más de 20 creativos validados en Swell Studio, corrí los anuncios — y el stock se agotó en 3 semanas.", stats: [{ big: "20+", small: "CREATIVOS VALIDADOS" }, { big: "3 semanas", small: "STOCK AGOTADO" }, { big: "R$0", small: "EN SESIÓN DE FOTOS" }] },
   how: { kicker: "02 — CÓMO FUNCIONA", steps: ["Sube la foto", "Elige la escena", "Descarga y publica"] },
+  tool: { kicker: "DENTRO DE LA HERRAMIENTA", h2: "Eres tú en control, de principio a fin", shots: ["Subes la foto del producto", "Eliges la escena y cuántas fotos", "Revisas y descargas las versiones listas"] },
   fidelity: { kicker: "03 — FIDELIDAD", h2a: "Tu producto, fiel.", h2b: "Revisas antes de publicar", body: "Etiqueta, color y forma preservados a partir de tu foto. Cambia el escenario y la luz — y eliges qué fotos usar antes de publicar. Dirección de arte de una productora audiovisual." },
   modes: { kicker: "04 — DOS MODOS", productT: "Producto", productD: "1 foto del celular → 4 variaciones de campaña.", personT: "Persona", personD: "3 selfies → 8 fotos de sesión editorial." },
   plans: { kicker: "04 — PLANES", perMonth: "/mes", photosWord: "fotos", perMonthWord: "al mes", included: "Todos los estilos incluidos", subscribe: "Suscribir", mostPopular: "MÁS POPULAR", guarantee: "7 DÍAS DE GARANTÍA · CANCELA CUANDO QUIERAS",
@@ -163,6 +165,7 @@ const en: Content = {
   ] },
   caseStudy: { kicker: "REAL CASE", brand: "Eclesyart · Fashion", quote: "I needed varied creatives and the photography budget didn't fit. I made 20+ validated creatives with Swell Studio, ran the ads — and stock sold out in 3 weeks.", stats: [{ big: "20+", small: "VALIDATED CREATIVES" }, { big: "3 weeks", small: "SOLD OUT" }, { big: "R$0", small: "ON PHOTO SHOOTS" }] },
   how: { kicker: "02 — HOW IT WORKS", steps: ["Upload the photo", "Pick the scene", "Download & post"] },
+  tool: { kicker: "INSIDE THE TOOL", h2: "You're in control, start to finish", shots: ["Upload the product photo", "Pick the scene and how many", "Review and download the ready versions"] },
   fidelity: { kicker: "03 — FIDELITY", h2a: "Your product, faithful.", h2b: "You review before posting", body: "Label, color and shape preserved from your photo. The scene and lighting change — and you choose which shots to use before posting. Art direction from a film studio." },
   modes: { kicker: "04 — TWO MODES", productT: "Product", productD: "1 phone photo → 4 campaign variations.", personT: "Person", personD: "3 selfies → 8 editorial shoot photos." },
   plans: { kicker: "04 — PLANS", perMonth: "/mo", photosWord: "photos", perMonthWord: "per month", included: "All styles included", subscribe: "Subscribe", mostPopular: "MOST POPULAR", guarantee: "7-DAY GUARANTEE · CANCEL ANYTIME",
@@ -592,6 +595,32 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ============ POR DENTRO DA FERRAMENTA (prints reais) ============ */}
+      <section style={{ borderTop: `1px solid ${SW.line}`, padding: "clamp(44px, 7vw, 84px) 0" }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 clamp(16px, 4vw, 40px)", marginBottom: 26 }}>
+          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember, marginBottom: 10 }}>{t.tool.kicker}</div>
+          <h2 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(26px, 6.5vw, 40px)", lineHeight: 0.97, letterSpacing: "-0.03em", margin: 0 }}>{t.tool.h2}<span style={{ color: SW.ember }}>.</span></h2>
+        </div>
+        <div className="swl-rail" style={{ display: "flex", gap: "clamp(16px, 3vw, 28px)", overflowX: "auto", padding: "4px clamp(16px, 4vw, 40px) 10px", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}>
+          {["/assets/tool/1-upload.jpg", "/assets/tool/2-cena.jpg", "/assets/tool/3-resultado.jpg"].map((src, i) => (
+            <figure key={i} style={{ margin: 0, flex: "0 0 min(88%, 640px)", scrollSnapAlign: "center", display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ borderRadius: 8, overflow: "hidden", border: `1px solid ${SW.line2}`, background: SW.surface, boxShadow: "0 24px 60px rgba(0,0,0,0.5)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "9px 12px", borderBottom: `1px solid ${SW.line}` }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 999, background: "rgba(244,239,230,0.18)" }} />
+                  <span style={{ width: 8, height: 8, borderRadius: 999, background: "rgba(244,239,230,0.18)" }} />
+                  <span style={{ width: 8, height: 8, borderRadius: 999, background: "rgba(224,116,47,0.5)" }} />
+                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt={t.tool.shots[i]} loading="lazy" decoding="async" style={{ width: "100%", display: "block" }} />
+              </div>
+              <figcaption style={{ fontFamily: FONT.mono, fontSize: 10.5, letterSpacing: "0.1em", color: SW.t55 }}>
+                <span style={{ color: SW.ember, fontWeight: 700 }}>{i + 1}.</span> {t.tool.shots[i]}
+              </figcaption>
+            </figure>
+          ))}
         </div>
       </section>
 
