@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import PromptGenerator from "./PromptGenerator";
 import EnsaioStudio from "./EnsaioStudio";
+import { isSandbox, installSandbox } from "@/lib/sandbox";
 
 const EMBER = "#E0742F";
 const INTRO_MSGS = ["Olá.", "Bem-vindo ao Estúdio Swell.", "Comece pela foto do seu produto."];
@@ -50,12 +51,21 @@ function Intro({ onDone }: { onDone: () => void }) {
 }
 
 export default function StudioShell({ initialProjectId }: { initialProjectId?: string } = {}) {
+  // Sandbox: instala o interceptador de fetch ANTES dos filhos montarem (idempotente).
+  if (typeof window !== "undefined" && isSandbox()) installSandbox();
   // Ao reabrir um projeto, pula a animação de abertura e vai direto pro estúdio.
   const [intro, setIntro] = useState(!initialProjectId);
   const [ensaio, setEnsaio] = useState(false);
+  const [sandbox, setSandbox] = useState(false);
+  useEffect(() => { setSandbox(isSandbox()); }, []);
 
   return (
     <>
+      {sandbox && (
+        <div style={{ position: "fixed", left: "50%", bottom: 14, transform: "translateX(-50%)", zIndex: 400, display: "flex", alignItems: "center", gap: 8, background: "rgba(224,116,47,0.16)", border: "1px solid rgba(224,116,47,0.55)", color: "#F4EFE6", borderRadius: 999, padding: "8px 16px", fontFamily: "'IBM Plex Mono', monospace", fontSize: 10.5, letterSpacing: "0.12em", backdropFilter: "blur(8px)", boxShadow: "0 10px 40px rgba(0,0,0,0.5)", pointerEvents: "none" }}>
+          🧪 SANDBOX · DADOS DE TESTE · GERAÇÃO SIMULADA · SEM CUSTO
+        </div>
+      )}
       {intro && <Intro onDone={() => setIntro(false)} />}
       {ensaio ? (
         <EnsaioStudio onBack={() => setEnsaio(false)} />

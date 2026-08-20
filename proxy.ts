@@ -8,6 +8,13 @@ const SESSION_COOKIE = "swell-subscriber";
 // ASSINATURA VÁLIDA. Antes bastava o cookie existir (forjável) — agora o token
 // é verificado; cookie inválido/expirado/forjado é tratado como "sem sessão".
 export async function proxy(request: NextRequest) {
+  // SANDBOX (branch de teste): libera /studio sem login, com ?sandbox=1 ou cookie.
+  // Só existe nesta branch — NÃO vai pra produção.
+  const sb = request.nextUrl.searchParams.get("sandbox");
+  if (sb === "1" || (sb !== "0" && request.cookies.get("swl-sandbox")?.value === "1")) {
+    return NextResponse.next();
+  }
+
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   const email = token ? await verifySessionToken(token) : null;
   if (!email) {
