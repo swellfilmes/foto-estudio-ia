@@ -70,19 +70,21 @@ const pt = {
     { text: "Outro nível aí 👏🏻👏🏻", via: "CLIENTE · INSTAGRAM" },
     { text: "Me arrepiei… olha isso", via: "CLIENTE · WHATSAPP" },
   ] },
+  caseStudy: { kicker: "CASO REAL", brand: "Eclesyart · Moda", quote: "Precisava de criativos diversos e o orçamento de fotografia não fechava. Fiz mais de 20 criativos validados no Swell, rodei os anúncios — e o estoque esgotou em 3 semanas.", stats: [{ big: "20+", small: "CRIATIVOS VALIDADOS" }, { big: "3 semanas", small: "ESTOQUE ESGOTADO" }, { big: "R$0", small: "EM SESSÃO DE FOTOS" }] },
   how: { kicker: "02 — COMO FUNCIONA", steps: ["Sobe a foto", "Escolhe a cena", "Baixa e posta"] },
-  fidelity: { kicker: "03 — FIDELIDADE", h2a: "Seu produto, idêntico.", h2b: "Só o cenário muda", body: "Rótulo, cor e formato preservados. Direção de arte de uma produtora audiovisual — não é filtro." },
+  fidelity: { kicker: "03 — FIDELIDADE", h2a: "Seu produto, fiel.", h2b: "Você revisa antes de postar", body: "Rótulo, cor e formato preservados a partir da sua foto. Muda o cenário e a luz — e você escolhe quais fotos usar antes de publicar. Direção de arte de uma produtora audiovisual." },
   modes: { kicker: "04 — DOIS MODOS", productT: "Produto", productD: "1 foto do celular → 4 variações de campanha.", personT: "Pessoa", personD: "3 selfies → 8 fotos de ensaio editorial." },
-  plans: { kicker: "05 — PLANOS", perMonth: "/mês", photosWord: "fotos", perMonthWord: "por mês", included: "Produto e pessoa inclusos", subscribe: "Assinar", mostPopular: "MAIS POPULAR", guarantee: "7 DIAS DE GARANTIA · CANCELA QUANDO QUISER",
+  plans: { kicker: "04 — PLANOS", perMonth: "/mês", photosWord: "fotos", perMonthWord: "por mês", included: "Todos os estilos inclusos", subscribe: "Assinar", mostPopular: "MAIS POPULAR", guarantee: "7 DIAS DE GARANTIA · CANCELA QUANDO QUISER",
     items: [
       { name: "SIMPLES", label: "Simples", highlight: "Ideal pra começar" },
       { name: "MÉDIO", label: "Médio", highlight: "2× mais fotos que o Simples" },
       { name: "GRANDE", label: "Grande", highlight: "5× mais fotos que o Simples" },
     ] },
-  faq: { kicker: "06 — DÚVIDAS", items: [
-    { q: "Meu produto fica idêntico?", a: "Sim. Rótulo, cor e formato são preservados a partir da foto que você envia. Só o cenário e a luz mudam." },
+  faq: { kicker: "05 — DÚVIDAS", items: [
+    { q: "Meu produto fica fiel ao original?", a: "Sim — rótulo, cor e formato saem fiéis à foto que você manda; muda só o cenário e a luz. E você sempre revisa antes de postar: escolhe as fotos que ficaram boas." },
     { q: "Preciso saber editar ou mexer em programa?", a: "Não, nada. Você sobe a foto do produto, escolhe a cena e pronto — luz, cenário e ângulo ficam por nossa conta. Você só baixa e posta." },
-    { q: "Quanto tempo demora?", a: "Cerca de 40 segundos por foto de produto. Ensaio de pessoa, 3 a 5 minutos." },
+    { q: "Quanto tempo demora?", a: "De 20 a 40 segundos por foto. Um pacote com 4 variações sai em cerca de 2 minutos." },
+    { q: "Como funcionam os créditos?", a: "1 foto = 1 imagem gerada. São 35 no Simples, 80 no Médio e 180 no Grande, por mês. Se uma geração falha, o crédito volta automaticamente. Os créditos valem no mês — não acumulam pro mês seguinte." },
     { q: "O teste é grátis mesmo?", a: "Sim: 5 fotos, sem cartão. Depois você escolhe um plano se quiser continuar." },
   ] },
   finalCta: { h2a: "Seu produto merece", h2b: "foto boa", cta: "Testar grátis", sub: "5 FOTOS · SEM CARTÃO" },
@@ -114,19 +116,21 @@ const es: Content = {
     { text: "Otro nivel 👏🏻👏🏻", via: "CLIENTE · INSTAGRAM" },
     { text: "Me dio escalofríos… mira esto", via: "CLIENTE · WHATSAPP" },
   ] },
+  caseStudy: { kicker: "CASO REAL", brand: "Eclesyart · Moda", quote: "Necesitaba creativos variados y el presupuesto de fotografía no daba. Hice más de 20 creativos validados en Swell, corrí los anuncios — y el stock se agotó en 3 semanas.", stats: [{ big: "20+", small: "CREATIVOS VALIDADOS" }, { big: "3 semanas", small: "STOCK AGOTADO" }, { big: "R$0", small: "EN SESIÓN DE FOTOS" }] },
   how: { kicker: "02 — CÓMO FUNCIONA", steps: ["Sube la foto", "Elige la escena", "Descarga y publica"] },
-  fidelity: { kicker: "03 — FIDELIDAD", h2a: "Tu producto, idéntico.", h2b: "Solo cambia el escenario", body: "Etiqueta, color y forma preservados. Dirección de arte de una productora audiovisual — no es un filtro." },
+  fidelity: { kicker: "03 — FIDELIDAD", h2a: "Tu producto, fiel.", h2b: "Revisas antes de publicar", body: "Etiqueta, color y forma preservados a partir de tu foto. Cambia el escenario y la luz — y eliges qué fotos usar antes de publicar. Dirección de arte de una productora audiovisual." },
   modes: { kicker: "04 — DOS MODOS", productT: "Producto", productD: "1 foto del celular → 4 variaciones de campaña.", personT: "Persona", personD: "3 selfies → 8 fotos de sesión editorial." },
-  plans: { kicker: "05 — PLANES", perMonth: "/mes", photosWord: "fotos", perMonthWord: "al mes", included: "Producto y persona incluidos", subscribe: "Suscribir", mostPopular: "MÁS POPULAR", guarantee: "7 DÍAS DE GARANTÍA · CANCELA CUANDO QUIERAS",
+  plans: { kicker: "04 — PLANES", perMonth: "/mes", photosWord: "fotos", perMonthWord: "al mes", included: "Todos los estilos incluidos", subscribe: "Suscribir", mostPopular: "MÁS POPULAR", guarantee: "7 DÍAS DE GARANTÍA · CANCELA CUANDO QUIERAS",
     items: [
       { name: "SIMPLE", label: "Simple", highlight: "Ideal para empezar" },
       { name: "MEDIO", label: "Medio", highlight: "2× más fotos que el Simple" },
       { name: "GRANDE", label: "Grande", highlight: "5× más fotos que el Simple" },
     ] },
-  faq: { kicker: "06 — DUDAS", items: [
-    { q: "¿Mi producto queda idéntico?", a: "Sí. Etiqueta, color y forma se preservan a partir de la foto que envías. Solo cambian el escenario y la luz." },
+  faq: { kicker: "05 — DUDAS", items: [
+    { q: "¿Mi producto queda fiel al original?", a: "Sí — etiqueta, color y forma salen fieles a la foto que envías; solo cambian el escenario y la luz. Y siempre revisas antes de publicar: eliges las fotos que quedaron bien." },
     { q: "¿Necesito saber editar o usar programas?", a: "No, nada. Subes la foto del producto, eliges la escena y listo — luz, escenario y ángulo van por nuestra cuenta. Solo descargas y publicas." },
-    { q: "¿Cuánto tarda?", a: "Cerca de 40 segundos por foto de producto. Sesión de persona, de 3 a 5 minutos." },
+    { q: "¿Cuánto tarda?", a: "De 20 a 40 segundos por foto. Un paquete con 4 variaciones sale en cerca de 2 minutos." },
+    { q: "¿Cómo funcionan los créditos?", a: "1 foto = 1 imagen generada. Son 35 en el Simple, 80 en el Medio y 180 en el Grande, al mes. Si una generación falla, el crédito se devuelve automáticamente. Los créditos valen en el mes — no se acumulan para el siguiente." },
     { q: "¿La prueba es gratis de verdad?", a: "Sí: 5 fotos, sin tarjeta. Después eliges un plan si quieres continuar." },
   ] },
   finalCta: { h2a: "Tu producto merece", h2b: "buena foto", cta: "Probar gratis", sub: "5 FOTOS · SIN TARJETA" },
@@ -157,19 +161,21 @@ const en: Content = {
     { text: "Next level 👏🏻👏🏻", via: "CLIENT · INSTAGRAM" },
     { text: "Got chills… look at this", via: "CLIENT · WHATSAPP" },
   ] },
+  caseStudy: { kicker: "REAL CASE", brand: "Eclesyart · Fashion", quote: "I needed varied creatives and the photography budget didn't fit. I made 20+ validated creatives with Swell, ran the ads — and stock sold out in 3 weeks.", stats: [{ big: "20+", small: "VALIDATED CREATIVES" }, { big: "3 weeks", small: "SOLD OUT" }, { big: "R$0", small: "ON PHOTO SHOOTS" }] },
   how: { kicker: "02 — HOW IT WORKS", steps: ["Upload the photo", "Pick the scene", "Download & post"] },
-  fidelity: { kicker: "03 — FIDELITY", h2a: "Your product, identical.", h2b: "Only the scene changes", body: "Label, color and shape preserved. Art direction from a film studio — not a filter." },
+  fidelity: { kicker: "03 — FIDELITY", h2a: "Your product, faithful.", h2b: "You review before posting", body: "Label, color and shape preserved from your photo. The scene and lighting change — and you choose which shots to use before posting. Art direction from a film studio." },
   modes: { kicker: "04 — TWO MODES", productT: "Product", productD: "1 phone photo → 4 campaign variations.", personT: "Person", personD: "3 selfies → 8 editorial shoot photos." },
-  plans: { kicker: "05 — PLANS", perMonth: "/mo", photosWord: "photos", perMonthWord: "per month", included: "Product and person included", subscribe: "Subscribe", mostPopular: "MOST POPULAR", guarantee: "7-DAY GUARANTEE · CANCEL ANYTIME",
+  plans: { kicker: "04 — PLANS", perMonth: "/mo", photosWord: "photos", perMonthWord: "per month", included: "All styles included", subscribe: "Subscribe", mostPopular: "MOST POPULAR", guarantee: "7-DAY GUARANTEE · CANCEL ANYTIME",
     items: [
       { name: "SIMPLE", label: "Simple", highlight: "Perfect to start" },
       { name: "MEDIUM", label: "Medium", highlight: "2× more photos than Simple" },
       { name: "LARGE", label: "Large", highlight: "5× more photos than Simple" },
     ] },
-  faq: { kicker: "06 — FAQ", items: [
-    { q: "Does my product stay identical?", a: "Yes. Label, color and shape are preserved from the photo you send. Only the scene and lighting change." },
+  faq: { kicker: "05 — FAQ", items: [
+    { q: "Does my product stay true to the original?", a: "Yes — label, color and shape come out faithful to the photo you send; only the scene and lighting change. And you always review before posting: you pick the shots that came out great." },
     { q: "Do I need to know editing or software?", a: "No, nothing. You upload the product photo, pick the scene, and that's it — light, scene and angle are on us. You just download and post." },
-    { q: "How long does it take?", a: "About 40 seconds per product photo. A person shoot, 3 to 5 minutes." },
+    { q: "How long does it take?", a: "20 to 40 seconds per photo. A 4-variation pack comes out in about 2 minutes." },
+    { q: "How do credits work?", a: "1 photo = 1 generated image. That's 35 on Simple, 80 on Medium and 180 on Large, per month. If a generation fails, the credit is refunded automatically. Credits are monthly — they don't roll over." },
     { q: "Is the trial really free?", a: "Yes: 5 photos, no card. Then you pick a plan if you want to continue." },
   ] },
   finalCta: { h2a: "Your product deserves", h2b: "a good photo", cta: "Try free", sub: "5 PHOTOS · NO CARD" },
@@ -344,6 +350,8 @@ export default function LandingPage() {
   const [leadStatus, setLeadStatus] = useState<"idle" | "sent" | "blocked">("idle");
   const [leadMsg, setLeadMsg] = useState("");
   const [leadError, setLeadError] = useState("");
+  const [showSticky, setShowSticky] = useState(false);
+  const heroRef = useRef<HTMLDivElement>(null);
   const exitShown = useRef(false);
 
   const t = CONTENT[lang];
@@ -367,6 +375,15 @@ export default function LandingPage() {
     document.addEventListener("mouseout", onMouseOut);
     return () => document.removeEventListener("mouseout", onMouseOut);
   }, [showLead, leadStatus]);
+
+  // Barra fixa só aparece quando o herói (com o formulário) sai da tela.
+  useEffect(() => {
+    const el = heroRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") { setShowSticky(true); return; }
+    const io = new IntersectionObserver(([e]) => setShowSticky(!e.isIntersecting), { threshold: 0 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   const submitLead = async () => {
     const email = leadEmail.trim();
@@ -465,7 +482,7 @@ export default function LandingPage() {
 
       {/* ============ HERO ============ */}
       <section style={{ padding: "clamp(30px, 5vw, 60px) clamp(16px, 4vw, 40px) clamp(40px, 6vw, 70px)" }}>
-        <div className="swl-rise" style={{ maxWidth: 560, margin: "0 auto", display: "flex", flexDirection: "column", gap: "clamp(22px, 4vw, 30px)" }}>
+        <div ref={heroRef} className="swl-rise" style={{ maxWidth: 560, margin: "0 auto", display: "flex", flexDirection: "column", gap: "clamp(22px, 4vw, 30px)" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 14, textAlign: "center" }}>
             <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.t42 }}>{t.hero.kicker}</div>
             <h1 style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: "clamp(28px, 7.5vw, 46px)", lineHeight: 1.06, letterSpacing: "-0.015em", margin: 0 }}>{t.hero.h1a}<br />{t.hero.h1b}<span style={{ color: SW.ember }}>?</span></h1>
@@ -519,6 +536,25 @@ export default function LandingPage() {
         <ProofRail labels={proofLabels} before={t.ba.beforeShort} after={t.ba.afterShort} />
       </section>
 
+      {/* ============ CASO REAL (Eclesyart) ============ */}
+      <section style={{ borderTop: `1px solid ${SW.line}`, padding: "clamp(44px, 7vw, 84px) clamp(16px, 4vw, 40px)" }}>
+        <div style={{ maxWidth: 760, margin: "0 auto" }}>
+          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember, marginBottom: 14 }}>{t.caseStudy.kicker}</div>
+          <blockquote style={{ margin: 0, fontFamily: FONT.archivo, fontWeight: 800, fontSize: "clamp(21px, 4.4vw, 30px)", lineHeight: 1.28, letterSpacing: "-0.02em", color: SW.text }}>
+            “{t.caseStudy.quote}”
+          </blockquote>
+          <div style={{ fontFamily: FONT.mono, fontSize: 11, letterSpacing: "0.16em", color: SW.t55, marginTop: 18 }}>— {t.caseStudy.brand.toUpperCase()}</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "clamp(10px, 2vw, 16px)", marginTop: 28 }}>
+            {t.caseStudy.stats.map((s, i) => (
+              <div key={i} style={{ background: SW.surface, border: `1px solid ${SW.line2}`, borderRadius: 3, padding: "18px 16px", display: "flex", flexDirection: "column", gap: 6 }}>
+                <div style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(24px, 5vw, 32px)", letterSpacing: "-0.03em", color: SW.ember, lineHeight: 1 }}>{s.big}</div>
+                <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: "0.14em", color: SW.t45 }}>{s.small}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ============ REAÇÕES REAIS ============ */}
       <section style={{ borderTop: `1px solid ${SW.line}`, padding: "clamp(40px, 6vw, 72px) clamp(16px, 4vw, 40px)" }}>
         <div style={{ maxWidth: 760, margin: "0 auto" }}>
@@ -566,36 +602,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ============ 04 · DOIS MODOS ============ */}
-      <section style={{ borderTop: `1px solid ${SW.line}`, padding: "clamp(44px, 7vw, 84px) clamp(16px, 4vw, 40px)" }}>
-        <div style={{ maxWidth: 1180, margin: "0 auto" }}>
-          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember, marginBottom: 26 }}>{t.modes.kicker}</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "clamp(14px, 2vw, 22px)" }}>
-            <div style={{ background: SW.surface, border: "1px solid rgba(224,116,47,0.35)", borderRadius: 3, overflow: "hidden" }}>
-              <div style={{ aspectRatio: "16/10", overflow: "hidden", background: SW.bg }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/assets/opt/luminaria-depois.jpg" alt="" loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-              </div>
-              <div style={{ padding: 22, display: "flex", flexDirection: "column", gap: 7 }}>
-                <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 22, letterSpacing: "-0.03em" }}>{t.modes.productT}</div>
-                <div style={{ fontSize: 15, color: SW.t55 }}>{t.modes.productD}</div>
-              </div>
-            </div>
-            <div style={{ background: SW.surface, border: `1px solid ${SW.line2}`, borderRadius: 3, overflow: "hidden" }}>
-              <div style={{ aspectRatio: "16/10", overflow: "hidden", background: SW.bg }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/assets/opt/pessoa-depois.jpg" alt="" loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 25%", display: "block" }} />
-              </div>
-              <div style={{ padding: 22, display: "flex", flexDirection: "column", gap: 7 }}>
-                <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 22, letterSpacing: "-0.03em" }}>{t.modes.personT}</div>
-                <div style={{ fontSize: 15, color: SW.t55 }}>{t.modes.personD}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ============ 05 · PLANOS ============ */}
+      {/* ============ PLANOS ============ */}
       <section id="planos" style={{ borderTop: `1px solid ${SW.line}`, padding: "clamp(44px, 7vw, 84px) clamp(16px, 4vw, 40px)", scrollMarginTop: 70 }}>
         <div style={{ maxWidth: 1180, margin: "0 auto" }}>
           <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember, marginBottom: 26 }}>{t.plans.kicker}</div>
@@ -671,12 +678,14 @@ export default function LandingPage() {
       {/* espaço pra barra fixa não cobrir o rodapé no celular */}
       <div className="swl-stickypad" style={{ height: 76 }} aria-hidden />
 
-      {/* ============ BARRA FIXA (mobile) ============ */}
-      <div className="swl-sticky" style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 70, padding: "10px 14px calc(10px + env(safe-area-inset-bottom))", background: "rgba(10,9,8,0.94)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderTop: `1px solid ${SW.line2}` }}>
-        <button onClick={openLead} className="swl-cta" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 9, background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 4, padding: "16px 20px", fontFamily: FONT.body, fontSize: 15.5, fontWeight: 800, letterSpacing: "-0.01em", cursor: "pointer", boxShadow: "0 -6px 30px rgba(224,116,47,0.28)" }}>
-          {t.sticky}<Arrow size={17} />
-        </button>
-      </div>
+      {/* ============ BARRA FIXA (mobile) — só depois que o herói sai da tela ============ */}
+      {showSticky && (
+        <div className="swl-sticky" style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 70, padding: "8px 14px calc(8px + env(safe-area-inset-bottom))", background: "rgba(10,9,8,0.94)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderTop: `1px solid ${SW.line2}` }}>
+          <button onClick={openLead} className="swl-cta" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 4, padding: "13px 18px", fontFamily: FONT.body, fontSize: 14.5, fontWeight: 800, letterSpacing: "-0.01em", cursor: "pointer", boxShadow: "0 -6px 30px rgba(224,116,47,0.28)" }}>
+            {t.sticky}<Arrow size={16} />
+          </button>
+        </div>
+      )}
 
       {/* ============ MODAL DE LEAD ============ */}
       {showLead && (
