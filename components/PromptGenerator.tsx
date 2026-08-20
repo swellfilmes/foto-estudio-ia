@@ -174,7 +174,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
   const [usage, setUsage] = useState<{ email?: string | null; plan: string | null; quota: number | null; used: number; remaining: number | null } | null>(null);
   const [upsellOpen, setUpsellOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [lightbox, setLightbox] = useState<{ src: string; name: string } | null>(null);
+  const [lightbox, setLightbox] = useState<{ items: { src: string; name: string }[]; index: number } | null>(null);
   const [compare, setCompare] = useState<string | null>(null); // #6 comparar resultado × referência
 
   // ── Projeto (produto salvo = fotos-referência + análise + suas gerações) ──
@@ -899,6 +899,10 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                       ? "Você está continuando este projeto — gere mais fotos no mesmo produto, com as referências já travadas."
                       : "Nenhum crédito gasto ainda. Escolha um estilo abaixo — cada geração usa suas fotos só pra travar o produto e cria um cenário novo."}
                   </p>
+                  <button onClick={() => setStage("category")} title="Voltar pra corrigir categoria, cor, material e os detalhes"
+                    style={{ marginTop: 14, display: "inline-flex", alignItems: "center", gap: 7, background: "none", border: `1px solid ${foam(0.16)}`, color: foam(0.72), borderRadius: 10, padding: "9px 15px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>
+                    ← Ajustar produto e detalhes
+                  </button>
                 </div>
                 {queueCount > 0 && (
                   <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
@@ -938,7 +942,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                     {projectGens.flatMap((g) =>
                       g.images.map((src, i) => (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img key={`${g.id}-${i}`} src={src} alt="" onClick={() => setLightbox({ src, name: `swell-${g.style}-${i + 1}.jpg` })} title="Ampliar" style={{ flexShrink: 0, width: 92, height: 116, objectFit: "cover", borderRadius: 12, border: `1px solid ${foam(0.1)}`, display: "block", cursor: "zoom-in" }} />
+                        <img key={`${g.id}-${i}`} src={src} alt="" onClick={() => setLightbox({ items: g.images.map((s, k) => ({ src: s, name: `swell-${g.style}-${k + 1}.jpg` })), index: i })} title="Ampliar" style={{ flexShrink: 0, width: 92, height: 116, objectFit: "cover", borderRadius: 12, border: `1px solid ${foam(0.1)}`, display: "block", cursor: "zoom-in" }} />
                       ))
                     )}
                   </div>
@@ -1080,7 +1084,11 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                   onPrepareRedo={() => prepareRedo(batch)} onConfirmRedo={() => confirmRedo(batch)}
                   onEditRedo={() => updateBatch(batch.id, { redo: undefined })}
                   onCompare={(src) => setCompare(src)}
-                  onExpand={(src, name) => setLightbox({ src, name })} />
+                  onExpand={(src) => {
+                    const items = batches.flatMap((b) => b.images.map((s, i) => ({ src: s, name: `swell-${b.style.key}-${i + 1}.jpg` })));
+                    const idx = items.findIndex((it) => it.src === src);
+                    setLightbox({ items, index: idx < 0 ? 0 : idx });
+                  }} />
               ))}
             </>
           )}
@@ -1155,7 +1163,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {g.images.map((src, i) => (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img key={i} src={src} alt="" onClick={() => setLightbox({ src, name: `swell-${g.style}-${i + 1}.jpg` })} title="Ampliar" style={{ width: 56, height: 70, objectFit: "cover", borderRadius: 8, border: `1px solid ${foam(0.1)}`, display: "block", cursor: "zoom-in" }} />
+                  <img key={i} src={src} alt="" onClick={() => setLightbox({ items: g.images.map((s, k) => ({ src: s, name: `swell-${g.style}-${k + 1}.jpg` })), index: i })} title="Ampliar" style={{ width: 56, height: 70, objectFit: "cover", borderRadius: 8, border: `1px solid ${foam(0.1)}`, display: "block", cursor: "zoom-in" }} />
                 ))}
               </div>
               <div style={{ fontSize: 11, color: foam(0.4), marginTop: 8 }}>{g.images.length} foto{g.images.length === 1 ? "" : "s"} · salvas pra sempre</div>
@@ -1197,17 +1205,36 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
       )}
 
       {/* Lightbox — clicar na foto amplia, com botão de baixar */}
-      {lightbox && (
-        <div onClick={() => setLightbox(null)} style={{ position: "fixed", inset: 0, zIndex: 80, background: "rgba(6,5,4,0.92)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "clamp(16px, 4vw, 48px)", gap: 20, animation: "riseIn 250ms ease both" }}>
-          <button onClick={() => setLightbox(null)} title="Fechar" style={{ position: "absolute", top: 18, right: 18, ...closeBtn }}><X size={16} /></button>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={lightbox.src} alt="" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "min(1100px, 92vw)", maxHeight: "76vh", objectFit: "contain", borderRadius: 12, boxShadow: "0 40px 120px rgba(0,0,0,0.6)" }} />
-          <a href={`/api/download?u=${encodeURIComponent(lightbox.src)}&name=${encodeURIComponent(lightbox.name)}`} onClick={(e) => e.stopPropagation()}
-            style={{ ...gradientBtn, display: "inline-flex", alignItems: "center", gap: 9, padding: "14px 28px", fontSize: 14, textDecoration: "none" }}>
-            <Download size={16} />Baixar foto
-          </a>
-        </div>
-      )}
+      {lightbox && (() => {
+        const cur = lightbox.items[lightbox.index];
+        const many = lightbox.items.length > 1;
+        const go = (d: number) => setLightbox((lb) => (lb ? { ...lb, index: (lb.index + d + lb.items.length) % lb.items.length } : lb));
+        const navBtn: React.CSSProperties = { position: "absolute", top: "50%", transform: "translateY(-50%)", width: 46, height: 46, borderRadius: "50%", background: "rgba(10,9,8,0.6)", backdropFilter: "blur(6px)", border: `1px solid ${foam(0.18)}`, color: FOAM, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 };
+        return (
+          <div onClick={() => setLightbox(null)} style={{ position: "fixed", inset: 0, zIndex: 80, background: "rgba(6,5,4,0.92)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "clamp(16px, 4vw, 48px)", gap: 16, animation: "riseIn 250ms ease both" }}>
+            <button onClick={() => setLightbox(null)} title="Fechar" style={{ position: "absolute", top: 18, right: 18, ...closeBtn }}><X size={16} /></button>
+            <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: "100%", maxWidth: "min(1100px, 92vw)" }}>
+              {many && (
+                <button onClick={(e) => { e.stopPropagation(); go(-1); }} title="Anterior" style={{ ...navBtn, left: 6 }}>
+                  <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                </button>
+              )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={cur.src} alt="" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "100%", maxHeight: "74vh", objectFit: "contain", borderRadius: 12, boxShadow: "0 40px 120px rgba(0,0,0,0.6)" }} />
+              {many && (
+                <button onClick={(e) => { e.stopPropagation(); go(1); }} title="Próximo" style={{ ...navBtn, right: 6 }}>
+                  <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                </button>
+              )}
+            </div>
+            {many && <div style={{ ...mono(10, 0.18), color: foam(0.6) }}>{lightbox.index + 1} / {lightbox.items.length}</div>}
+            <a href={`/api/download?u=${encodeURIComponent(cur.src)}&name=${encodeURIComponent(cur.name)}`} onClick={(e) => e.stopPropagation()}
+              style={{ ...gradientBtn, display: "inline-flex", alignItems: "center", gap: 9, padding: "14px 28px", fontSize: 14, textDecoration: "none" }}>
+              <Download size={16} />Baixar foto
+            </a>
+          </div>
+        );
+      })()}
 
       {/* #6 — Comparar: sua foto × resultado gerado, lado a lado */}
       {compare && (
