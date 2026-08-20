@@ -88,8 +88,10 @@ async function deliver(opts: { email: string; subject: string; html: string; tex
     text: opts.text,
   });
   if (result.error) {
+    console.error(`[email] Resend REJEITOU (${opts.email}):`, result.error.message);
     throw new Error(`Resend: ${result.error.message}`);
   }
+  console.log(`[email] enviado para ${opts.email} — id ${result.data?.id ?? "?"}`);
 }
 
 function firstName(name?: string | null): string {

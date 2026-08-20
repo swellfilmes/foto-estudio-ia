@@ -56,7 +56,7 @@ const pt = {
     h1a: "Cansado de foto feia", h1b: "travando sua venda",
     subPre: "Sua foto de celular vira ", subStrong: "foto de estúdio em poucos minutos", subPost: ".",
     emailPlaceholder: "Seu melhor e-mail",
-    cta: "Criar 5 fotos grátis", reassure: "5 fotos grátis · sem cartão",
+    cta: "Comece a criar agora", reassure: "5 fotos grátis · sem cartão",
     processPre: "Sobe a foto", processStrong: "4 versões em ~2 min", processPost: ", sem cartão.",
     urgency: "Cada dia de foto fraca é venda que escapa — testa hoje.",
   },
@@ -103,7 +103,7 @@ const es: Content = {
     h1a: "¿Cansada de fotos feas", h1b: "que frenan tus ventas",
     subPre: "Tu foto de celular se vuelve ", subStrong: "foto de estudio en pocos minutos", subPost: ".",
     emailPlaceholder: "Tu mejor e-mail",
-    cta: "Crear 5 fotos gratis", reassure: "5 fotos gratis · sin tarjeta",
+    cta: "Empieza a crear ahora", reassure: "5 fotos gratis · sin tarjeta",
     processPre: "Sube la foto", processStrong: "4 versiones en ~2 min", processPost: ", sin tarjeta.",
     urgency: "Cada día con fotos flojas es una venta que se escapa — prueba hoy.",
   },
@@ -149,7 +149,7 @@ const en: Content = {
     h1a: "Ugly photos", h1b: "killing your sales",
     subPre: "Your phone photo becomes a ", subStrong: "studio photo in minutes", subPost: ".",
     emailPlaceholder: "Your best email",
-    cta: "Create 5 free photos", reassure: "5 free photos · no card",
+    cta: "Start creating now", reassure: "5 free photos · no card",
     processPre: "Upload your photo", processStrong: "4 versions in ~2 min", processPost: ", no card.",
     urgency: "Every day with weak photos is a sale slipping away — try today.",
   },
@@ -522,8 +522,8 @@ export default function LandingPage() {
         .swl-ghost:hover { color: ${SW.emberHi}; }
         .swl-sticky, .swl-stickypad { display: none; }
         @media (max-width: 640px) { .swl-sticky { display: block; } .swl-stickypad { display: block; } }
-        @keyframes swlPulse { 0%, 100% { box-shadow: 0 16px 50px rgba(224,116,47,0.26); } 50% { box-shadow: 0 16px 60px rgba(224,116,47,0.5); } }
-        .swl-pulse { animation: swlPulse 2.4s ease-in-out infinite; }
+        @keyframes swlPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,138,61,0.5), 0 16px 44px rgba(224,116,47,0.45); } 50% { box-shadow: 0 0 0 10px rgba(255,138,61,0), 0 18px 64px rgba(255,138,61,0.72); } }
+        .swl-pulse { animation: swlPulse 2s ease-in-out infinite; }
         @media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
       `}</style>
 
@@ -566,7 +566,7 @@ export default function LandingPage() {
                 type="email" autoComplete="email" inputMode="email" placeholder={t.hero.emailPlaceholder} aria-label="e-mail"
                 style={{ width: "100%", background: "rgba(244,239,230,0.06)", border: `1.5px solid ${leadError ? "rgba(232,131,111,0.85)" : "rgba(224,116,47,0.55)"}`, borderRadius: 4, padding: "18px 18px", color: SW.text, fontFamily: FONT.body, fontSize: 16.5, outline: "none", textAlign: "center" }}
               />
-              <button type="submit" className="swl-cta swl-pulse" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 4, padding: "20px 28px", fontFamily: FONT.body, fontSize: 17, fontWeight: 800, letterSpacing: "-0.015em", cursor: "pointer" }}>
+              <button type="submit" className="swl-cta swl-pulse" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: "linear-gradient(180deg, #FF8C3F 0%, #E0651A 100%)", color: "#0A0908", border: "none", borderRadius: 4, padding: "20px 28px", fontFamily: FONT.body, fontSize: 17.5, fontWeight: 800, letterSpacing: "-0.015em", cursor: "pointer" }}>
                 {t.hero.cta}<Arrow />
               </button>
               {leadError && <div style={{ color: "#E8836F", fontSize: 13, lineHeight: 1.4, textAlign: "center" }}>{leadError}</div>}
