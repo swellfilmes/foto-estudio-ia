@@ -539,7 +539,9 @@ export default function LandingPage() {
       {/* ============ CASO REAL (Eclesyart) ============ */}
       <section style={{ borderTop: `1px solid ${SW.line}`, padding: "clamp(44px, 7vw, 84px) clamp(16px, 4vw, 40px)" }}>
         <div style={{ maxWidth: 760, margin: "0 auto" }}>
-          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember, marginBottom: 14 }}>{t.caseStudy.kicker}</div>
+          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember, marginBottom: 16 }}>{t.caseStudy.kicker}</div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/assets/eclesyart-logo.png" alt={t.caseStudy.brand} style={{ height: 58, width: "auto", display: "block", marginBottom: 22 }} />
           <blockquote style={{ margin: 0, fontFamily: FONT.archivo, fontWeight: 800, fontSize: "clamp(21px, 4.4vw, 30px)", lineHeight: 1.28, letterSpacing: "-0.02em", color: SW.text }}>
             “{t.caseStudy.quote}”
           </blockquote>
