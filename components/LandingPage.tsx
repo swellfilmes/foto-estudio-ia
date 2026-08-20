@@ -73,7 +73,7 @@ const pt = {
   caseStudy: { kicker: "CASO REAL", brand: "Eclesyart · Moda", quote: "Precisava de criativos diversos e o orçamento de fotografia não fechava. Fiz mais de 20 criativos validados no Swell Studio, rodei os anúncios — e o estoque esgotou em 3 semanas.", stats: [{ big: "20+", small: "CRIATIVOS VALIDADOS" }, { big: "3 semanas", small: "ESTOQUE ESGOTADO" }, { big: "R$0", small: "EM SESSÃO DE FOTOS" }] },
   how: { kicker: "02 — COMO FUNCIONA", steps: ["Sobe a foto", "Escolhe a cena", "Baixa e posta"] },
   tool: { kicker: "POR DENTRO DA FERRAMENTA", h2: "É você no controle, do início ao fim", shots: ["Sobe a foto do produto", "Escolhe a cena e quantas fotos", "Revisa e baixa as versões prontas"] },
-  fidelity: { kicker: "03 — FIDELIDADE", h2a: "Seu produto, fiel.", h2b: "Você revisa antes de postar", body: "Rótulo, cor e formato preservados a partir da sua foto. Muda o cenário e a luz — e você escolhe quais fotos usar antes de publicar. Direção de arte de uma produtora audiovisual.", labels: ["COSMÉTICO", "DECORAÇÃO", "BEBIDA", "ACESSÓRIO"] },
+  fidelity: { kicker: "03 — FIDELIDADE", h2a: "Seu produto, fiel.", h2b: "Você revisa antes de postar", body: "Rótulo, cor e formato preservados a partir da sua foto. Muda o cenário e a luz — e você escolhe quais fotos usar antes de publicar. Direção de arte de uma produtora audiovisual.", labels: ["COSMÉTICO", "CALÇADO", "VESTUÁRIO"] },
   modes: { kicker: "04 — DOIS MODOS", productT: "Produto", productD: "1 foto do celular → 4 variações de campanha.", personT: "Pessoa", personD: "3 selfies → 8 fotos de ensaio editorial." },
   plans: { kicker: "04 — PLANOS", perMonth: "/mês", photosWord: "fotos", perMonthWord: "por mês", included: "Todos os estilos inclusos", subscribe: "Assinar", mostPopular: "MAIS POPULAR", guarantee: "7 DIAS DE GARANTIA · CANCELA QUANDO QUISER",
     items: [
@@ -120,7 +120,7 @@ const es: Content = {
   caseStudy: { kicker: "CASO REAL", brand: "Eclesyart · Moda", quote: "Necesitaba creativos variados y el presupuesto de fotografía no daba. Hice más de 20 creativos validados en Swell Studio, corrí los anuncios — y el stock se agotó en 3 semanas.", stats: [{ big: "20+", small: "CREATIVOS VALIDADOS" }, { big: "3 semanas", small: "STOCK AGOTADO" }, { big: "R$0", small: "EN SESIÓN DE FOTOS" }] },
   how: { kicker: "02 — CÓMO FUNCIONA", steps: ["Sube la foto", "Elige la escena", "Descarga y publica"] },
   tool: { kicker: "DENTRO DE LA HERRAMIENTA", h2: "Eres tú en control, de principio a fin", shots: ["Subes la foto del producto", "Eliges la escena y cuántas fotos", "Revisas y descargas las versiones listas"] },
-  fidelity: { kicker: "03 — FIDELIDAD", h2a: "Tu producto, fiel.", h2b: "Revisas antes de publicar", body: "Etiqueta, color y forma preservados a partir de tu foto. Cambia el escenario y la luz — y eliges qué fotos usar antes de publicar. Dirección de arte de una productora audiovisual.", labels: ["COSMÉTICO", "DECORACIÓN", "BEBIDA", "ACCESORIO"] },
+  fidelity: { kicker: "03 — FIDELIDAD", h2a: "Tu producto, fiel.", h2b: "Revisas antes de publicar", body: "Etiqueta, color y forma preservados a partir de tu foto. Cambia el escenario y la luz — y eliges qué fotos usar antes de publicar. Dirección de arte de una productora audiovisual.", labels: ["COSMÉTICO", "CALZADO", "ROPA"] },
   modes: { kicker: "04 — DOS MODOS", productT: "Producto", productD: "1 foto del celular → 4 variaciones de campaña.", personT: "Persona", personD: "3 selfies → 8 fotos de sesión editorial." },
   plans: { kicker: "04 — PLANES", perMonth: "/mes", photosWord: "fotos", perMonthWord: "al mes", included: "Todos los estilos incluidos", subscribe: "Suscribir", mostPopular: "MÁS POPULAR", guarantee: "7 DÍAS DE GARANTÍA · CANCELA CUANDO QUIERAS",
     items: [
@@ -166,7 +166,7 @@ const en: Content = {
   caseStudy: { kicker: "REAL CASE", brand: "Eclesyart · Fashion", quote: "I needed varied creatives and the photography budget didn't fit. I made 20+ validated creatives with Swell Studio, ran the ads — and stock sold out in 3 weeks.", stats: [{ big: "20+", small: "VALIDATED CREATIVES" }, { big: "3 weeks", small: "SOLD OUT" }, { big: "R$0", small: "ON PHOTO SHOOTS" }] },
   how: { kicker: "02 — HOW IT WORKS", steps: ["Upload the photo", "Pick the scene", "Download & post"] },
   tool: { kicker: "INSIDE THE TOOL", h2: "You're in control, start to finish", shots: ["Upload the product photo", "Pick the scene and how many", "Review and download the ready versions"] },
-  fidelity: { kicker: "03 — FIDELITY", h2a: "Your product, faithful.", h2b: "You review before posting", body: "Label, color and shape preserved from your photo. The scene and lighting change — and you choose which shots to use before posting. Art direction from a film studio.", labels: ["COSMETIC", "DECOR", "DRINK", "ACCESSORY"] },
+  fidelity: { kicker: "03 — FIDELITY", h2a: "Your product, faithful.", h2b: "You review before posting", body: "Label, color and shape preserved from your photo. The scene and lighting change — and you choose which shots to use before posting. Art direction from a film studio.", labels: ["COSMETIC", "FOOTWEAR", "APPAREL"] },
   modes: { kicker: "04 — TWO MODES", productT: "Product", productD: "1 phone photo → 4 campaign variations.", personT: "Person", personD: "3 selfies → 8 editorial shoot photos." },
   plans: { kicker: "04 — PLANS", perMonth: "/mo", photosWord: "photos", perMonthWord: "per month", included: "All styles included", subscribe: "Subscribe", mostPopular: "MOST POPULAR", guarantee: "7-DAY GUARANTEE · CANCEL ANYTIME",
     items: [
@@ -215,9 +215,8 @@ const PROOF_IMG = [
 // Pares antes/depois da seção de fidelidade (inclui o shampoo novo).
 const FID_IMG = [
   { antes: "/assets/opt/shampoo-antes.jpg", depois: "/assets/opt/shampoo-depois.jpg" },
-  { antes: "/assets/opt/luminaria-antes.jpg", depois: "/assets/opt/luminaria-depois.jpg" },
-  { antes: "/assets/opt/suco-antes.jpg", depois: "/assets/opt/suco-depois.jpg" },
-  { antes: "/assets/opt/relogio-antes.jpg", depois: "/assets/opt/relogio-depois.jpg" },
+  { antes: "/assets/opt/tenis-antes.jpg", depois: "/assets/opt/tenis-depois.jpg" },
+  { antes: "/assets/opt/camisa-antes.jpg", depois: "/assets/opt/camisa-depois.jpg" },
 ];
 const TOOL_SHOTS = ["/assets/tool/1-upload.jpg", "/assets/tool/2-cena.jpg", "/assets/tool/3-resultado.jpg"];
 
@@ -409,6 +408,7 @@ export default function LandingPage() {
   const [leadMsg, setLeadMsg] = useState("");
   const [leadError, setLeadError] = useState("");
   const [showSticky, setShowSticky] = useState(false);
+  const [lightbox, setLightbox] = useState<string | null>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const exitShown = useRef(false);
 
@@ -493,6 +493,8 @@ export default function LandingPage() {
   };
 
   const openLead = () => setShowLead(true);
+  // Lightbox: abre a versão em alta (/assets/hi/...). Se não existir, o onError volta pro thumb.
+  const openImg = (src: string) => setLightbox(src.replace("/assets/", "/assets/hi/"));
   const proofLabels = t.proof.labels;
 
   return (
@@ -618,7 +620,7 @@ export default function LandingPage() {
                   <span style={{ width: 8, height: 8, borderRadius: 999, background: "rgba(224,116,47,0.5)" }} />
                 </div>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt={t.tool.shots[i]} loading="lazy" decoding="async" style={{ width: "100%", display: "block" }} />
+                <img src={src} alt={t.tool.shots[i]} onClick={() => openImg(src)} loading="lazy" decoding="async" style={{ width: "100%", display: "block", cursor: "zoom-in" }} />
               </div>
             ))} />
           </div>
@@ -677,12 +679,12 @@ export default function LandingPage() {
               <div style={{ display: "flex", gap: "clamp(8px, 2vw, 14px)" }}>
                 <div style={{ position: "relative", flex: 1, aspectRatio: "3/4", overflow: "hidden", borderRadius: 4, border: `1px solid ${SW.line2}`, background: SW.surface }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={p.antes} alt="" loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  <img src={p.antes} alt="" onClick={() => openImg(p.antes)} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", cursor: "zoom-in" }} />
                   <span style={{ position: "absolute", left: 8, top: 8, fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: "0.14em", color: SW.t62, background: "rgba(10,9,8,0.5)", padding: "4px 7px" }}>{t.ba.beforeShort}</span>
                 </div>
                 <div style={{ position: "relative", flex: 1, aspectRatio: "3/4", overflow: "hidden", borderRadius: 4, border: "1px solid rgba(224,116,47,0.4)", background: SW.surface }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={p.depois} alt="" loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  <img src={p.depois} alt="" onClick={() => openImg(p.depois)} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", cursor: "zoom-in" }} />
                   <span style={{ position: "absolute", left: 8, top: 8, fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: "0.14em", color: SW.ember, background: "rgba(10,9,8,0.5)", padding: "4px 7px" }}>{t.ba.afterShort}</span>
                 </div>
               </div>
@@ -774,6 +776,19 @@ export default function LandingPage() {
           <button onClick={openLead} className="swl-cta" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 4, padding: "13px 18px", fontFamily: FONT.body, fontSize: 14.5, fontWeight: 800, letterSpacing: "-0.01em", cursor: "pointer", boxShadow: "0 -6px 30px rgba(224,116,47,0.28)" }}>
             {t.sticky}<Arrow size={16} />
           </button>
+        </div>
+      )}
+
+      {/* ============ LIGHTBOX (clicar pra ampliar em alta) ============ */}
+      {lightbox && (
+        <div onClick={() => setLightbox(null)} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(6,5,4,0.94)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "clamp(12px, 4vw, 44px)" }}>
+          <button onClick={() => setLightbox(null)} aria-label="fechar" style={{ position: "absolute", top: 16, right: 16, width: 40, height: 40, borderRadius: 999, background: "rgba(244,239,230,0.08)", border: `1px solid ${SW.line2}`, color: SW.text, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}>
+            <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={lightbox} alt="" onClick={(e) => e.stopPropagation()}
+            onError={(e) => { const el = e.currentTarget; const base = el.src.replace("/assets/hi/", "/assets/"); if (el.src !== base) el.src = base; }}
+            style={{ maxWidth: "min(1400px, 96vw)", maxHeight: "92vh", objectFit: "contain", borderRadius: 6, boxShadow: "0 40px 120px rgba(0,0,0,0.7)" }} />
         </div>
       )}
 
