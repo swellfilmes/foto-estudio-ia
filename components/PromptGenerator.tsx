@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { track as vaTrack } from "@vercel/analytics";
 import { ProductInfo, PhotoType, ProductCategory } from "@/lib/types";
 import { assembleScene, BrandDirection } from "@/lib/scene-blocks";
 import {
@@ -179,6 +180,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
   const [lightbox, setLightbox] = useState<{ items: { src: string; name: string }[]; index: number } | null>(null);
   const [compare, setCompare] = useState<string | null>(null); // #6 comparar resultado × referência
   const [gallerySearch, setGallerySearch] = useState(""); // busca na galeria
+  const firstGenRef = useRef(false); // dispara o evento first_generation uma vez por sessão
   // #3 — baixar todas as fotos da sessão de uma vez
   const downloadAll = () => {
     const items = batches.flatMap((b) => b.images.map((s, i) => ({ src: s, name: `swell-${b.style.key}-${i + 1}.jpg` })));
@@ -464,6 +466,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
   async function generateStyle(style: StyleOption, note?: string, prebuiltPrompt?: string, isBase = false) {
     // Paywall (pré-checagem): se a cota já zerou, mostra o upsell e nem começa a gerar
     if (usage?.quota != null && (usage.remaining ?? 0) <= 0) { setUpsellOpen(true); return; }
+    if (!firstGenRef.current) { firstGenRef.current = true; vaTrack("first_generation", { style: style.key }); }
     const id = ++batchSeq.current;
     const asm = assembleScene(style.key, product, 0, brandDirection);
     setBatches((prev) => [...prev, { id, style, images: [], loading: true, note, review: asm.needsReview, isBase, startedAt: Date.now() }]);

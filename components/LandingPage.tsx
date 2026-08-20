@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { track as vaTrack } from "@vercel/analytics";
 
 /* ===================== tokens (Swell Studio — design v3) ===================== */
 const SW = {
@@ -451,6 +452,7 @@ export default function LandingPage() {
       return;
     }
     setLeadError("");
+    vaTrack("email_submit", { lang });
     const name = email.split("@")[0];
     const params = new URLSearchParams(window.location.search);
     // Captura de lead → automação de CRM (Datacrazy).
@@ -493,9 +495,10 @@ export default function LandingPage() {
     }
   };
 
-  const openLead = () => setShowLead(true);
+  const openLead = () => { vaTrack("cta_click", { where: "modal" }); setShowLead(true); };
   // Rola até o formulário do herói e foca o campo de e-mail (CTA do menu).
   const goToForm = () => {
+    vaTrack("cta_click", { where: "menu" });
     heroRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     setTimeout(() => emailRef.current?.focus({ preventScroll: true }), 450);
   };

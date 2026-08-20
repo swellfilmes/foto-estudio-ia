@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSubscriber, hasActiveAccess, isOwner } from "@/lib/db";
 import { verifyAccessToken, signSessionToken } from "@/lib/access-token";
+import { track } from "@vercel/analytics/server";
 
 const COOKIE_NAME = "swell-subscriber";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 dias
@@ -66,6 +67,7 @@ export async function GET(req: NextRequest) {
       path: "/",
       maxAge: TRIAL_DEVICE_MAX_AGE,
     });
+    try { await track("signup_complete", { plan: "trial" }); } catch { /* analytics best-effort */ }
   }
   return res;
 }
