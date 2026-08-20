@@ -53,10 +53,10 @@ const STYLES_PRODUCT: StyleOption[] = [
   { key: "fundo-branco", label: "Fundo Branco", sub: "e-commerce · marketplace", icon: ImageIcon, photoType: "fundo-limpo" },
   { key: "detalhe", label: "Detalhe", sub: "close · inspeção", icon: Search, photoType: "macro" },
   { key: "na-mao", label: "Na Mão", sub: "escala real", icon: Hand, photoType: "segurando" },
-  { key: "flat-lay", label: "Flat Lay", sub: "de cima · kit/props", icon: LayoutGrid, photoType: "flat-lay" },
-  { key: "lifestyle", label: "Lifestyle", sub: "cena real · desejo", icon: Coffee, photoType: "lifestyle" },
-  { key: "hero", label: "Hero", sub: "campanha · impacto", icon: Sparkles, photoType: "lifestyle" },
-  { key: "cg", label: "CG · Render 3D", sub: "visual premium digital", icon: Gem, photoType: "fundo-limpo" },
+  { key: "flat-lay", label: "Visto de cima", sub: "flat lay · kit/props", icon: LayoutGrid, photoType: "flat-lay" },
+  { key: "lifestyle", label: "Em cena real", sub: "lifestyle · desejo", icon: Coffee, photoType: "lifestyle" },
+  { key: "hero", label: "Foto de campanha", sub: "principal · máximo impacto", icon: Sparkles, photoType: "lifestyle" },
+  { key: "cg", label: "Visual 3D premium", sub: "render digital", icon: Gem, photoType: "fundo-limpo" },
 ];
 
 const STYLES_WITH_MODEL: StyleOption[] = [
@@ -627,7 +627,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         <nav style={{ display: "flex", alignItems: "center", gap: 2, marginRight: 8 }}>
-          <button onClick={reset} style={navBtn}>Novo ensaio</button>
+          <button onClick={reset} style={navBtn}>Criar fotos</button>
           <button onClick={() => setGalleryOpen(true)} style={navBtn}>Galeria</button>
           <button onClick={() => setBrandOpen(true)} style={navBtn}>{brand.name ? `● ${brand.name}` : "Minha marca"}</button>
           <button onClick={() => setProfileOpen(true)} style={navBtn}>Conta</button>
@@ -643,7 +643,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
           }}
         >
           {hasQuota
-            ? `${usage!.used}/${usage!.quota} FOTOS`
+            ? `${usage!.remaining} DE ${usage!.quota} FOTOS`
             : `${usedTotal} FOTO${usedTotal === 1 ? "" : "S"} GERADA${usedTotal === 1 ? "" : "S"}`}
         </button>
         <button onClick={() => setProfileOpen(true)} title="Sua conta" style={{
@@ -881,11 +881,13 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                       : "Nenhum crédito gasto ainda. Escolha um estilo abaixo — cada geração usa suas fotos só pra travar o produto e cria um cenário novo."}
                   </p>
                 </div>
-                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                  <button onClick={() => setQueueOpen(true)} style={{ display: "flex", alignItems: "center", gap: 8, background: foam(0.05), border: `1px solid ${foam(0.14)}`, color: FOAM, borderRadius: 12, padding: "12px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>
-                    <Layers size={14} />Ver a fila<span style={{ ...mono(10), color: EMBER }}>{queueCount}</span>
-                  </button>
-                </div>
+                {queueCount > 0 && (
+                  <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                    <button onClick={() => setQueueOpen(true)} style={{ display: "flex", alignItems: "center", gap: 8, background: foam(0.05), border: `1px solid ${foam(0.14)}`, color: FOAM, borderRadius: 12, padding: "12px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>
+                      <Layers size={14} />Ver a fila<span style={{ ...mono(10), color: EMBER }}>{queueCount}</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Mosaico das fotos de referência (nada é gerado — zero crédito) */}
@@ -953,7 +955,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                       <div style={{ padding: "13px 15px" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginBottom: 3 }}>
                           <span style={{ fontSize: 14, fontWeight: 700, color: FOAM }}>{s.label}</span>
-                          <span style={{ fontSize: 11, color: EMBER, whiteSpace: "nowrap" }}>{variations} foto{variations === 1 ? "" : "s"} →</span>
+                          <span style={{ fontSize: 11, color: EMBER, whiteSpace: "nowrap" }}>{isSel ? "Selecionado" : "Escolher →"}</span>
                         </div>
                         <div style={{ fontSize: 12, color: foam(0.5) }}>{s.sub}</div>
                       </div>
@@ -996,6 +998,12 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                         </div>
                       </div>
 
+                      {hasQuota && (
+                        <div style={{ ...mono(10.5, 0.1), color: foam(0.6), marginBottom: 14, display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+                          <Zap size={12} color={EMBER} />
+                          <span>Esta geração usa <strong style={{ color: FOAM }}>{variations} foto{variations === 1 ? "" : "s"}</strong> · restarão <strong style={{ color: EMBER }}>{Math.max(0, (usage!.remaining ?? 0) - variations)}</strong> de {usage!.quota}</span>
+                        </div>
+                      )}
                       {prepError && <div style={{ fontSize: 12, color: "#E8836F", marginBottom: 10 }}>{prepError}</div>}
                       <button
                         disabled={preparing}
@@ -1016,7 +1024,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                           }
                         }}
                         style={{ width: "100%", background: preparing ? foam(0.08) : EMBER, border: "none", color: preparing ? foam(0.5) : INK, borderRadius: 12, padding: 15, fontSize: 15, fontWeight: 700, cursor: preparing ? "wait" : "pointer", fontFamily: "'Hanken Grotesk', sans-serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                        {preparing ? "Entendendo o seu pedido…" : request.trim() ? "Transformar meu pedido em prompt" : `Gerar agora · ${variations} foto${variations === 1 ? "" : "s"}`}
+                        {preparing ? "Entendendo o seu pedido…" : request.trim() ? "Revisar meu pedido" : `Gerar agora · ${variations} foto${variations === 1 ? "" : "s"}`}
                         <ArrowRight size={16} />
                       </button>
                     </>
@@ -1321,14 +1329,20 @@ function BatchBlock({ batch, msgIdx, progressPct, onRetry, onYes, onNo, onFeedba
           )}
           {batch.feedback === "no" && !batch.redo && (
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>O que faltou? Conta do seu jeito que a gente ajusta.</div>
+              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>O que faltou? Toque num motivo ou escreva do seu jeito.</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 12 }}>
+                {["O produto mudou", "O rótulo/texto saiu errado", "A cor mudou", "O cenário não ficou bom", "A mão/pessoa ficou estranha", "O enquadramento não funcionou"].map((r) => (
+                  <button key={r} onClick={() => onFeedbackText((batch.feedbackText ? batch.feedbackText.trim() + "; " : "") + r)}
+                    style={{ background: foam(0.05), border: `1px solid ${foam(0.14)}`, color: foam(0.82), borderRadius: 999, padding: "6px 12px", fontSize: 12, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>{r}</button>
+                ))}
+              </div>
               <textarea value={batch.feedbackText || ""} onChange={(e) => onFeedbackText(e.target.value)} rows={2}
                 placeholder="Ex: fundo mais escuro; produto maior na foto; modelo inteira…"
                 style={{ width: "100%", background: foam(0.05), border: `1px solid ${foam(0.12)}`, borderRadius: 10, padding: "11px 13px", color: FOAM, fontSize: 13, resize: "vertical", outline: "none", fontFamily: "'Hanken Grotesk', sans-serif", boxSizing: "border-box", marginBottom: 12 }} />
               {batch.redoError && <div style={{ fontSize: 12, color: "#E8836F", marginBottom: 8 }}>{batch.redoError}</div>}
               <button onClick={onPrepareRedo} disabled={!batch.feedbackText?.trim() || batch.redoPreparing}
                 style={{ background: batch.feedbackText?.trim() && !batch.redoPreparing ? EMBER : foam(0.08), color: batch.feedbackText?.trim() && !batch.redoPreparing ? INK : foam(0.5), border: "none", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontWeight: 700, cursor: batch.feedbackText?.trim() && !batch.redoPreparing ? "pointer" : "not-allowed", fontFamily: "'Hanken Grotesk', sans-serif" }}>
-                {batch.redoPreparing ? "Entendendo o que faltou…" : "Transformar no prompt →"}
+                {batch.redoPreparing ? "Entendendo o que faltou…" : "Preparar nova versão →"}
               </button>
             </div>
           )}
