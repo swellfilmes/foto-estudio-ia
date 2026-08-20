@@ -177,6 +177,15 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
   const [profileOpen, setProfileOpen] = useState(false);
   const [lightbox, setLightbox] = useState<{ items: { src: string; name: string }[]; index: number } | null>(null);
   const [compare, setCompare] = useState<string | null>(null); // #6 comparar resultado × referência
+  const [gallerySearch, setGallerySearch] = useState(""); // busca na galeria
+  const renameProject = (id: number, current: string | null) => {
+    const input = window.prompt("Novo nome do projeto:", current || "");
+    if (input == null) return;
+    const n = input.trim();
+    if (!n) return;
+    setHistoryProjects((prev) => prev.map((p) => (p.id === id ? { ...p, name: n } : p)));
+    fetch("/api/projects", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, name: n }) }).catch(() => {});
+  };
 
   // ── Projeto (produto salvo = fotos-referência + análise + suas gerações) ──
   const [projectName, setProjectName] = useState<string>("");
@@ -1138,25 +1147,41 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
             {historyEmail ? `HISTÓRICO DE ${historyEmail.toUpperCase()}` : "SEM SESSÃO — FAÇA LOGIN DE NOVO PARA VER SEU HISTÓRICO"}
           </div>
 
+          <div style={{ display: "flex", alignItems: "center", gap: 8, background: foam(0.04), border: `1px solid ${foam(0.12)}`, borderRadius: 10, padding: "9px 12px", marginBottom: 16 }}>
+            <Search size={14} color={foam(0.5)} />
+            <input value={gallerySearch} onChange={(e) => setGallerySearch(e.target.value)} placeholder="Buscar por produto ou estilo…"
+              style={{ flex: 1, background: "none", border: "none", color: FOAM, fontSize: 13, outline: "none", fontFamily: "'Hanken Grotesk', sans-serif", minWidth: 0 }} />
+            {gallerySearch && <button onClick={() => setGallerySearch("")} title="Limpar" style={{ background: "none", border: "none", color: foam(0.5), cursor: "pointer", padding: 0, lineHeight: 0 }}><X size={13} /></button>}
+          </div>
+
           {!historyLoading && historyProjects.length > 0 && (
             <div style={{ marginBottom: 22 }}>
               <div style={{ ...mono(9, 0.2), color: foam(0.45), marginBottom: 10 }}>PROJETOS · ABRIR PRA GERAR MAIS</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                {historyProjects.map((p) => (
-                  <a key={p.id} href={`/studio?project=${p.id}`} style={{ textDecoration: "none", color: "inherit", background: foam(0.03), border: `1px solid ${foam(0.09)}`, borderRadius: 12, overflow: "hidden", display: "block" }}>
-                    <div style={{ aspectRatio: "4 / 3", background: "#1B1714", position: "relative" }}>
+                {historyProjects.filter((p) => !gallerySearch.trim() || (p.name || "").toLowerCase().includes(gallerySearch.trim().toLowerCase())).map((p) => {
+                  const openP = () => { window.location.href = `/studio?project=${p.id}`; };
+                  return (
+                  <div key={p.id} style={{ background: foam(0.03), border: `1px solid ${foam(0.09)}`, borderRadius: 12, overflow: "hidden" }}>
+                    <div onClick={openP} title="Abrir projeto" style={{ aspectRatio: "4 / 3", background: "#1B1714", position: "relative", cursor: "pointer" }}>
                       {p.ref_images?.[0] && (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={p.ref_images[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                       )}
                       <span style={{ position: "absolute", right: 6, top: 6, ...mono(7, 0.12), color: FOAM, background: "rgba(10,9,8,0.65)", borderRadius: 999, padding: "3px 7px" }}>{p.gen_count}</span>
                     </div>
-                    <div style={{ padding: "8px 10px" }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name || "Produto"}</div>
-                      <div style={{ ...mono(8, 0.12), color: EMBER, marginTop: 3 }}>ABRIR ↗</div>
+                    <div style={{ padding: "8px 10px", display: "flex", alignItems: "center", gap: 6 }}>
+                      <div onClick={openP} style={{ flex: 1, minWidth: 0, cursor: "pointer" }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name || "Produto"}</div>
+                        <div style={{ ...mono(8, 0.12), color: EMBER, marginTop: 3 }}>ABRIR ↗</div>
+                      </div>
+                      <button onClick={() => renameProject(p.id, p.name)} title="Renomear projeto"
+                        style={{ flex: "none", background: foam(0.06), border: `1px solid ${foam(0.12)}`, color: foam(0.6), borderRadius: 8, width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0 }}>
+                        <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                      </button>
                     </div>
-                  </a>
-                ))}
+                  </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -1167,7 +1192,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
           {!historyLoading && history.length === 0 && historyEmail && (
             <div style={{ fontSize: 13, color: foam(0.45), textAlign: "center", padding: "30px 0" }}>Nada por aqui ainda — tudo que você gerar fica salvo aqui, pra sempre.</div>
           )}
-          {!historyLoading && history.map((g) => (
+          {!historyLoading && history.filter((g) => !gallerySearch.trim() || (g.label || g.style || "").toLowerCase().includes(gallerySearch.trim().toLowerCase())).map((g) => (
             <div key={g.id} style={{ marginBottom: 22, background: foam(0.03), border: `1px solid ${foam(0.08)}`, borderRadius: 14, padding: 14 }}>
               <div style={{ ...mono(9, 0.18), color: foam(0.4), marginBottom: 6 }}>{formatWhen(g.created_at)}</div>
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>{g.label || g.style}</div>

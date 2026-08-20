@@ -66,6 +66,7 @@ function match(url: string, method: string, body: Record<string, unknown> | unde
     return { email: "sandbox@swell.studio", generations: mockGenerations() };
   }
   if (u.endsWith("/api/projects")) {
+    if (method === "PATCH") return { ok: true };
     if (method === "POST") {
       const b = body || {};
       return { project: { id: ++idCounter, email: "sandbox@swell.studio", name: b.name ?? "Produto", category: b.category ?? null, color: b.color ?? null, material: b.material ?? null, size: b.size ?? null, ref_images: (b.refImagesBase64 as string[]) ?? [], created_at: nowISO(), updated_at: nowISO() } };
