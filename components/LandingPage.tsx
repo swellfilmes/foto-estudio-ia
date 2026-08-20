@@ -348,7 +348,7 @@ function ProofRail({ labels, before, after }: { labels: string[]; before: string
 }
 
 /* ===================== slider automático (uma por vez, esquerda→direita) ===================== */
-function Slider({ items }: { items: React.ReactNode[] }) {
+function Slider({ items, arrows = false }: { items: React.ReactNode[]; arrows?: boolean }) {
   const [idx, setIdx] = useState(0);
   const paused = useRef(false);
   const n = items.length;
@@ -360,14 +360,32 @@ function Slider({ items }: { items: React.ReactNode[] }) {
   }, [n]);
   const pause = () => { paused.current = true; };
   const resume = () => { paused.current = false; };
+  const go = (d: number) => setIdx((i) => (i + d + n) % n);
+  const arrowStyle = (side: "left" | "right"): React.CSSProperties => ({
+    position: "absolute", top: "50%", [side]: 8, transform: "translateY(-50%)", zIndex: 3,
+    width: 38, height: 38, borderRadius: 999, background: "rgba(10,9,8,0.6)", backdropFilter: "blur(6px)",
+    border: `1px solid ${SW.line2}`, color: SW.text, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+  });
   return (
     <div>
-      <div style={{ overflow: "hidden", borderRadius: 8 }} onPointerDown={pause} onPointerUp={resume} onPointerLeave={resume} onPointerCancel={resume} onTouchStart={pause} onTouchEnd={resume}>
-        <div style={{ display: "flex", transform: `translateX(-${idx * 100}%)`, transition: "transform 600ms cubic-bezier(0.22,1,0.36,1)" }}>
-          {items.map((c, i) => (
-            <div key={i} style={{ flex: "0 0 100%", minWidth: 0 }}>{c}</div>
-          ))}
+      <div style={{ position: "relative" }}>
+        <div style={{ overflow: "hidden", borderRadius: 8 }} onPointerDown={pause} onPointerUp={resume} onPointerLeave={resume} onPointerCancel={resume} onTouchStart={pause} onTouchEnd={resume}>
+          <div style={{ display: "flex", transform: `translateX(-${idx * 100}%)`, transition: "transform 600ms cubic-bezier(0.22,1,0.36,1)" }}>
+            {items.map((c, i) => (
+              <div key={i} style={{ flex: "0 0 100%", minWidth: 0 }}>{c}</div>
+            ))}
+          </div>
         </div>
+        {arrows && n > 1 && (
+          <>
+            <button onClick={() => go(-1)} aria-label="anterior" className="swl-cta" style={arrowStyle("left")}>
+              <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+            </button>
+            <button onClick={() => go(1)} aria-label="próximo" className="swl-cta" style={arrowStyle("right")}>
+              <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+            </button>
+          </>
+        )}
       </div>
       {n > 1 && (
         <div style={{ display: "flex", justifyContent: "center", gap: 7, marginTop: 16 }}>
@@ -592,7 +610,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div style={{ flex: "1.4 1 360px", minWidth: 0 }}>
-            <Slider items={TOOL_SHOTS.map((src, i) => (
+            <Slider arrows items={TOOL_SHOTS.map((src, i) => (
               <div key={i} style={{ border: `1px solid ${SW.line2}`, borderRadius: 8, overflow: "hidden", background: SW.surface, boxShadow: "0 24px 60px rgba(0,0,0,0.5)" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "9px 12px", borderBottom: `1px solid ${SW.line}` }}>
                   <span style={{ width: 8, height: 8, borderRadius: 999, background: "rgba(244,239,230,0.18)" }} />
