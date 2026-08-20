@@ -53,9 +53,9 @@ const pt = {
   hero: {
     kicker: "FOTO DE PRODUTO COM IA",
     h1a: "Cansado de foto feia", h1b: "travando sua venda",
-    subPre: "Sua foto de celular vira ", subStrong: "foto de estúdio em 1 minuto", subPost: ".",
+    subPre: "Sua foto de celular vira ", subStrong: "foto de estúdio em poucos minutos", subPost: ".",
     emailPlaceholder: "Seu melhor e-mail",
-    cta: "Testar grátis — 5 fotos",
+    cta: "Criar 5 fotos grátis", reassure: "5 fotos grátis · sem cartão",
     processPre: "Sobe a foto", processStrong: "4 versões em ~2 min", processPost: ", sem cartão.",
     urgency: "Cada dia de foto fraca é venda que escapa — testa hoje.",
   },
@@ -100,9 +100,9 @@ const es: Content = {
   hero: {
     kicker: "FOTOS DE PRODUCTO CON IA",
     h1a: "¿Cansada de fotos feas", h1b: "que frenan tus ventas",
-    subPre: "Tu foto de celular se vuelve ", subStrong: "foto de estudio en 1 minuto", subPost: ".",
+    subPre: "Tu foto de celular se vuelve ", subStrong: "foto de estudio en pocos minutos", subPost: ".",
     emailPlaceholder: "Tu mejor e-mail",
-    cta: "Probar gratis — 5 fotos",
+    cta: "Crear 5 fotos gratis", reassure: "5 fotos gratis · sin tarjeta",
     processPre: "Sube la foto", processStrong: "4 versiones en ~2 min", processPost: ", sin tarjeta.",
     urgency: "Cada día con fotos flojas es una venta que se escapa — prueba hoy.",
   },
@@ -146,9 +146,9 @@ const en: Content = {
   hero: {
     kicker: "AI PRODUCT PHOTOGRAPHY",
     h1a: "Ugly photos", h1b: "killing your sales",
-    subPre: "Your phone photo becomes a ", subStrong: "studio photo in 1 minute", subPost: ".",
+    subPre: "Your phone photo becomes a ", subStrong: "studio photo in minutes", subPost: ".",
     emailPlaceholder: "Your best email",
-    cta: "Try free — 5 photos",
+    cta: "Create 5 free photos", reassure: "5 free photos · no card",
     processPre: "Upload your photo", processStrong: "4 versions in ~2 min", processPost: ", no card.",
     urgency: "Every day with weak photos is a sale slipping away — try today.",
   },
@@ -410,6 +410,7 @@ export default function LandingPage() {
   const [showSticky, setShowSticky] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const heroRef = useRef<HTMLDivElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
   const exitShown = useRef(false);
 
   const t = CONTENT[lang];
@@ -493,6 +494,11 @@ export default function LandingPage() {
   };
 
   const openLead = () => setShowLead(true);
+  // Rola até o formulário do herói e foca o campo de e-mail (CTA do menu).
+  const goToForm = () => {
+    heroRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setTimeout(() => emailRef.current?.focus({ preventScroll: true }), 450);
+  };
   // Lightbox: abre a versão em alta (/assets/hi/...). Se não existir, o onError volta pro thumb.
   const openImg = (src: string) => setLightbox(src.replace("/assets/", "/assets/hi/"));
   const proofLabels = t.proof.labels;
@@ -535,7 +541,7 @@ export default function LandingPage() {
               ))}
             </div>
             <a href="/entrar" className="swl-ghost" style={{ fontFamily: FONT.body, fontSize: 13.5, fontWeight: 700, color: SW.t72, textDecoration: "none" }}>{t.nav.login}</a>
-            <button onClick={openLead} className="swl-cta" style={{ flex: "none", background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 999, padding: "10px 16px", fontFamily: FONT.body, fontSize: 13, fontWeight: 800, letterSpacing: "-0.01em", cursor: "pointer", boxShadow: "0 8px 26px rgba(224,116,47,0.22)" }}>{t.nav.tryFree}</button>
+            <button onClick={goToForm} className="swl-cta" style={{ flex: "none", background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 999, padding: "10px 16px", fontFamily: FONT.body, fontSize: 13, fontWeight: 800, letterSpacing: "-0.01em", cursor: "pointer", boxShadow: "0 8px 26px rgba(224,116,47,0.22)" }}>{t.nav.tryFree}</button>
           </div>
         </div>
       </header>
@@ -549,25 +555,21 @@ export default function LandingPage() {
             <p style={{ fontSize: "clamp(16px, 4.5vw, 19px)", lineHeight: 1.4, color: SW.t72, margin: 0, textWrap: "balance" }}>{t.hero.subPre}<strong style={{ color: SW.text, fontWeight: 700 }}>{t.hero.subStrong}</strong>{t.hero.subPost}</p>
           </div>
 
-          <BeforeAfter t={t.ba} />
-
           {leadStatus === "idle" ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <form onSubmit={(e) => { e.preventDefault(); submitLead(); }} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <input
+                ref={emailRef} name="email" id="email-hero" required
                 value={leadEmail}
                 onChange={(e) => { setLeadEmail(e.target.value); if (leadError) setLeadError(""); }}
-                onKeyDown={(e) => { if (e.key === "Enter") submitLead(); }}
-                type="email" autoComplete="email" inputMode="email" placeholder={t.hero.emailPlaceholder}
+                type="email" autoComplete="email" inputMode="email" placeholder={t.hero.emailPlaceholder} aria-label="e-mail"
                 style={{ width: "100%", background: "rgba(244,239,230,0.06)", border: `1.5px solid ${leadError ? "rgba(232,131,111,0.85)" : "rgba(224,116,47,0.55)"}`, borderRadius: 4, padding: "18px 18px", color: SW.text, fontFamily: FONT.body, fontSize: 16.5, outline: "none", textAlign: "center" }}
               />
-              <button onClick={submitLead} className="swl-cta swl-pulse" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 4, padding: "20px 28px", fontFamily: FONT.body, fontSize: 17, fontWeight: 800, letterSpacing: "-0.015em", cursor: "pointer" }}>
+              <button type="submit" className="swl-cta swl-pulse" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 4, padding: "20px 28px", fontFamily: FONT.body, fontSize: 17, fontWeight: 800, letterSpacing: "-0.015em", cursor: "pointer" }}>
                 {t.hero.cta}<Arrow />
               </button>
               {leadError && <div style={{ color: "#E8836F", fontSize: 13, lineHeight: 1.4, textAlign: "center" }}>{leadError}</div>}
-              <p style={{ fontSize: 13.5, lineHeight: 1.55, color: SW.t55, margin: "2px auto 0", textAlign: "center", maxWidth: "42ch" }}>
-                {t.hero.processPre} <span style={{ color: SW.ember }}>→</span> <strong style={{ color: SW.text, fontWeight: 700 }}>{t.hero.processStrong}</strong>{t.hero.processPost} <span style={{ color: SW.emberHi }}>{t.hero.urgency}</span>
-              </p>
-            </div>
+              <div style={{ fontFamily: FONT.mono, fontSize: 10.5, letterSpacing: "0.16em", color: SW.t45, textAlign: "center", marginTop: 2 }}>{t.hero.reassure}</div>
+            </form>
           ) : leadStatus === "sent" ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center", textAlign: "center", background: SW.surface, border: "1px solid rgba(224,116,47,0.4)", borderRadius: 4, padding: "24px 20px" }}>
               <div style={{ width: 48, height: 48, borderRadius: 999, background: "rgba(224,116,47,0.12)", border: "1px solid rgba(224,116,47,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -583,6 +585,14 @@ export default function LandingPage() {
               <p style={{ fontSize: 14.5, lineHeight: 1.5, color: SW.t55, margin: 0 }}>{leadMsg}</p>
               <a href="#planos" className="swl-cta" style={{ width: "100%", textAlign: "center", background: EMBER_GRAD, color: "#0A0908", borderRadius: 4, padding: 15, fontFamily: FONT.body, fontSize: 15, fontWeight: 800, textDecoration: "none", marginTop: 2 }}>{t.blocked.seePlans}</a>
             </div>
+          )}
+
+          <BeforeAfter t={t.ba} />
+
+          {leadStatus === "idle" && (
+            <p style={{ fontSize: 13.5, lineHeight: 1.55, color: SW.t55, margin: "0 auto", textAlign: "center", maxWidth: "42ch" }}>
+              {t.hero.processPre} <span style={{ color: SW.ember }}>→</span> <strong style={{ color: SW.text, fontWeight: 700 }}>{t.hero.processStrong}</strong>{t.hero.processPost} <span style={{ color: SW.emberHi }}>{t.hero.urgency}</span>
+            </p>
           )}
         </div>
       </section>
