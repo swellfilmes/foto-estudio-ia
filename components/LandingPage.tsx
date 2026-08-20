@@ -86,7 +86,7 @@ type Reaction = { text: string; react: string | null; via: string };
 const REACTIONS: Reaction[] = [
   { text: "A arte ficou cachorrada", react: "❤️", via: "CLIENTE · WHATSAPP" },
   { text: "Tá lindo de mais", react: "❤️", via: "CLIENTE · WHATSAPP" },
-  { text: "Outro nível aí 👏🏻👏🏻", react: null, via: "@JORGEALC20 · INSTAGRAM" },
+  { text: "Outro nível aí 👏🏻👏🏻", react: null, via: "CLIENTE · INSTAGRAM" },
   { text: "Me arrepiei… olha isso", react: "😍", via: "CLIENTE · WHATSAPP" },
 ];
 
@@ -334,7 +334,7 @@ export default function LandingPage() {
         <div className="swl-rise" style={{ maxWidth: 560, margin: "0 auto", display: "flex", flexDirection: "column", gap: "clamp(22px, 4vw, 30px)" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 14, textAlign: "center" }}>
             <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.t42 }}>FOTO DE PRODUTO COM IA</div>
-            <h1 style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: "clamp(36px, 9.5vw, 56px)", lineHeight: 1.04, letterSpacing: "-0.01em", margin: 0, textWrap: "balance" }}>Cansada de foto feia travando sua venda<span style={{ color: SW.ember }}>?</span></h1>
+            <h1 style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: "clamp(28px, 7.5vw, 46px)", lineHeight: 1.06, letterSpacing: "-0.015em", margin: 0 }}>Cansada de foto feia<br />travando sua venda<span style={{ color: SW.ember }}>?</span></h1>
             <p style={{ fontSize: "clamp(16px, 4.5vw, 19px)", lineHeight: 1.4, color: SW.t72, margin: 0, textWrap: "balance" }}>Sua foto de celular vira <strong style={{ color: SW.text, fontWeight: 700 }}>foto de estúdio em 1 minuto</strong>.</p>
           </div>
 
