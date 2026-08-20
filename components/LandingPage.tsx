@@ -221,7 +221,6 @@ const FID_IMG = [
 ];
 const TOOL_SHOTS = ["/assets/tool/1-upload.jpg", "/assets/tool/2-cena.jpg", "/assets/tool/3-resultado.jpg"];
 
-const REACT_EMOJI: (string | null)[] = ["❤️", "❤️", null, "😍"];
 
 const DATACRAZY_WEBHOOK =
   "https://api.datacrazy.io/v1/crm/api/crm/integrations/webhook/business/a1391dce-2771-4a48-b4d8-6743f67ef8c6";
@@ -658,24 +657,6 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* ============ REAÇÕES REAIS ============ */}
-      <section style={{ borderTop: `1px solid ${SW.line}`, padding: "clamp(40px, 6vw, 72px) clamp(16px, 4vw, 40px)" }}>
-        <div style={{ maxWidth: 760, margin: "0 auto" }}>
-          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember, marginBottom: 10 }}>{t.reactions.kicker}</div>
-          <h2 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(26px, 6.5vw, 40px)", lineHeight: 0.97, letterSpacing: "-0.03em", margin: "0 0 28px" }}>{t.reactions.h2}<span style={{ color: SW.ember }}>.</span></h2>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-            {t.reactions.items.map((r, i) => (
-              <div key={i} style={{ position: "relative", flex: "1 1 240px", background: SW.surface, border: `1px solid ${SW.line2}`, borderRadius: "16px 16px 16px 4px", padding: "16px 18px", display: "flex", flexDirection: "column", gap: 12 }}>
-                {REACT_EMOJI[i] && <span style={{ position: "absolute", right: 14, top: 14, fontSize: 16, lineHeight: 1 }}>{REACT_EMOJI[i]}</span>}
-                <p style={{ margin: 0, paddingRight: REACT_EMOJI[i] ? 26 : 0, fontSize: 16.5, lineHeight: 1.4, color: SW.text, fontWeight: 500 }}>{r.text}</p>
-                <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: "0.14em", color: SW.t40 }}>{r.via}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{ fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: "0.14em", color: SW.t35, marginTop: 22 }}>{t.proof.disclaimer}</div>
         </div>
       </section>
 
