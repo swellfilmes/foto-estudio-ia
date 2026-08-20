@@ -73,7 +73,7 @@ const pt = {
   caseStudy: { kicker: "CASO REAL", brand: "Eclesyart · Moda", quote: "Precisava de criativos diversos e o orçamento de fotografia não fechava. Fiz mais de 20 criativos validados no Swell Studio, rodei os anúncios — e o estoque esgotou em 3 semanas.", stats: [{ big: "20+", small: "CRIATIVOS VALIDADOS" }, { big: "3 semanas", small: "ESTOQUE ESGOTADO" }, { big: "R$0", small: "EM SESSÃO DE FOTOS" }] },
   how: { kicker: "02 — COMO FUNCIONA", steps: ["Sobe a foto", "Escolhe a cena", "Baixa e posta"] },
   tool: { kicker: "POR DENTRO DA FERRAMENTA", h2: "É você no controle, do início ao fim", shots: ["Sobe a foto do produto", "Escolhe a cena e quantas fotos", "Revisa e baixa as versões prontas"] },
-  fidelity: { kicker: "03 — FIDELIDADE", h2a: "Seu produto, fiel.", h2b: "Você revisa antes de postar", body: "Rótulo, cor e formato preservados a partir da sua foto. Muda o cenário e a luz — e você escolhe quais fotos usar antes de publicar. Direção de arte de uma produtora audiovisual." },
+  fidelity: { kicker: "03 — FIDELIDADE", h2a: "Seu produto, fiel.", h2b: "Você revisa antes de postar", body: "Rótulo, cor e formato preservados a partir da sua foto. Muda o cenário e a luz — e você escolhe quais fotos usar antes de publicar. Direção de arte de uma produtora audiovisual.", labels: ["COSMÉTICO", "DECORAÇÃO", "BEBIDA", "ACESSÓRIO"] },
   modes: { kicker: "04 — DOIS MODOS", productT: "Produto", productD: "1 foto do celular → 4 variações de campanha.", personT: "Pessoa", personD: "3 selfies → 8 fotos de ensaio editorial." },
   plans: { kicker: "04 — PLANOS", perMonth: "/mês", photosWord: "fotos", perMonthWord: "por mês", included: "Todos os estilos inclusos", subscribe: "Assinar", mostPopular: "MAIS POPULAR", guarantee: "7 DIAS DE GARANTIA · CANCELA QUANDO QUISER",
     items: [
@@ -120,7 +120,7 @@ const es: Content = {
   caseStudy: { kicker: "CASO REAL", brand: "Eclesyart · Moda", quote: "Necesitaba creativos variados y el presupuesto de fotografía no daba. Hice más de 20 creativos validados en Swell Studio, corrí los anuncios — y el stock se agotó en 3 semanas.", stats: [{ big: "20+", small: "CREATIVOS VALIDADOS" }, { big: "3 semanas", small: "STOCK AGOTADO" }, { big: "R$0", small: "EN SESIÓN DE FOTOS" }] },
   how: { kicker: "02 — CÓMO FUNCIONA", steps: ["Sube la foto", "Elige la escena", "Descarga y publica"] },
   tool: { kicker: "DENTRO DE LA HERRAMIENTA", h2: "Eres tú en control, de principio a fin", shots: ["Subes la foto del producto", "Eliges la escena y cuántas fotos", "Revisas y descargas las versiones listas"] },
-  fidelity: { kicker: "03 — FIDELIDAD", h2a: "Tu producto, fiel.", h2b: "Revisas antes de publicar", body: "Etiqueta, color y forma preservados a partir de tu foto. Cambia el escenario y la luz — y eliges qué fotos usar antes de publicar. Dirección de arte de una productora audiovisual." },
+  fidelity: { kicker: "03 — FIDELIDAD", h2a: "Tu producto, fiel.", h2b: "Revisas antes de publicar", body: "Etiqueta, color y forma preservados a partir de tu foto. Cambia el escenario y la luz — y eliges qué fotos usar antes de publicar. Dirección de arte de una productora audiovisual.", labels: ["COSMÉTICO", "DECORACIÓN", "BEBIDA", "ACCESORIO"] },
   modes: { kicker: "04 — DOS MODOS", productT: "Producto", productD: "1 foto del celular → 4 variaciones de campaña.", personT: "Persona", personD: "3 selfies → 8 fotos de sesión editorial." },
   plans: { kicker: "04 — PLANES", perMonth: "/mes", photosWord: "fotos", perMonthWord: "al mes", included: "Todos los estilos incluidos", subscribe: "Suscribir", mostPopular: "MÁS POPULAR", guarantee: "7 DÍAS DE GARANTÍA · CANCELA CUANDO QUIERAS",
     items: [
@@ -166,7 +166,7 @@ const en: Content = {
   caseStudy: { kicker: "REAL CASE", brand: "Eclesyart · Fashion", quote: "I needed varied creatives and the photography budget didn't fit. I made 20+ validated creatives with Swell Studio, ran the ads — and stock sold out in 3 weeks.", stats: [{ big: "20+", small: "VALIDATED CREATIVES" }, { big: "3 weeks", small: "SOLD OUT" }, { big: "R$0", small: "ON PHOTO SHOOTS" }] },
   how: { kicker: "02 — HOW IT WORKS", steps: ["Upload the photo", "Pick the scene", "Download & post"] },
   tool: { kicker: "INSIDE THE TOOL", h2: "You're in control, start to finish", shots: ["Upload the product photo", "Pick the scene and how many", "Review and download the ready versions"] },
-  fidelity: { kicker: "03 — FIDELITY", h2a: "Your product, faithful.", h2b: "You review before posting", body: "Label, color and shape preserved from your photo. The scene and lighting change — and you choose which shots to use before posting. Art direction from a film studio." },
+  fidelity: { kicker: "03 — FIDELITY", h2a: "Your product, faithful.", h2b: "You review before posting", body: "Label, color and shape preserved from your photo. The scene and lighting change — and you choose which shots to use before posting. Art direction from a film studio.", labels: ["COSMETIC", "DECOR", "DRINK", "ACCESSORY"] },
   modes: { kicker: "04 — TWO MODES", productT: "Product", productD: "1 phone photo → 4 campaign variations.", personT: "Person", personD: "3 selfies → 8 editorial shoot photos." },
   plans: { kicker: "04 — PLANS", perMonth: "/mo", photosWord: "photos", perMonthWord: "per month", included: "All styles included", subscribe: "Subscribe", mostPopular: "MOST POPULAR", guarantee: "7-DAY GUARANTEE · CANCEL ANYTIME",
     items: [
@@ -212,11 +212,14 @@ const PROOF_IMG = [
   { antes: "/assets/opt/camisa-antes.jpg", depois: "/assets/opt/camisa-depois.jpg" },
 ];
 
-const STEP_ICONS = [
-  <><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3.2" /></>,
-  <><rect x="2" y="4" width="20" height="16" rx="2" /><line x1="7" y1="4" x2="7" y2="20" /><line x1="17" y1="4" x2="17" y2="20" /></>,
-  <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="3" x2="12" y2="15" /></>,
+// Pares antes/depois da seção de fidelidade (inclui o shampoo novo).
+const FID_IMG = [
+  { antes: "/assets/opt/shampoo-antes.jpg", depois: "/assets/opt/shampoo-depois.jpg" },
+  { antes: "/assets/opt/luminaria-antes.jpg", depois: "/assets/opt/luminaria-depois.jpg" },
+  { antes: "/assets/opt/suco-antes.jpg", depois: "/assets/opt/suco-depois.jpg" },
+  { antes: "/assets/opt/relogio-antes.jpg", depois: "/assets/opt/relogio-depois.jpg" },
 ];
+const TOOL_SHOTS = ["/assets/tool/1-upload.jpg", "/assets/tool/2-cena.jpg", "/assets/tool/3-resultado.jpg"];
 
 const REACT_EMOJI: (string | null)[] = ["❤️", "❤️", null, "😍"];
 
@@ -340,6 +343,40 @@ function ProofRail({ labels, before, after }: { labels: string[]; before: string
           <figcaption style={{ fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: "0.18em", color: SW.t38 }}>{labels[i % labels.length]}</figcaption>
         </figure>
       ))}
+    </div>
+  );
+}
+
+/* ===================== slider automático (uma por vez, esquerda→direita) ===================== */
+function Slider({ items }: { items: React.ReactNode[] }) {
+  const [idx, setIdx] = useState(0);
+  const paused = useRef(false);
+  const n = items.length;
+  useEffect(() => {
+    if (n <= 1) return;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const id = setInterval(() => { if (!paused.current) setIdx((i) => (i + 1) % n); }, 4200);
+    return () => clearInterval(id);
+  }, [n]);
+  const pause = () => { paused.current = true; };
+  const resume = () => { paused.current = false; };
+  return (
+    <div>
+      <div style={{ overflow: "hidden", borderRadius: 8 }} onPointerDown={pause} onPointerUp={resume} onPointerLeave={resume} onPointerCancel={resume} onTouchStart={pause} onTouchEnd={resume}>
+        <div style={{ display: "flex", transform: `translateX(-${idx * 100}%)`, transition: "transform 600ms cubic-bezier(0.22,1,0.36,1)" }}>
+          {items.map((c, i) => (
+            <div key={i} style={{ flex: "0 0 100%", minWidth: 0 }}>{c}</div>
+          ))}
+        </div>
+      </div>
+      {n > 1 && (
+        <div style={{ display: "flex", justifyContent: "center", gap: 7, marginTop: 16 }}>
+          {items.map((_, i) => (
+            <button key={i} onClick={() => setIdx(i)} aria-label={`slide ${i + 1}`}
+              style={{ width: i === idx ? 24 : 8, height: 8, borderRadius: 999, border: "none", background: i === idx ? SW.ember : "rgba(244,239,230,0.25)", cursor: "pointer", padding: 0, transition: "width 250ms, background 250ms" }} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -539,6 +576,37 @@ export default function LandingPage() {
         <ProofRail labels={proofLabels} before={t.ba.beforeShort} after={t.ba.afterShort} />
       </section>
 
+      {/* ============ 02 · COMO FUNCIONA (ferramenta real, título ao lado + slider) ============ */}
+      <section style={{ borderTop: `1px solid ${SW.line}`, padding: "clamp(44px, 7vw, 84px) clamp(16px, 4vw, 40px)" }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto", display: "flex", flexWrap: "wrap", gap: "clamp(24px, 5vw, 56px)", alignItems: "center" }}>
+          <div style={{ flex: "1 1 280px", minWidth: 0 }}>
+            <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember, marginBottom: 12 }}>{t.how.kicker}</div>
+            <h2 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(27px, 5.5vw, 42px)", lineHeight: 0.98, letterSpacing: "-0.03em", margin: "0 0 24px" }}>{t.tool.h2}<span style={{ color: SW.ember }}>.</span></h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {t.tool.shots.map((s, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <span style={{ flex: "none", width: 30, height: 30, borderRadius: 999, background: "rgba(224,116,47,0.12)", border: "1px solid rgba(224,116,47,0.35)", color: SW.ember, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT.archivo, fontWeight: 800, fontSize: 14 }}>{i + 1}</span>
+                  <span style={{ fontSize: 16, color: SW.t72, lineHeight: 1.3 }}>{s}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{ flex: "1.4 1 360px", minWidth: 0 }}>
+            <Slider items={TOOL_SHOTS.map((src, i) => (
+              <div key={i} style={{ border: `1px solid ${SW.line2}`, borderRadius: 8, overflow: "hidden", background: SW.surface, boxShadow: "0 24px 60px rgba(0,0,0,0.5)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "9px 12px", borderBottom: `1px solid ${SW.line}` }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 999, background: "rgba(244,239,230,0.18)" }} />
+                  <span style={{ width: 8, height: 8, borderRadius: 999, background: "rgba(244,239,230,0.18)" }} />
+                  <span style={{ width: 8, height: 8, borderRadius: 999, background: "rgba(224,116,47,0.5)" }} />
+                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt={t.tool.shots[i]} loading="lazy" decoding="async" style={{ width: "100%", display: "block" }} />
+              </div>
+            ))} />
+          </div>
+        </div>
+      </section>
+
       {/* ============ CASO REAL (Eclesyart) ============ */}
       <section style={{ borderTop: `1px solid ${SW.line}`, padding: "clamp(44px, 7vw, 84px) clamp(16px, 4vw, 40px)" }}>
         <div style={{ maxWidth: 760, margin: "0 auto" }}>
@@ -578,58 +646,31 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ============ 02 · COMO FUNCIONA ============ */}
+      {/* ============ 03 · FIDELIDADE (antes/depois em slider) ============ */}
       <section style={{ borderTop: `1px solid ${SW.line}`, padding: "clamp(44px, 7vw, 84px) clamp(16px, 4vw, 40px)" }}>
-        <div style={{ maxWidth: 1180, margin: "0 auto" }}>
-          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember, marginBottom: 26 }}>{t.how.kicker}</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: "clamp(14px, 2vw, 22px)" }}>
-            {t.how.steps.map((title, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 18, padding: 22, background: SW.surface, border: `1px solid ${SW.line2}`, borderRadius: 3 }}>
-                <div style={{ flex: "none", width: 46, height: 46, borderRadius: 999, background: "rgba(224,116,47,0.1)", border: "1px solid rgba(224,116,47,0.3)", color: SW.ember, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <svg width={21} height={21} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">{STEP_ICONS[i]}</svg>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <div style={{ fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: "0.2em", color: SW.t35 }}>{`0${i + 1}`}</div>
-                  <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 20, letterSpacing: "-0.025em" }}>{title}</div>
-                </div>
-              </div>
-            ))}
+        <div style={{ maxWidth: 720, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 16, alignItems: "center", marginBottom: 34 }}>
+            <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember }}>{t.fidelity.kicker}</div>
+            <h2 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(30px, 8vw, 48px)", lineHeight: 0.95, letterSpacing: "-0.035em", margin: 0 }}>{t.fidelity.h2a}<br />{t.fidelity.h2b}<span style={{ color: SW.ember }}>.</span></h2>
+            <p style={{ fontSize: 16, lineHeight: 1.6, color: SW.t55, margin: 0, maxWidth: "44ch" }}>{t.fidelity.body}</p>
           </div>
-        </div>
-      </section>
-
-      {/* ============ POR DENTRO DA FERRAMENTA (prints reais) ============ */}
-      <section style={{ borderTop: `1px solid ${SW.line}`, padding: "clamp(44px, 7vw, 84px) 0" }}>
-        <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 clamp(16px, 4vw, 40px)", marginBottom: 26 }}>
-          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember, marginBottom: 10 }}>{t.tool.kicker}</div>
-          <h2 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(26px, 6.5vw, 40px)", lineHeight: 0.97, letterSpacing: "-0.03em", margin: 0 }}>{t.tool.h2}<span style={{ color: SW.ember }}>.</span></h2>
-        </div>
-        <div className="swl-rail" style={{ display: "flex", gap: "clamp(16px, 3vw, 28px)", overflowX: "auto", padding: "4px clamp(16px, 4vw, 40px) 10px", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}>
-          {["/assets/tool/1-upload.jpg", "/assets/tool/2-cena.jpg", "/assets/tool/3-resultado.jpg"].map((src, i) => (
-            <figure key={i} style={{ margin: 0, flex: "0 0 min(88%, 640px)", scrollSnapAlign: "center", display: "flex", flexDirection: "column", gap: 12 }}>
-              <div style={{ borderRadius: 8, overflow: "hidden", border: `1px solid ${SW.line2}`, background: SW.surface, boxShadow: "0 24px 60px rgba(0,0,0,0.5)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "9px 12px", borderBottom: `1px solid ${SW.line}` }}>
-                  <span style={{ width: 8, height: 8, borderRadius: 999, background: "rgba(244,239,230,0.18)" }} />
-                  <span style={{ width: 8, height: 8, borderRadius: 999, background: "rgba(244,239,230,0.18)" }} />
-                  <span style={{ width: 8, height: 8, borderRadius: 999, background: "rgba(224,116,47,0.5)" }} />
+          <Slider items={FID_IMG.map((p, i) => (
+            <div key={i} style={{ display: "flex", flexDirection: "column", gap: 12, padding: "0 2px" }}>
+              <div style={{ display: "flex", gap: "clamp(8px, 2vw, 14px)" }}>
+                <div style={{ position: "relative", flex: 1, aspectRatio: "3/4", overflow: "hidden", borderRadius: 4, border: `1px solid ${SW.line2}`, background: SW.surface }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={p.antes} alt="" loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  <span style={{ position: "absolute", left: 8, top: 8, fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: "0.14em", color: SW.t62, background: "rgba(10,9,8,0.5)", padding: "4px 7px" }}>{t.ba.beforeShort}</span>
                 </div>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt={t.tool.shots[i]} loading="lazy" decoding="async" style={{ width: "100%", display: "block" }} />
+                <div style={{ position: "relative", flex: 1, aspectRatio: "3/4", overflow: "hidden", borderRadius: 4, border: "1px solid rgba(224,116,47,0.4)", background: SW.surface }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={p.depois} alt="" loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  <span style={{ position: "absolute", left: 8, top: 8, fontFamily: FONT.mono, fontSize: 8.5, letterSpacing: "0.14em", color: SW.ember, background: "rgba(10,9,8,0.5)", padding: "4px 7px" }}>{t.ba.afterShort}</span>
+                </div>
               </div>
-              <figcaption style={{ fontFamily: FONT.mono, fontSize: 10.5, letterSpacing: "0.1em", color: SW.t55 }}>
-                <span style={{ color: SW.ember, fontWeight: 700 }}>{i + 1}.</span> {t.tool.shots[i]}
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-      </section>
-
-      {/* ============ 03 · FIDELIDADE ============ */}
-      <section style={{ borderTop: `1px solid ${SW.line}`, padding: "clamp(50px, 8vw, 96px) clamp(16px, 4vw, 40px)" }}>
-        <div style={{ maxWidth: 620, margin: "0 auto", textAlign: "center", display: "flex", flexDirection: "column", gap: 18, alignItems: "center" }}>
-          <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.ember }}>{t.fidelity.kicker}</div>
-          <h2 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(30px, 8vw, 48px)", lineHeight: 0.95, letterSpacing: "-0.035em", margin: 0 }}>{t.fidelity.h2a}<br />{t.fidelity.h2b}<span style={{ color: SW.ember }}>.</span></h2>
-          <p style={{ fontSize: 16, lineHeight: 1.6, color: SW.t55, margin: 0, maxWidth: "44ch" }}>{t.fidelity.body}</p>
+              <div style={{ fontFamily: FONT.mono, fontSize: 9.5, letterSpacing: "0.18em", color: SW.t45, textAlign: "center" }}>{t.fidelity.labels[i]}</div>
+            </div>
+          ))} />
         </div>
       </section>
 
