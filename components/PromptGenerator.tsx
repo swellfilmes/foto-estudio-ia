@@ -179,6 +179,20 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
   const [lightbox, setLightbox] = useState<{ items: { src: string; name: string }[]; index: number } | null>(null);
   const [compare, setCompare] = useState<string | null>(null); // #6 comparar resultado × referência
   const [gallerySearch, setGallerySearch] = useState(""); // busca na galeria
+  // #3 — baixar todas as fotos da sessão de uma vez
+  const downloadAll = () => {
+    const items = batches.flatMap((b) => b.images.map((s, i) => ({ src: s, name: `swell-${b.style.key}-${i + 1}.jpg` })));
+    items.forEach((it, k) => {
+      setTimeout(() => {
+        const a = document.createElement("a");
+        a.href = `/api/download?u=${encodeURIComponent(it.src)}&name=${encodeURIComponent(it.name)}`;
+        a.download = it.name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }, k * 350);
+    });
+  };
   const renameProject = (id: number, current: string | null) => {
     const input = window.prompt("Novo nome do projeto:", current || "");
     if (input == null) return;
@@ -620,8 +634,8 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
         <div style={{ position: "absolute", top: 2, left: withModel ? 17 : 2, width: 17, height: 17, borderRadius: "50%", background: FOAM, transition: "left 300ms cubic-bezier(0.22,1,0.36,1)" }} />
       </div>
       <div>
-        <div style={{ fontSize: 14, fontWeight: 700, color: withModel ? EMBER : FOAM }}>Colocar com um modelo?</div>
-        <div style={{ fontSize: 12, color: foam(0.5) }}>Uma pessoa segurando, usando ou apresentando o produto</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: withModel ? EMBER : FOAM }}>Mostrar uma pessoa (modelo)?</div>
+        <div style={{ fontSize: 12, color: foam(0.5) }}>Rosto e corpo. (Só a mão, pra dar escala, já está no estilo “Na Mão” abaixo.)</div>
       </div>
     </button>
   );
@@ -924,6 +938,12 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                     style={{ marginTop: 14, display: "inline-flex", alignItems: "center", gap: 7, background: "none", border: `1px solid ${foam(0.16)}`, color: foam(0.72), borderRadius: 10, padding: "9px 15px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>
                     ← Ajustar produto e detalhes
                   </button>
+                  {batches.reduce((n, b) => n + b.images.length, 0) > 0 && (
+                    <button onClick={downloadAll} title="Baixar todas as fotos desta sessão"
+                      style={{ marginTop: 14, marginLeft: 8, display: "inline-flex", alignItems: "center", gap: 7, background: foam(0.05), border: `1px solid ${foam(0.16)}`, color: FOAM, borderRadius: 10, padding: "9px 15px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>
+                      <Download size={14} />Baixar todas ({batches.reduce((n, b) => n + b.images.length, 0)})
+                    </button>
+                  )}
                 </div>
                 {queueCount > 0 && (
                   <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
