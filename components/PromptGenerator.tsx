@@ -53,10 +53,10 @@ const STYLES_PRODUCT: StyleOption[] = [
   { key: "fundo-branco", label: "Fundo Branco", sub: "e-commerce · marketplace", icon: ImageIcon, photoType: "fundo-limpo" },
   { key: "detalhe", label: "Detalhe", sub: "close · inspeção", icon: Search, photoType: "macro" },
   { key: "na-mao", label: "Na Mão", sub: "escala real", icon: Hand, photoType: "segurando" },
-  { key: "flat-lay", label: "Flat Lay", sub: "de cima · kit/props", icon: LayoutGrid, photoType: "flat-lay" },
-  { key: "lifestyle", label: "Lifestyle", sub: "cena real · desejo", icon: Coffee, photoType: "lifestyle" },
-  { key: "hero", label: "Hero", sub: "campanha · impacto", icon: Sparkles, photoType: "lifestyle" },
-  { key: "cg", label: "CG · Render 3D", sub: "visual premium digital", icon: Gem, photoType: "fundo-limpo" },
+  { key: "flat-lay", label: "Visto de cima", sub: "flat lay · kit/props", icon: LayoutGrid, photoType: "flat-lay" },
+  { key: "lifestyle", label: "Em cena real", sub: "lifestyle · desejo", icon: Coffee, photoType: "lifestyle" },
+  { key: "hero", label: "Foto de campanha", sub: "principal · máximo impacto", icon: Sparkles, photoType: "lifestyle" },
+  { key: "cg", label: "Visual 3D premium", sub: "render digital", icon: Gem, photoType: "fundo-limpo" },
 ];
 
 const STYLES_WITH_MODEL: StyleOption[] = [
@@ -97,12 +97,13 @@ const defaultProduct: ProductInfo = {
 };
 
 // Perfil "Minha Marca" — salvo no navegador, entra como slot de direção nos prompts
-interface BrandProfile { name: string; tone: string; mood: string; human: string; colorHex: string }
-const emptyBrand: BrandProfile = { name: "", tone: "", mood: "", human: "", colorHex: "" };
+interface BrandProfile { name: string; tone: string; mood: string; human: string; colorHex: string; logo?: string; palette?: string[]; forbidden?: string; scenario?: string }
+const emptyBrand: BrandProfile = { name: "", tone: "", mood: "", human: "", colorHex: "", logo: "", palette: [], forbidden: "", scenario: "" };
 const BRAND_STORAGE_KEY = "swell-brand";
 const BRAND_TONES = ["Minimalista", "Premium", "Acolhedor", "Vibrante", "Natural"];
 const BRAND_MOODS = ["Clean", "Quente", "Escuro", "Colorido"];
 const BRAND_HUMANS = ["Sem pessoas", "Só detalhes (mãos)", "Com modelo"];
+const BRAND_SCENARIOS = ["Fundo claro e natural", "Fundo escuro premium", "Cena de casa / lifestyle", "Estúdio clean", "Externa / natureza"];
 
 interface Photo { url: string; base64: string }
 
@@ -168,13 +169,38 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
   // Controles de geração: quantas fotos por clique e a proporção
   const [variations, setVariations] = useState(VARIATIONS_PER_CLICK);
   const [aspect, setAspect] = useState<string>("auto");
+  const [advancedOpen, setAdvancedOpen] = useState(false); // #10 — categoria/cor/material recolhidos
   // Contador REAL de fotos já geradas (persistente — não zera ao trocar de ensaio)
   const [usedTotal, setUsedTotal] = useState(0);
   // Cota do plano (paywall) + popup de upsell
   const [usage, setUsage] = useState<{ email?: string | null; plan: string | null; quota: number | null; used: number; remaining: number | null } | null>(null);
   const [upsellOpen, setUpsellOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [lightbox, setLightbox] = useState<{ src: string; name: string } | null>(null);
+  const [lightbox, setLightbox] = useState<{ items: { src: string; name: string }[]; index: number } | null>(null);
+  const [compare, setCompare] = useState<string | null>(null); // #6 comparar resultado × referência
+  const [gallerySearch, setGallerySearch] = useState(""); // busca na galeria
+  // #3 — baixar todas as fotos da sessão de uma vez
+  const downloadAll = () => {
+    const items = batches.flatMap((b) => b.images.map((s, i) => ({ src: s, name: `swell-${b.style.key}-${i + 1}.jpg` })));
+    items.forEach((it, k) => {
+      setTimeout(() => {
+        const a = document.createElement("a");
+        a.href = `/api/download?u=${encodeURIComponent(it.src)}&name=${encodeURIComponent(it.name)}`;
+        a.download = it.name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }, k * 350);
+    });
+  };
+  const renameProject = (id: number, current: string | null) => {
+    const input = window.prompt("Novo nome do projeto:", current || "");
+    if (input == null) return;
+    const n = input.trim();
+    if (!n) return;
+    setHistoryProjects((prev) => prev.map((p) => (p.id === id ? { ...p, name: n } : p)));
+    fetch(`/api/projects?id=${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: n }) }).catch(() => {});
+  };
 
   // ── Projeto (produto salvo = fotos-referência + análise + suas gerações) ──
   const [projectName, setProjectName] = useState<string>("");
@@ -261,10 +287,13 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
     setBrandOpen(false);
   }
 
-  const brandDirection: BrandDirection | undefined =
-    brand.tone || brand.colorHex || brand.mood || brand.human
-      ? { tone: brand.tone || undefined, colorHex: brand.colorHex || undefined, mood: brand.mood || undefined, human: brand.human || undefined }
-      : undefined;
+  const hasBrand = brand.tone || brand.colorHex || brand.mood || brand.human || (brand.palette && brand.palette.length) || brand.scenario || brand.forbidden;
+  const brandDirection: BrandDirection | undefined = hasBrand
+    ? {
+        tone: brand.tone || undefined, colorHex: brand.colorHex || undefined, mood: brand.mood || undefined, human: brand.human || undefined,
+        palette: brand.palette && brand.palette.length ? brand.palette : undefined, scenario: brand.scenario || undefined, forbidden: brand.forbidden || undefined,
+      }
+    : undefined;
 
   // ── Upload / análise ──────────────────────────────────────────────────────
   function resizeAndConvert(file: File): Promise<{ base64: string; mediaType: string }> {
@@ -608,8 +637,8 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
         <div style={{ position: "absolute", top: 2, left: withModel ? 17 : 2, width: 17, height: 17, borderRadius: "50%", background: FOAM, transition: "left 300ms cubic-bezier(0.22,1,0.36,1)" }} />
       </div>
       <div>
-        <div style={{ fontSize: 14, fontWeight: 700, color: withModel ? EMBER : FOAM }}>Colocar com um modelo?</div>
-        <div style={{ fontSize: 12, color: foam(0.5) }}>Uma pessoa segurando, usando ou apresentando o produto</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: withModel ? EMBER : FOAM }}>Mostrar uma pessoa (modelo)?</div>
+        <div style={{ fontSize: 12, color: foam(0.5) }}>Rosto e corpo. (Só a mão, pra dar escala, já está no estilo “Na Mão” abaixo.)</div>
       </div>
     </button>
   );
@@ -627,9 +656,12 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         <nav style={{ display: "flex", alignItems: "center", gap: 2, marginRight: 8 }}>
-          <button onClick={reset} style={navBtn}>Novo ensaio</button>
+          <button onClick={reset} style={navBtn}>Criar fotos</button>
           <button onClick={() => setGalleryOpen(true)} style={navBtn}>Galeria</button>
-          <button onClick={() => setBrandOpen(true)} style={navBtn}>{brand.name ? `● ${brand.name}` : "Minha marca"}</button>
+          <a href="/marca" title="Configure sua marca — logo, paleta, cenário e o que nunca deve aparecer"
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, textDecoration: "none", background: ember(0.14), border: `1px solid ${ember(0.5)}`, color: EMBER, borderRadius: 999, padding: "8px 15px", fontSize: 13, fontWeight: 700, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+            <Sparkles size={13} />{brand.name ? brand.name : "Criar minha marca"}
+          </a>
           <button onClick={() => setProfileOpen(true)} style={navBtn}>Conta</button>
         </nav>
         <button
@@ -643,7 +675,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
           }}
         >
           {hasQuota
-            ? `${usage!.used}/${usage!.quota} FOTOS`
+            ? `${usage!.remaining} DE ${usage!.quota} FOTOS`
             : `${usedTotal} FOTO${usedTotal === 1 ? "" : "S"} GERADA${usedTotal === 1 ? "" : "S"}`}
         </button>
         <button onClick={() => setProfileOpen(true)} title="Sua conta" style={{
@@ -792,9 +824,36 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                       onChange={(e) => { if (e.target.files) addFiles(Array.from(e.target.files)); e.target.value = ""; }} />
                     <div style={{ ...mono(9, 0.16), color: foam(0.35), marginLeft: 6 }}>{photos.length} DE {MAX_PHOTOS}</div>
                   </div>
+
+                  {/* #5 — Detalhes que não podem mudar (fidelidade) */}
+                  {(product.labelText || product.color || product.material || product.size) && (
+                    <div style={{ marginTop: 18, border: `1px solid ${ember(0.3)}`, background: ember(0.05), borderRadius: 14, padding: "14px 16px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 11 }}>
+                        <Lock size={13} color={EMBER} />
+                        <span style={{ ...mono(9, 0.18), color: EMBER }}>DETALHES QUE NÃO PODEM MUDAR</span>
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {([["Rótulo", product.labelText], ["Cor", product.color], ["Material", product.material], ["Formato", product.size]] as const).filter(([, v]) => v).map(([k, v]) => (
+                          <span key={k} style={{ display: "inline-flex", alignItems: "center", gap: 7, background: foam(0.05), border: `1px solid ${foam(0.12)}`, borderRadius: 999, padding: "6px 12px", fontSize: 12.5, color: foam(0.88) }}>
+                            <span style={{ ...mono(8, 0.14), color: foam(0.45) }}>{k.toUpperCase()}</span>{v}
+                          </span>
+                        ))}
+                      </div>
+                      <div style={{ fontSize: 11.5, lineHeight: 1.5, color: foam(0.5), marginTop: 11 }}>A gente preserva isto fiel à sua foto. Está certo? Se algo estiver errado, corrija nos campos abaixo antes de gerar.</div>
+                    </div>
+                  )}
                 </div>
 
                 <div style={{ padding: "clamp(24px, 3vw, 36px)" }}>
+                  <button onClick={() => setAdvancedOpen((o) => !o)}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: 12, background: foam(0.03), border: `1px solid ${foam(0.1)}`, borderRadius: 12, padding: "13px 16px", cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif", marginBottom: advancedOpen ? 22 : 0 }}>
+                    <span style={{ display: "flex", flexDirection: "column", gap: 2, textAlign: "left" }}>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: FOAM }}>Ajustes avançados</span>
+                      <span style={{ fontSize: 12, color: foam(0.5) }}>Categoria, cor e material — já preenchidos pela análise. Mexa só se quiser.</span>
+                    </span>
+                    <span style={{ color: EMBER, fontSize: 22, lineHeight: 1 }}>{advancedOpen ? "−" : "+"}</span>
+                  </button>
+                  {advancedOpen && (<>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 10 }}>
                     <div style={{ ...mono(11, 0.22), color: EMBER }}>AJUDE A GENTE A ACERTAR O CENÁRIO</div>
                     <div style={{ ...mono(9, 0.18), color: foam(0.45), border: `1px solid ${foam(0.15)}`, borderRadius: 999, padding: "5px 13px" }}>OPCIONAL</div>
@@ -843,6 +902,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                       ))}
                     </div>
                   </div>
+                  </>)}
 
                   {modelToggle}
 
@@ -880,12 +940,24 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                       ? "Você está continuando este projeto — gere mais fotos no mesmo produto, com as referências já travadas."
                       : "Nenhum crédito gasto ainda. Escolha um estilo abaixo — cada geração usa suas fotos só pra travar o produto e cria um cenário novo."}
                   </p>
-                </div>
-                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                  <button onClick={() => setQueueOpen(true)} style={{ display: "flex", alignItems: "center", gap: 8, background: foam(0.05), border: `1px solid ${foam(0.14)}`, color: FOAM, borderRadius: 12, padding: "12px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>
-                    <Layers size={14} />Ver a fila<span style={{ ...mono(10), color: EMBER }}>{queueCount}</span>
+                  <button onClick={() => setStage("category")} title="Voltar pra corrigir categoria, cor, material e os detalhes"
+                    style={{ marginTop: 14, display: "inline-flex", alignItems: "center", gap: 7, background: "none", border: `1px solid ${foam(0.16)}`, color: foam(0.72), borderRadius: 10, padding: "9px 15px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>
+                    ← Ajustar produto e detalhes
                   </button>
+                  {batches.reduce((n, b) => n + b.images.length, 0) > 0 && (
+                    <button onClick={downloadAll} title="Baixar todas as fotos desta sessão"
+                      style={{ marginTop: 14, marginLeft: 8, display: "inline-flex", alignItems: "center", gap: 7, background: foam(0.05), border: `1px solid ${foam(0.16)}`, color: FOAM, borderRadius: 10, padding: "9px 15px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>
+                      <Download size={14} />Baixar todas ({batches.reduce((n, b) => n + b.images.length, 0)})
+                    </button>
+                  )}
                 </div>
+                {queueCount > 0 && (
+                  <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                    <button onClick={() => setQueueOpen(true)} style={{ display: "flex", alignItems: "center", gap: 8, background: foam(0.05), border: `1px solid ${foam(0.14)}`, color: FOAM, borderRadius: 12, padding: "12px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>
+                      <Layers size={14} />Ver a fila<span style={{ ...mono(10), color: EMBER }}>{queueCount}</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Mosaico das fotos de referência (nada é gerado — zero crédito) */}
@@ -917,7 +989,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                     {projectGens.flatMap((g) =>
                       g.images.map((src, i) => (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img key={`${g.id}-${i}`} src={src} alt="" onClick={() => setLightbox({ src, name: `swell-${g.style}-${i + 1}.jpg` })} title="Ampliar" style={{ flexShrink: 0, width: 92, height: 116, objectFit: "cover", borderRadius: 12, border: `1px solid ${foam(0.1)}`, display: "block", cursor: "zoom-in" }} />
+                        <img key={`${g.id}-${i}`} src={src} alt="" onClick={() => setLightbox({ items: g.images.map((s, k) => ({ src: s, name: `swell-${g.style}-${k + 1}.jpg` })), index: i })} title="Ampliar" style={{ flexShrink: 0, width: 92, height: 116, objectFit: "cover", borderRadius: 12, border: `1px solid ${foam(0.1)}`, display: "block", cursor: "zoom-in" }} />
                       ))
                     )}
                   </div>
@@ -953,7 +1025,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                       <div style={{ padding: "13px 15px" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginBottom: 3 }}>
                           <span style={{ fontSize: 14, fontWeight: 700, color: FOAM }}>{s.label}</span>
-                          <span style={{ fontSize: 11, color: EMBER, whiteSpace: "nowrap" }}>{variations} foto{variations === 1 ? "" : "s"} →</span>
+                          <span style={{ fontSize: 11, color: EMBER, whiteSpace: "nowrap" }}>{isSel ? "Selecionado" : "Escolher →"}</span>
                         </div>
                         <div style={{ fontSize: 12, color: foam(0.5) }}>{s.sub}</div>
                       </div>
@@ -996,6 +1068,12 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                         </div>
                       </div>
 
+                      {hasQuota && (
+                        <div style={{ ...mono(10.5, 0.1), color: foam(0.6), marginBottom: 14, display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+                          <Zap size={12} color={EMBER} />
+                          <span>Esta geração usa <strong style={{ color: FOAM }}>{variations} foto{variations === 1 ? "" : "s"}</strong> · restarão <strong style={{ color: EMBER }}>{Math.max(0, (usage!.remaining ?? 0) - variations)}</strong> de {usage!.quota}</span>
+                        </div>
+                      )}
                       {prepError && <div style={{ fontSize: 12, color: "#E8836F", marginBottom: 10 }}>{prepError}</div>}
                       <button
                         disabled={preparing}
@@ -1016,7 +1094,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                           }
                         }}
                         style={{ width: "100%", background: preparing ? foam(0.08) : EMBER, border: "none", color: preparing ? foam(0.5) : INK, borderRadius: 12, padding: 15, fontSize: 15, fontWeight: 700, cursor: preparing ? "wait" : "pointer", fontFamily: "'Hanken Grotesk', sans-serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                        {preparing ? "Entendendo o seu pedido…" : request.trim() ? "Transformar meu pedido em prompt" : `Gerar agora · ${variations} foto${variations === 1 ? "" : "s"}`}
+                        {preparing ? "Entendendo o seu pedido…" : request.trim() ? "Revisar meu pedido" : `Gerar agora · ${variations} foto${variations === 1 ? "" : "s"}`}
                         <ArrowRight size={16} />
                       </button>
                     </>
@@ -1052,7 +1130,12 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                   onFeedbackText={(v) => updateBatch(batch.id, { feedbackText: v })}
                   onPrepareRedo={() => prepareRedo(batch)} onConfirmRedo={() => confirmRedo(batch)}
                   onEditRedo={() => updateBatch(batch.id, { redo: undefined })}
-                  onExpand={(src, name) => setLightbox({ src, name })} />
+                  onCompare={(src) => setCompare(src)}
+                  onExpand={(src) => {
+                    const items = batches.flatMap((b) => b.images.map((s, i) => ({ src: s, name: `swell-${b.style.key}-${i + 1}.jpg` })));
+                    const idx = items.findIndex((it) => it.src === src);
+                    setLightbox({ items, index: idx < 0 ? 0 : idx });
+                  }} />
               ))}
             </>
           )}
@@ -1091,25 +1174,41 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
             {historyEmail ? `HISTÓRICO DE ${historyEmail.toUpperCase()}` : "SEM SESSÃO — FAÇA LOGIN DE NOVO PARA VER SEU HISTÓRICO"}
           </div>
 
+          <div style={{ display: "flex", alignItems: "center", gap: 8, background: foam(0.04), border: `1px solid ${foam(0.12)}`, borderRadius: 10, padding: "9px 12px", marginBottom: 16 }}>
+            <Search size={14} color={foam(0.5)} />
+            <input value={gallerySearch} onChange={(e) => setGallerySearch(e.target.value)} placeholder="Buscar por produto ou estilo…"
+              style={{ flex: 1, background: "none", border: "none", color: FOAM, fontSize: 13, outline: "none", fontFamily: "'Hanken Grotesk', sans-serif", minWidth: 0 }} />
+            {gallerySearch && <button onClick={() => setGallerySearch("")} title="Limpar" style={{ background: "none", border: "none", color: foam(0.5), cursor: "pointer", padding: 0, lineHeight: 0 }}><X size={13} /></button>}
+          </div>
+
           {!historyLoading && historyProjects.length > 0 && (
             <div style={{ marginBottom: 22 }}>
               <div style={{ ...mono(9, 0.2), color: foam(0.45), marginBottom: 10 }}>PROJETOS · ABRIR PRA GERAR MAIS</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                {historyProjects.map((p) => (
-                  <a key={p.id} href={`/studio?project=${p.id}`} style={{ textDecoration: "none", color: "inherit", background: foam(0.03), border: `1px solid ${foam(0.09)}`, borderRadius: 12, overflow: "hidden", display: "block" }}>
-                    <div style={{ aspectRatio: "4 / 3", background: "#1B1714", position: "relative" }}>
+                {historyProjects.filter((p) => !gallerySearch.trim() || (p.name || "").toLowerCase().includes(gallerySearch.trim().toLowerCase())).map((p) => {
+                  const openP = () => { window.location.href = `/studio?project=${p.id}`; };
+                  return (
+                  <div key={p.id} style={{ background: foam(0.03), border: `1px solid ${foam(0.09)}`, borderRadius: 12, overflow: "hidden" }}>
+                    <div onClick={openP} title="Abrir projeto" style={{ aspectRatio: "4 / 3", background: "#1B1714", position: "relative", cursor: "pointer" }}>
                       {p.ref_images?.[0] && (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={p.ref_images[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                       )}
                       <span style={{ position: "absolute", right: 6, top: 6, ...mono(7, 0.12), color: FOAM, background: "rgba(10,9,8,0.65)", borderRadius: 999, padding: "3px 7px" }}>{p.gen_count}</span>
                     </div>
-                    <div style={{ padding: "8px 10px" }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name || "Produto"}</div>
-                      <div style={{ ...mono(8, 0.12), color: EMBER, marginTop: 3 }}>ABRIR ↗</div>
+                    <div style={{ padding: "8px 10px", display: "flex", alignItems: "center", gap: 6 }}>
+                      <div onClick={openP} style={{ flex: 1, minWidth: 0, cursor: "pointer" }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name || "Produto"}</div>
+                        <div style={{ ...mono(8, 0.12), color: EMBER, marginTop: 3 }}>ABRIR ↗</div>
+                      </div>
+                      <button onClick={() => renameProject(p.id, p.name)} title="Renomear projeto"
+                        style={{ flex: "none", background: foam(0.06), border: `1px solid ${foam(0.12)}`, color: foam(0.6), borderRadius: 8, width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0 }}>
+                        <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                      </button>
                     </div>
-                  </a>
-                ))}
+                  </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -1120,14 +1219,14 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
           {!historyLoading && history.length === 0 && historyEmail && (
             <div style={{ fontSize: 13, color: foam(0.45), textAlign: "center", padding: "30px 0" }}>Nada por aqui ainda — tudo que você gerar fica salvo aqui, pra sempre.</div>
           )}
-          {!historyLoading && history.map((g) => (
+          {!historyLoading && history.filter((g) => !gallerySearch.trim() || (g.label || g.style || "").toLowerCase().includes(gallerySearch.trim().toLowerCase())).map((g) => (
             <div key={g.id} style={{ marginBottom: 22, background: foam(0.03), border: `1px solid ${foam(0.08)}`, borderRadius: 14, padding: 14 }}>
               <div style={{ ...mono(9, 0.18), color: foam(0.4), marginBottom: 6 }}>{formatWhen(g.created_at)}</div>
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>{g.label || g.style}</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {g.images.map((src, i) => (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img key={i} src={src} alt="" onClick={() => setLightbox({ src, name: `swell-${g.style}-${i + 1}.jpg` })} title="Ampliar" style={{ width: 56, height: 70, objectFit: "cover", borderRadius: 8, border: `1px solid ${foam(0.1)}`, display: "block", cursor: "zoom-in" }} />
+                  <img key={i} src={src} alt="" onClick={() => setLightbox({ items: g.images.map((s, k) => ({ src: s, name: `swell-${g.style}-${k + 1}.jpg` })), index: i })} title="Ampliar" style={{ width: 56, height: 70, objectFit: "cover", borderRadius: 8, border: `1px solid ${foam(0.1)}`, display: "block", cursor: "zoom-in" }} />
                 ))}
               </div>
               <div style={{ fontSize: 11, color: foam(0.4), marginTop: 8 }}>{g.images.length} foto{g.images.length === 1 ? "" : "s"} · salvas pra sempre</div>
@@ -1169,15 +1268,55 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
       )}
 
       {/* Lightbox — clicar na foto amplia, com botão de baixar */}
-      {lightbox && (
-        <div onClick={() => setLightbox(null)} style={{ position: "fixed", inset: 0, zIndex: 80, background: "rgba(6,5,4,0.92)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "clamp(16px, 4vw, 48px)", gap: 20, animation: "riseIn 250ms ease both" }}>
-          <button onClick={() => setLightbox(null)} title="Fechar" style={{ position: "absolute", top: 18, right: 18, ...closeBtn }}><X size={16} /></button>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={lightbox.src} alt="" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "min(1100px, 92vw)", maxHeight: "76vh", objectFit: "contain", borderRadius: 12, boxShadow: "0 40px 120px rgba(0,0,0,0.6)" }} />
-          <a href={`/api/download?u=${encodeURIComponent(lightbox.src)}&name=${encodeURIComponent(lightbox.name)}`} onClick={(e) => e.stopPropagation()}
-            style={{ ...gradientBtn, display: "inline-flex", alignItems: "center", gap: 9, padding: "14px 28px", fontSize: 14, textDecoration: "none" }}>
-            <Download size={16} />Baixar foto
-          </a>
+      {lightbox && (() => {
+        const cur = lightbox.items[lightbox.index];
+        const many = lightbox.items.length > 1;
+        const go = (d: number) => setLightbox((lb) => (lb ? { ...lb, index: (lb.index + d + lb.items.length) % lb.items.length } : lb));
+        const navBtn: React.CSSProperties = { position: "absolute", top: "50%", transform: "translateY(-50%)", width: 46, height: 46, borderRadius: "50%", background: "rgba(10,9,8,0.6)", backdropFilter: "blur(6px)", border: `1px solid ${foam(0.18)}`, color: FOAM, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 };
+        return (
+          <div onClick={() => setLightbox(null)} style={{ position: "fixed", inset: 0, zIndex: 80, background: "rgba(6,5,4,0.92)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "clamp(16px, 4vw, 48px)", gap: 16, animation: "riseIn 250ms ease both" }}>
+            <button onClick={() => setLightbox(null)} title="Fechar" style={{ position: "absolute", top: 18, right: 18, ...closeBtn }}><X size={16} /></button>
+            <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: "100%", maxWidth: "min(1100px, 92vw)" }}>
+              {many && (
+                <button onClick={(e) => { e.stopPropagation(); go(-1); }} title="Anterior" style={{ ...navBtn, left: 6 }}>
+                  <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                </button>
+              )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={cur.src} alt="" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "100%", maxHeight: "74vh", objectFit: "contain", borderRadius: 12, boxShadow: "0 40px 120px rgba(0,0,0,0.6)" }} />
+              {many && (
+                <button onClick={(e) => { e.stopPropagation(); go(1); }} title="Próximo" style={{ ...navBtn, right: 6 }}>
+                  <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                </button>
+              )}
+            </div>
+            {many && <div style={{ ...mono(10, 0.18), color: foam(0.6) }}>{lightbox.index + 1} / {lightbox.items.length}</div>}
+            <a href={`/api/download?u=${encodeURIComponent(cur.src)}&name=${encodeURIComponent(cur.name)}`} onClick={(e) => e.stopPropagation()}
+              style={{ ...gradientBtn, display: "inline-flex", alignItems: "center", gap: 9, padding: "14px 28px", fontSize: 14, textDecoration: "none" }}>
+              <Download size={16} />Baixar foto
+            </a>
+          </div>
+        );
+      })()}
+
+      {/* #6 — Comparar: sua foto × resultado gerado, lado a lado */}
+      {compare && (
+        <div onClick={() => setCompare(null)} style={{ position: "fixed", inset: 0, zIndex: 80, background: "rgba(6,5,4,0.94)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "clamp(16px, 4vw, 48px)", gap: 18, animation: "riseIn 250ms ease both" }}>
+          <button onClick={() => setCompare(null)} title="Fechar" style={{ position: "absolute", top: 18, right: 18, ...closeBtn }}><X size={16} /></button>
+          <div style={{ ...mono(10, 0.22), color: EMBER }}>CONFIRA A FIDELIDADE</div>
+          <div style={{ display: "flex", gap: "clamp(10px, 2vw, 20px)", alignItems: "center", justifyContent: "center", flexWrap: "wrap", maxWidth: "96vw" }}>
+            <figure style={{ margin: 0, display: "flex", flexDirection: "column", gap: 8, alignItems: "center" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={photos[0]?.url} alt="" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "min(440px, 42vw)", maxHeight: "64vh", objectFit: "contain", borderRadius: 10, border: `1px solid ${foam(0.14)}` }} />
+              <figcaption style={{ ...mono(9, 0.16), color: foam(0.6) }}>SUA FOTO</figcaption>
+            </figure>
+            <ArrowRight size={22} color={EMBER} style={{ flex: "none" }} />
+            <figure style={{ margin: 0, display: "flex", flexDirection: "column", gap: 8, alignItems: "center" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={compare} alt="" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "min(440px, 42vw)", maxHeight: "64vh", objectFit: "contain", borderRadius: 10, border: `1px solid ${ember(0.5)}`, boxShadow: "0 0 60px rgba(224,116,47,0.15)" }} />
+              <figcaption style={{ ...mono(9, 0.16), color: EMBER }}>GERADA NO SWELL</figcaption>
+            </figure>
+          </div>
         </div>
       )}
 
@@ -1243,7 +1382,7 @@ function StyleThumb({ styleKey, Icon }: { styleKey: string; Icon: LucideIcon }) 
 }
 
 // ── Lote de geração (grid + feedback) ────────────────────────────────────────
-function BatchBlock({ batch, msgIdx, progressPct, onRetry, onYes, onNo, onFeedbackText, onPrepareRedo, onConfirmRedo, onEditRedo, onExpand }: {
+function BatchBlock({ batch, msgIdx, progressPct, onRetry, onYes, onNo, onFeedbackText, onPrepareRedo, onConfirmRedo, onEditRedo, onCompare, onExpand }: {
   batch: Batch;
   msgIdx: number;
   progressPct: (b?: { startedAt: number }) => string;
@@ -1254,6 +1393,7 @@ function BatchBlock({ batch, msgIdx, progressPct, onRetry, onYes, onNo, onFeedba
   onPrepareRedo: () => void;
   onConfirmRedo: () => void;
   onEditRedo: () => void;
+  onCompare: (src: string) => void;
   onExpand: (src: string, name: string) => void;
 }) {
   const BIcon = batch.style.icon;
@@ -1285,10 +1425,16 @@ function BatchBlock({ batch, msgIdx, progressPct, onRetry, onYes, onNo, onFeedba
               <img src={src} alt={`${batch.style.label} ${i + 1}`} onClick={() => onExpand(src, `swell-${batch.style.key}-${i + 1}.jpg`)} title="Ampliar" style={{ width: "100%", display: "block", cursor: "zoom-in" }} />
               <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", background: "linear-gradient(180deg, rgba(10,9,8,0) 0%, rgba(10,9,8,0.85) 100%)" }}>
                 <span style={{ ...mono(9, 0.16), color: foam(0.75) }}>VAR {String(i + 1).padStart(2, "0")}</span>
-                <a href={`/api/download?u=${encodeURIComponent(src)}&name=swell-${batch.style.key}-${i + 1}.jpg`}
-                  style={{ display: "flex", alignItems: "center", gap: 5, background: foam(0.12), backdropFilter: "blur(8px)", color: FOAM, borderRadius: 8, padding: "5px 10px", fontSize: 11, fontWeight: 600, textDecoration: "none" }}>
-                  <Download size={11} />Baixar
-                </a>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <button onClick={() => onCompare(src)} title="Comparar com sua foto"
+                    style={{ display: "flex", alignItems: "center", gap: 5, background: foam(0.12), backdropFilter: "blur(8px)", color: FOAM, borderRadius: 8, padding: "5px 10px", fontSize: 11, fontWeight: 600, border: "none", cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>
+                    ⇆ Comparar
+                  </button>
+                  <a href={`/api/download?u=${encodeURIComponent(src)}&name=swell-${batch.style.key}-${i + 1}.jpg`}
+                    style={{ display: "flex", alignItems: "center", gap: 5, background: foam(0.12), backdropFilter: "blur(8px)", color: FOAM, borderRadius: 8, padding: "5px 10px", fontSize: 11, fontWeight: 600, textDecoration: "none" }}>
+                    <Download size={11} />Baixar
+                  </a>
+                </div>
               </div>
             </div>
           ))}
@@ -1321,14 +1467,20 @@ function BatchBlock({ batch, msgIdx, progressPct, onRetry, onYes, onNo, onFeedba
           )}
           {batch.feedback === "no" && !batch.redo && (
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>O que faltou? Conta do seu jeito que a gente ajusta.</div>
+              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>O que faltou? Toque num motivo ou escreva do seu jeito.</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 12 }}>
+                {["O produto mudou", "O rótulo/texto saiu errado", "A cor mudou", "O cenário não ficou bom", "A mão/pessoa ficou estranha", "O enquadramento não funcionou"].map((r) => (
+                  <button key={r} onClick={() => onFeedbackText((batch.feedbackText ? batch.feedbackText.trim() + "; " : "") + r)}
+                    style={{ background: foam(0.05), border: `1px solid ${foam(0.14)}`, color: foam(0.82), borderRadius: 999, padding: "6px 12px", fontSize: 12, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>{r}</button>
+                ))}
+              </div>
               <textarea value={batch.feedbackText || ""} onChange={(e) => onFeedbackText(e.target.value)} rows={2}
                 placeholder="Ex: fundo mais escuro; produto maior na foto; modelo inteira…"
                 style={{ width: "100%", background: foam(0.05), border: `1px solid ${foam(0.12)}`, borderRadius: 10, padding: "11px 13px", color: FOAM, fontSize: 13, resize: "vertical", outline: "none", fontFamily: "'Hanken Grotesk', sans-serif", boxSizing: "border-box", marginBottom: 12 }} />
               {batch.redoError && <div style={{ fontSize: 12, color: "#E8836F", marginBottom: 8 }}>{batch.redoError}</div>}
               <button onClick={onPrepareRedo} disabled={!batch.feedbackText?.trim() || batch.redoPreparing}
                 style={{ background: batch.feedbackText?.trim() && !batch.redoPreparing ? EMBER : foam(0.08), color: batch.feedbackText?.trim() && !batch.redoPreparing ? INK : foam(0.5), border: "none", borderRadius: 10, padding: "12px 18px", fontSize: 13, fontWeight: 700, cursor: batch.feedbackText?.trim() && !batch.redoPreparing ? "pointer" : "not-allowed", fontFamily: "'Hanken Grotesk', sans-serif" }}>
-                {batch.redoPreparing ? "Entendendo o que faltou…" : "Transformar no prompt →"}
+                {batch.redoPreparing ? "Entendendo o que faltou…" : "Preparar nova versão →"}
               </button>
             </div>
           )}
@@ -1381,46 +1533,99 @@ function Drawer({ kicker, title, onClose, children }: { kicker: string; title: s
 // ── Formulário Minha Marca (dentro da gaveta) ────────────────────────────────
 function BrandForm({ brand, onSave }: { brand: BrandProfile; onSave: (b: BrandProfile) => void }) {
   const [draft, setDraft] = useState<BrandProfile>(brand);
+  const [newColor, setNewColor] = useState("#E0742F");
   const set = (field: keyof BrandProfile, v: string) => setDraft((d) => ({ ...d, [field]: d[field] === v ? "" : v }));
+  const addColor = (hex: string) => setDraft((d) => ({ ...d, palette: [...(d.palette || []), hex].slice(0, 6) }));
+  const removeColor = (i: number) => setDraft((d) => ({ ...d, palette: (d.palette || []).filter((_, k) => k !== i) }));
+  const onLogo = (file?: File) => {
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = () => setDraft((d) => ({ ...d, logo: String(r.result) }));
+    r.readAsDataURL(file);
+  };
   const chip = (active: boolean): React.CSSProperties => ({
     padding: "7px 15px", borderRadius: 999, fontSize: 13, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif",
     border: `1px solid ${active ? ember(0.6) : foam(0.15)}`, background: active ? ember(0.12) : foam(0.04),
     color: active ? EMBER : foam(0.65), transition: "all 200ms",
   });
   const label: React.CSSProperties = { ...mono(10, 0.22), color: foam(0.45), marginBottom: 9 };
+  const field: React.CSSProperties = { width: "100%", background: foam(0.05), border: `1px solid ${foam(0.12)}`, borderRadius: 12, padding: "12px 14px", color: FOAM, fontSize: 14, outline: "none", boxSizing: "border-box", fontFamily: "'Hanken Grotesk', sans-serif" };
   return (
     <div>
       <p style={{ fontSize: 13, lineHeight: 1.6, color: foam(0.55), margin: "0 0 24px" }}>
-        O que você define aqui guia todas as gerações — tom, clima visual e presença humana.
+        Isto guia todas as gerações — pra sua marca ficar <strong style={{ color: FOAM }}>consistente</strong>: logo, paleta, cenário e o que <strong style={{ color: FOAM }}>nunca</strong> deve aparecer.
       </p>
+
       <label style={{ display: "block", marginBottom: 22 }}>
         <span style={{ display: "block", ...label }}>NOME DA MARCA</span>
-        <input value={draft.name} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} placeholder="Ex: Mar de Dentro"
-          style={{ width: "100%", background: foam(0.05), border: `1px solid ${foam(0.12)}`, borderRadius: 12, padding: "12px 14px", color: FOAM, fontSize: 14, outline: "none", boxSizing: "border-box", fontFamily: "'Hanken Grotesk', sans-serif" }} />
+        <input value={draft.name} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} placeholder="Ex: Mar de Dentro" style={field} />
       </label>
+
+      {/* LOGO */}
+      <div style={label}>LOGO DA MARCA</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
+        <div style={{ width: 72, height: 72, borderRadius: 14, border: `1px solid ${foam(0.14)}`, background: draft.logo ? "#0A0908" : foam(0.04), display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flex: "none" }}>
+          {draft.logo
+            // eslint-disable-next-line @next/next/no-img-element
+            ? <img src={draft.logo} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+            : <ImageIcon size={22} color={foam(0.3)} />}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <label style={{ ...chip(false), display: "inline-flex", alignItems: "center", gap: 7 }}>
+            <ArrowUp size={13} />{draft.logo ? "Trocar logo" : "Enviar logo"}
+            <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" style={{ display: "none" }} onChange={(e) => { onLogo(e.target.files?.[0]); e.target.value = ""; }} />
+          </label>
+          {draft.logo && <button onClick={() => setDraft((d) => ({ ...d, logo: "" }))} style={{ background: "none", border: "none", color: foam(0.45), fontSize: 11, cursor: "pointer", textDecoration: "underline", padding: 0, textAlign: "left" }}>remover</button>}
+          <span style={{ fontSize: 11, color: foam(0.4) }}>PNG com fundo transparente fica melhor.</span>
+        </div>
+      </div>
+
       <div style={label}>TOM DA MARCA</div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 22 }}>
         {BRAND_TONES.map((t) => <button key={t} onClick={() => set("tone", t)} style={chip(draft.tone === t)}>{t}</button>)}
       </div>
+
       <div style={label}>CLIMA VISUAL</div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 22 }}>
         {BRAND_MOODS.map((m) => <button key={m} onClick={() => set("mood", m)} style={chip(draft.mood === m)}>{m}</button>)}
       </div>
+
       <div style={label}>PRESENÇA HUMANA</div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 22 }}>
         {BRAND_HUMANS.map((h) => <button key={h} onClick={() => set("human", h)} style={chip(draft.human === h)}>{h}</button>)}
       </div>
-      <div style={label}>COR PRINCIPAL</div>
-      <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 28 }}>
-        <input type="color" value={draft.colorHex || "#E0742F"} onChange={(e) => setDraft((d) => ({ ...d, colorHex: e.target.value }))}
-          style={{ width: 44, height: 34, border: `1px solid ${foam(0.15)}`, borderRadius: 10, background: foam(0.05), cursor: "pointer", padding: 2 }} />
-        <span style={{ ...mono(12, 0.06), color: foam(0.55) }}>{draft.colorHex || "sem cor definida"}</span>
-        {draft.colorHex && (
-          <button onClick={() => setDraft((d) => ({ ...d, colorHex: "" }))} style={{ background: "none", border: "none", color: foam(0.45), fontSize: 11, cursor: "pointer", textDecoration: "underline", padding: 0 }}>
-            remover
+
+      {/* PALETA */}
+      <div style={label}>PALETA DA MARCA</div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 8 }}>
+        {(draft.palette || []).map((c, i) => (
+          <button key={i} onClick={() => removeColor(i)} title="Remover cor"
+            style={{ width: 34, height: 34, borderRadius: 9, background: c, border: `1px solid ${foam(0.2)}`, cursor: "pointer", position: "relative", padding: 0 }}>
+            <span style={{ position: "absolute", top: -6, right: -6, width: 15, height: 15, borderRadius: "50%", background: "#0A0908", color: FOAM, border: `1px solid ${foam(0.25)}`, fontSize: 9, lineHeight: "13px" }}>×</span>
           </button>
+        ))}
+        {(draft.palette || []).length < 6 && (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <input type="color" value={newColor} onChange={(e) => setNewColor(e.target.value)}
+              style={{ width: 34, height: 34, border: `1px dashed ${foam(0.25)}`, borderRadius: 9, background: foam(0.04), cursor: "pointer", padding: 2 }} />
+            <button onClick={() => addColor(newColor)} style={{ ...chip(false), padding: "6px 12px" }}>+ Adicionar</button>
+          </span>
         )}
       </div>
+      <span style={{ display: "block", fontSize: 11, color: foam(0.4), marginBottom: 24 }}>Até 6 cores. A gente evita cores fora da sua paleta nas fotos.</span>
+
+      {/* CENÁRIO */}
+      <div style={label}>CENÁRIO PREFERIDO</div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
+        {BRAND_SCENARIOS.map((s) => <button key={s} onClick={() => set("scenario", s)} style={chip(draft.scenario === s)}>{s}</button>)}
+      </div>
+
+      {/* ELEMENTOS PROIBIDOS */}
+      <div style={label}>O QUE NUNCA DEVE APARECER</div>
+      <textarea value={draft.forbidden || ""} onChange={(e) => setDraft((d) => ({ ...d, forbidden: e.target.value }))} rows={2}
+        placeholder="Ex: sem plástico brilhante, sem fundo vermelho, sem texto na foto, sem pessoas…"
+        style={{ ...field, resize: "vertical", marginBottom: 28 }} />
+
       <button onClick={() => onSave(draft)} style={{ width: "100%", background: EMBER, border: "none", color: INK, borderRadius: 12, padding: 14, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>
         Salvar minha marca
       </button>

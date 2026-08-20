@@ -226,20 +226,27 @@ function measureLine(p: ProductInfo): string {
 
 // Perfil de marca do lojista ("Minha Marca") — vira um slot do prompt.
 export interface BrandDirection {
-  tone?: string;     // ex: "premium e minimalista"
-  colorHex?: string; // cor principal da marca — guia fundo/set, nunca o produto
-  mood?: string;     // clima visual: clean, quente, escuro, colorido
-  human?: string;    // presença humana preferida da marca
+  tone?: string;      // ex: "premium e minimalista"
+  colorHex?: string;  // cor principal da marca — guia fundo/set, nunca o produto
+  mood?: string;      // clima visual: clean, quente, escuro, colorido
+  human?: string;     // presença humana preferida da marca
+  palette?: string[]; // paleta da marca — guia fundo/acentos (nunca recolore o produto)
+  scenario?: string;  // cenário preferido da marca
+  forbidden?: string; // o que nunca deve aparecer nas fotos
 }
 
 function brandLine(b?: BrandDirection): string {
   if (!b) return "";
   const parts: string[] = [];
   if (b.colorHex) parts.push(`the brand's primary color ${b.colorHex} may guide the backdrop and set accents (NEVER recolor the product itself)`);
+  if (b.palette && b.palette.length) parts.push(`keep the backdrop and set accents within the brand palette (${b.palette.join(", ")}) — never recolor the product`);
   if (b.tone) parts.push(`brand tone: ${b.tone}`);
   if (b.mood) parts.push(`overall visual mood: ${b.mood}`);
+  if (b.scenario) parts.push(`preferred scene: ${b.scenario}`);
   if (b.human) parts.push(`human presence preference: ${b.human}`);
-  return parts.length ? `Brand direction: ${parts.join("; ")}.` : "";
+  let line = parts.length ? `Brand direction: ${parts.join("; ")}.` : "";
+  if (b.forbidden && b.forbidden.trim()) line += ` STRICTLY AVOID (brand rules): ${b.forbidden.trim()}.`;
+  return line.trim();
 }
 
 // Estrutura-mestre: [TIPO] → [TRAVA] → [DELTA] → [MEDIDA] → [MARCA] → [MUNDO] → [COMPOSIÇÃO] → [ANTI] → [EXCLUSÕES] → [FECHO]
