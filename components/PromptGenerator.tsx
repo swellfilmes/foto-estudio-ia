@@ -655,7 +655,10 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
         <nav style={{ display: "flex", alignItems: "center", gap: 2, marginRight: 8 }}>
           <button onClick={reset} style={navBtn}>Criar fotos</button>
           <button onClick={() => setGalleryOpen(true)} style={navBtn}>Galeria</button>
-          <button onClick={() => setBrandOpen(true)} style={navBtn}>{brand.name ? `● ${brand.name}` : "Minha marca"}</button>
+          <a href="/marca" title="Configure sua marca — logo, paleta, cenário e o que nunca deve aparecer"
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, textDecoration: "none", background: ember(0.14), border: `1px solid ${ember(0.5)}`, color: EMBER, borderRadius: 999, padding: "8px 15px", fontSize: 13, fontWeight: 700, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+            <Sparkles size={13} />{brand.name ? brand.name : "Criar minha marca"}
+          </a>
           <button onClick={() => setProfileOpen(true)} style={navBtn}>Conta</button>
         </nav>
         <button
