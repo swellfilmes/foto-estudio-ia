@@ -175,6 +175,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
   const [upsellOpen, setUpsellOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [lightbox, setLightbox] = useState<{ src: string; name: string } | null>(null);
+  const [compare, setCompare] = useState<string | null>(null); // #6 comparar resultado × referência
 
   // ── Projeto (produto salvo = fotos-referência + análise + suas gerações) ──
   const [projectName, setProjectName] = useState<string>("");
@@ -792,6 +793,24 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                       onChange={(e) => { if (e.target.files) addFiles(Array.from(e.target.files)); e.target.value = ""; }} />
                     <div style={{ ...mono(9, 0.16), color: foam(0.35), marginLeft: 6 }}>{photos.length} DE {MAX_PHOTOS}</div>
                   </div>
+
+                  {/* #5 — Detalhes que não podem mudar (fidelidade) */}
+                  {(product.labelText || product.color || product.material || product.size) && (
+                    <div style={{ marginTop: 18, border: `1px solid ${ember(0.3)}`, background: ember(0.05), borderRadius: 14, padding: "14px 16px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 11 }}>
+                        <Lock size={13} color={EMBER} />
+                        <span style={{ ...mono(9, 0.18), color: EMBER }}>DETALHES QUE NÃO PODEM MUDAR</span>
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {([["Rótulo", product.labelText], ["Cor", product.color], ["Material", product.material], ["Formato", product.size]] as const).filter(([, v]) => v).map(([k, v]) => (
+                          <span key={k} style={{ display: "inline-flex", alignItems: "center", gap: 7, background: foam(0.05), border: `1px solid ${foam(0.12)}`, borderRadius: 999, padding: "6px 12px", fontSize: 12.5, color: foam(0.88) }}>
+                            <span style={{ ...mono(8, 0.14), color: foam(0.45) }}>{k.toUpperCase()}</span>{v}
+                          </span>
+                        ))}
+                      </div>
+                      <div style={{ fontSize: 11.5, lineHeight: 1.5, color: foam(0.5), marginTop: 11 }}>A gente preserva isto fiel à sua foto. Está certo? Se algo estiver errado, corrija nos campos abaixo antes de gerar.</div>
+                    </div>
+                  )}
                 </div>
 
                 <div style={{ padding: "clamp(24px, 3vw, 36px)" }}>
@@ -1060,6 +1079,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                   onFeedbackText={(v) => updateBatch(batch.id, { feedbackText: v })}
                   onPrepareRedo={() => prepareRedo(batch)} onConfirmRedo={() => confirmRedo(batch)}
                   onEditRedo={() => updateBatch(batch.id, { redo: undefined })}
+                  onCompare={(src) => setCompare(src)}
                   onExpand={(src, name) => setLightbox({ src, name })} />
               ))}
             </>
@@ -1189,6 +1209,27 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
         </div>
       )}
 
+      {/* #6 — Comparar: sua foto × resultado gerado, lado a lado */}
+      {compare && (
+        <div onClick={() => setCompare(null)} style={{ position: "fixed", inset: 0, zIndex: 80, background: "rgba(6,5,4,0.94)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "clamp(16px, 4vw, 48px)", gap: 18, animation: "riseIn 250ms ease both" }}>
+          <button onClick={() => setCompare(null)} title="Fechar" style={{ position: "absolute", top: 18, right: 18, ...closeBtn }}><X size={16} /></button>
+          <div style={{ ...mono(10, 0.22), color: EMBER }}>CONFIRA A FIDELIDADE</div>
+          <div style={{ display: "flex", gap: "clamp(10px, 2vw, 20px)", alignItems: "center", justifyContent: "center", flexWrap: "wrap", maxWidth: "96vw" }}>
+            <figure style={{ margin: 0, display: "flex", flexDirection: "column", gap: 8, alignItems: "center" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={photos[0]?.url} alt="" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "min(440px, 42vw)", maxHeight: "64vh", objectFit: "contain", borderRadius: 10, border: `1px solid ${foam(0.14)}` }} />
+              <figcaption style={{ ...mono(9, 0.16), color: foam(0.6) }}>SUA FOTO</figcaption>
+            </figure>
+            <ArrowRight size={22} color={EMBER} style={{ flex: "none" }} />
+            <figure style={{ margin: 0, display: "flex", flexDirection: "column", gap: 8, alignItems: "center" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={compare} alt="" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "min(440px, 42vw)", maxHeight: "64vh", objectFit: "contain", borderRadius: 10, border: `1px solid ${ember(0.5)}`, boxShadow: "0 0 60px rgba(224,116,47,0.15)" }} />
+              <figcaption style={{ ...mono(9, 0.16), color: EMBER }}>GERADA NO SWELL</figcaption>
+            </figure>
+          </div>
+        </div>
+      )}
+
       {/* Upsell — quando a cota do plano acaba */}
       {upsellOpen && (
         <div onClick={() => setUpsellOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 75, background: "rgba(10,9,8,0.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, animation: "riseIn 300ms ease both" }}>
@@ -1251,7 +1292,7 @@ function StyleThumb({ styleKey, Icon }: { styleKey: string; Icon: LucideIcon }) 
 }
 
 // ── Lote de geração (grid + feedback) ────────────────────────────────────────
-function BatchBlock({ batch, msgIdx, progressPct, onRetry, onYes, onNo, onFeedbackText, onPrepareRedo, onConfirmRedo, onEditRedo, onExpand }: {
+function BatchBlock({ batch, msgIdx, progressPct, onRetry, onYes, onNo, onFeedbackText, onPrepareRedo, onConfirmRedo, onEditRedo, onCompare, onExpand }: {
   batch: Batch;
   msgIdx: number;
   progressPct: (b?: { startedAt: number }) => string;
@@ -1262,6 +1303,7 @@ function BatchBlock({ batch, msgIdx, progressPct, onRetry, onYes, onNo, onFeedba
   onPrepareRedo: () => void;
   onConfirmRedo: () => void;
   onEditRedo: () => void;
+  onCompare: (src: string) => void;
   onExpand: (src: string, name: string) => void;
 }) {
   const BIcon = batch.style.icon;
@@ -1293,10 +1335,16 @@ function BatchBlock({ batch, msgIdx, progressPct, onRetry, onYes, onNo, onFeedba
               <img src={src} alt={`${batch.style.label} ${i + 1}`} onClick={() => onExpand(src, `swell-${batch.style.key}-${i + 1}.jpg`)} title="Ampliar" style={{ width: "100%", display: "block", cursor: "zoom-in" }} />
               <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", background: "linear-gradient(180deg, rgba(10,9,8,0) 0%, rgba(10,9,8,0.85) 100%)" }}>
                 <span style={{ ...mono(9, 0.16), color: foam(0.75) }}>VAR {String(i + 1).padStart(2, "0")}</span>
-                <a href={`/api/download?u=${encodeURIComponent(src)}&name=swell-${batch.style.key}-${i + 1}.jpg`}
-                  style={{ display: "flex", alignItems: "center", gap: 5, background: foam(0.12), backdropFilter: "blur(8px)", color: FOAM, borderRadius: 8, padding: "5px 10px", fontSize: 11, fontWeight: 600, textDecoration: "none" }}>
-                  <Download size={11} />Baixar
-                </a>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <button onClick={() => onCompare(src)} title="Comparar com sua foto"
+                    style={{ display: "flex", alignItems: "center", gap: 5, background: foam(0.12), backdropFilter: "blur(8px)", color: FOAM, borderRadius: 8, padding: "5px 10px", fontSize: 11, fontWeight: 600, border: "none", cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>
+                    ⇆ Comparar
+                  </button>
+                  <a href={`/api/download?u=${encodeURIComponent(src)}&name=swell-${batch.style.key}-${i + 1}.jpg`}
+                    style={{ display: "flex", alignItems: "center", gap: 5, background: foam(0.12), backdropFilter: "blur(8px)", color: FOAM, borderRadius: 8, padding: "5px 10px", fontSize: 11, fontWeight: 600, textDecoration: "none" }}>
+                    <Download size={11} />Baixar
+                  </a>
+                </div>
               </div>
             </div>
           ))}
