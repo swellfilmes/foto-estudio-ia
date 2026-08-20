@@ -310,6 +310,10 @@ export default function LandingPage() {
         .swl-cta:active { transform: translateY(1px); }
         .swl-ghost { transition: color 200ms; }
         .swl-ghost:hover { color: ${SW.emberHi}; }
+        .swl-sticky, .swl-stickypad { display: none; }
+        @media (max-width: 640px) { .swl-sticky { display: block; } .swl-stickypad { display: block; } }
+        @keyframes swlPulse { 0%, 100% { box-shadow: 0 16px 50px rgba(224,116,47,0.26); } 50% { box-shadow: 0 16px 60px rgba(224,116,47,0.5); } }
+        .swl-pulse { animation: swlPulse 2.4s ease-in-out infinite; }
         @media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
       `}</style>
 
@@ -336,14 +340,39 @@ export default function LandingPage() {
 
           <BeforeAfter />
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center" }}>
-            <button onClick={openLead} className="swl-cta" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 4, padding: "20px 28px", fontFamily: FONT.body, fontSize: 17, fontWeight: 800, letterSpacing: "-0.015em", cursor: "pointer", boxShadow: "0 16px 50px rgba(224,116,47,0.26)" }}>
-              Transformar minha foto agora<Arrow />
-            </button>
-            <p style={{ fontSize: 13.5, lineHeight: 1.5, color: SW.t55, margin: 0, textAlign: "center", maxWidth: "38ch" }}>
-              Sobe a foto do produto <span style={{ color: SW.ember }}>→</span> recebe <strong style={{ color: SW.text, fontWeight: 700 }}>4 versões profissionais em ~2 min</strong>. Grátis pra testar, sem cartão.
-            </p>
-          </div>
+          {leadStatus === "idle" ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <input
+                value={leadEmail}
+                onChange={(e) => { setLeadEmail(e.target.value); if (leadError) setLeadError(""); }}
+                onKeyDown={(e) => { if (e.key === "Enter") submitLead(); }}
+                type="email" autoComplete="email" inputMode="email" placeholder="Seu melhor e-mail"
+                style={{ width: "100%", background: "rgba(244,239,230,0.06)", border: `1.5px solid ${leadError ? "rgba(232,131,111,0.85)" : "rgba(224,116,47,0.55)"}`, borderRadius: 4, padding: "18px 18px", color: SW.text, fontFamily: FONT.body, fontSize: 16.5, outline: "none", textAlign: "center" }}
+              />
+              <button onClick={submitLead} className="swl-cta swl-pulse" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 4, padding: "20px 28px", fontFamily: FONT.body, fontSize: 17, fontWeight: 800, letterSpacing: "-0.015em", cursor: "pointer" }}>
+                Testar grátis — 5 fotos<Arrow />
+              </button>
+              {leadError && <div style={{ color: "#E8836F", fontSize: 13, lineHeight: 1.4, textAlign: "center" }}>{leadError}</div>}
+              <p style={{ fontSize: 13.5, lineHeight: 1.55, color: SW.t55, margin: "2px auto 0", textAlign: "center", maxWidth: "42ch" }}>
+                Sobe a foto <span style={{ color: SW.ember }}>→</span> <strong style={{ color: SW.text, fontWeight: 700 }}>4 versões em ~2 min</strong>, sem cartão. <span style={{ color: SW.emberHi }}>Cada dia de foto fraca é venda que escapa — testa hoje.</span>
+              </p>
+            </div>
+          ) : leadStatus === "sent" ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center", textAlign: "center", background: SW.surface, border: "1px solid rgba(224,116,47,0.4)", borderRadius: 4, padding: "24px 20px" }}>
+              <div style={{ width: 48, height: 48, borderRadius: 999, background: "rgba(224,116,47,0.12)", border: "1px solid rgba(224,116,47,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={SW.ember} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><polyline points="22 6 12 13 2 6" /></svg>
+              </div>
+              <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 23, letterSpacing: "-0.02em" }}>Confira seu e-mail.</div>
+              <p style={{ fontSize: 14.5, lineHeight: 1.5, color: SW.t55, margin: 0 }}>Mandamos um link pra <strong style={{ color: SW.text }}>{leadEmail}</strong> — clica nele pra liberar suas 5 fotos.</p>
+              <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: "0.14em", color: SW.t35 }}>ÀS VEZES CAI EM PROMOÇÕES / SPAM</div>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center", textAlign: "center", background: SW.surface, border: `1px solid ${SW.line2}`, borderRadius: 4, padding: "24px 20px" }}>
+              <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 21, letterSpacing: "-0.02em" }}>Teste já usado.</div>
+              <p style={{ fontSize: 14.5, lineHeight: 1.5, color: SW.t55, margin: 0 }}>{leadMsg}</p>
+              <a href="#planos" className="swl-cta" style={{ width: "100%", textAlign: "center", background: EMBER_GRAD, color: "#0A0908", borderRadius: 4, padding: 15, fontFamily: FONT.body, fontSize: 15, fontWeight: 800, textDecoration: "none", marginTop: 2 }}>Ver planos</a>
+            </div>
+          )}
         </div>
       </section>
 
@@ -501,6 +530,16 @@ export default function LandingPage() {
         <span>SWELL STUDIO · UMA MARCA SWELL FILMES</span>
         <span>SALVADOR · BAHIA</span>
       </footer>
+
+      {/* espaço pra barra fixa não cobrir o rodapé no celular */}
+      <div className="swl-stickypad" style={{ height: 76 }} aria-hidden />
+
+      {/* ============ BARRA FIXA (mobile) — CTA sempre a um toque ============ */}
+      <div className="swl-sticky" style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 70, padding: "10px 14px calc(10px + env(safe-area-inset-bottom))", background: "rgba(10,9,8,0.94)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderTop: `1px solid ${SW.line2}` }}>
+        <button onClick={openLead} className="swl-cta" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 9, background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 4, padding: "16px 20px", fontFamily: FONT.body, fontSize: 16, fontWeight: 800, letterSpacing: "-0.01em", cursor: "pointer", boxShadow: "0 -6px 30px rgba(224,116,47,0.28)" }}>
+          Testar grátis — 5 fotos, sem cartão<Arrow size={17} />
+        </button>
+      </div>
 
       {/* ============ MODAL DE LEAD ============ */}
       {showLead && (
