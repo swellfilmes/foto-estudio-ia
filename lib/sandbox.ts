@@ -18,6 +18,13 @@ function origin(): string {
 export function isSandbox(): boolean {
   if (typeof window === "undefined") return false;
   try {
+    // TRAVA: o modo teste (mock) só vale em preview/dev — NUNCA no domínio real.
+    // Como /studio virou público, isto impede alguém de ativar o mock com ?sandbox=1
+    // no site de produção.
+    const host = window.location.hostname;
+    const allowed = host === "localhost" || host === "127.0.0.1" || host.endsWith(".vercel.app");
+    if (!allowed) return false;
+
     const q = new URLSearchParams(window.location.search).get("sandbox");
     if (q === "1") {
       document.cookie = "swl-sandbox=1; path=/; samesite=lax";

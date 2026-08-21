@@ -52,13 +52,14 @@ const pt = {
   docTitle: "Swell Studio — Foto de estúdio, do seu celular",
   nav: { login: "Entrar", tryFree: "Testar grátis" },
   hero: {
-    kicker: "IMAGENS DE ALTA CONVERSÃO",
-    h1a: "Sua imagem está", h1b: "vendendo por você",
-    subPre: "A foto do seu celular vira ", subStrong: "imagem feita pra vender", subPost: " — em minutos.",
+    kicker: "FOTOS PARA QUEM VENDE ONLINE",
+    h1a: "Seu produto", h1b: "pronto para anunciar",
+    subPre: "Envie a foto do celular e receba um ", subStrong: "kit de imagens pra anunciar", subPost: ".",
     emailPlaceholder: "Seu melhor e-mail",
-    cta: "Comece a criar agora", reassure: "Teste grátis · sem cartão", consent: "Ao continuar, você concorda com os Termos e a Política de Privacidade.",
-    processPre: "Sobe a foto", processStrong: "4 versões em ~2 min", processPost: ", sem cartão.",
-    urgency: "Cada dia de foto fraca é venda que escapa — testa hoje.",
+    cta: "Testar com meu produto", reassure: "Teste grátis · sem cartão", consent: "Ao continuar, você concorda com os Termos e a Política de Privacidade.",
+    kitFrom: "1 FOTO", kitItems: ["CAPA", "DETALHE", "CONTEXTO", "ANÚNCIO"],
+    processPre: "Envie a foto", processStrong: "kit pronto em minutos", processPost: ", sem cartão.",
+    urgency: "Anuncie hoje, sem esperar sessão de fotos.",
   },
   ba: { before: "ANTES · CELULAR", after: "DEPOIS · SWELL", drag: "ARRASTA PRA VER", beforeShort: "ANTES", afterShort: "DEPOIS" },
   sent: { title: "Confira seu e-mail.", body: (e: string) => <>Mandamos um link pra <strong style={{ color: SW.text }}>{e}</strong> — clica nele pra liberar suas 5 fotos.</>, spam: "ÀS VEZES CAI EM PROMOÇÕES / SPAM" },
@@ -72,7 +73,7 @@ const pt = {
     { text: "Me arrepiei… olha isso", via: "CLIENTE · WHATSAPP" },
   ] },
   caseStudy: { kicker: "CASO REAL", brand: "Eclesyart · Moda", quote: "Precisava de criativos diversos e o orçamento de fotografia não fechava. Fiz mais de 20 criativos validados no Swell Studio, rodei os anúncios — e o estoque esgotou em 3 semanas.", stats: [{ big: "20+", small: "CRIATIVOS VALIDADOS" }, { big: "3 semanas", small: "ESTOQUE ESGOTADO" }, { big: "R$0", small: "EM SESSÃO DE FOTOS" }] },
-  how: { kicker: "02 — COMO FUNCIONA", steps: ["Sobe a foto", "Escolhe a cena", "Baixa e posta"] },
+  how: { kicker: "02 — COMO FUNCIONA", steps: ["Envie a foto", "Escolha onde vai usar", "Revise e baixe"] },
   tool: { kicker: "POR DENTRO DA FERRAMENTA", h2: "É você no controle, do início ao fim", shots: ["Sobe a foto do produto", "Escolhe a cena e quantas fotos", "Revisa e baixa as versões prontas"] },
   fidelity: { kicker: "03 — FIDELIDADE", h2a: "Seu produto, fiel.", h2b: "Você revisa antes de postar", body: "Rótulo, cor e formato preservados a partir da sua foto. Muda o cenário e a luz — e você escolhe quais fotos usar antes de publicar. Direção de arte de uma produtora audiovisual.", labels: ["COSMÉTICO", "CALÇADO", "VESTUÁRIO"] },
   modes: { kicker: "04 — DOIS MODOS", productT: "Produto", productD: "1 foto do celular → 4 variações de campanha.", personT: "Pessoa", personD: "3 selfies → 8 fotos de ensaio editorial." },
@@ -89,7 +90,7 @@ const pt = {
     { q: "Como funcionam os créditos?", a: "1 foto = 1 imagem gerada. São 35 no Simples, 80 no Médio e 180 no Grande, por mês. Se uma geração falha, o crédito volta automaticamente. Os créditos valem no mês — não acumulam pro mês seguinte." },
     { q: "O teste é grátis mesmo?", a: "Sim: 5 fotos, sem cartão. Depois você escolhe um plano se quiser continuar." },
   ] },
-  finalCta: { h2a: "Seu produto merece", h2b: "foto boa", cta: "Testar grátis", sub: "5 FOTOS · SEM CARTÃO" },
+  finalCta: { h2a: "Seu produto", h2b: "pronto para anunciar", cta: "Testar com meu produto", sub: "TESTE GRÁTIS · SEM CARTÃO" },
   modal: { kicker: "TESTE GRÁTIS", title: "5 fotos, sem cartão.", body: "Deixa seu e-mail — a gente manda um link pra liberar.", placeholder: "seu@email.com", cta: "Quero testar", nospam: "SEM SPAM · CANCELA QUANDO QUISER" },
   sticky: "Testar grátis — 5 fotos, sem cartão",
 };
@@ -99,13 +100,14 @@ const es: Content = {
   docTitle: "Swell Studio — Foto de estudio, desde tu celular",
   nav: { login: "Entrar", tryFree: "Probar gratis" },
   hero: {
-    kicker: "IMÁGENES DE ALTA CONVERSIÓN",
-    h1a: "¿Tu imagen está", h1b: "vendiendo por ti",
-    subPre: "La foto de tu celular se vuelve ", subStrong: "imagen hecha para vender", subPost: " — en minutos.",
+    kicker: "FOTOS PARA QUIEN VENDE ONLINE",
+    h1a: "Tu producto", h1b: "listo para anunciar",
+    subPre: "Envía la foto del celular y recibe un ", subStrong: "kit de imágenes para anunciar", subPost: ".",
     emailPlaceholder: "Tu mejor e-mail",
-    cta: "Empieza a crear ahora", reassure: "Prueba gratis · sin tarjeta", consent: "Al continuar, aceptas los Términos y la Política de Privacidad.",
-    processPre: "Sube la foto", processStrong: "4 versiones en ~2 min", processPost: ", sin tarjeta.",
-    urgency: "Cada día con fotos flojas es una venta que se escapa — prueba hoy.",
+    cta: "Probar con mi producto", reassure: "Prueba gratis · sin tarjeta", consent: "Al continuar, aceptas los Términos y la Política de Privacidad.",
+    kitFrom: "1 FOTO", kitItems: ["PORTADA", "DETALLE", "CONTEXTO", "ANUNCIO"],
+    processPre: "Envía la foto", processStrong: "kit listo en minutos", processPost: ", sin tarjeta.",
+    urgency: "Anuncia hoy, sin esperar una sesión de fotos.",
   },
   ba: { before: "ANTES · CELULAR", after: "DESPUÉS · SWELL", drag: "ARRASTRA PARA VER", beforeShort: "ANTES", afterShort: "DESPUÉS" },
   sent: { title: "Revisa tu e-mail.", body: (e: string) => <>Enviamos un enlace a <strong style={{ color: SW.text }}>{e}</strong> — haz clic para liberar tus 5 fotos.</>, spam: "A VECES CAE EN PROMOCIONES / SPAM" },
@@ -119,7 +121,7 @@ const es: Content = {
     { text: "Me dio escalofríos… mira esto", via: "CLIENTE · WHATSAPP" },
   ] },
   caseStudy: { kicker: "CASO REAL", brand: "Eclesyart · Moda", quote: "Necesitaba creativos variados y el presupuesto de fotografía no daba. Hice más de 20 creativos validados en Swell Studio, corrí los anuncios — y el stock se agotó en 3 semanas.", stats: [{ big: "20+", small: "CREATIVOS VALIDADOS" }, { big: "3 semanas", small: "STOCK AGOTADO" }, { big: "R$0", small: "EN SESIÓN DE FOTOS" }] },
-  how: { kicker: "02 — CÓMO FUNCIONA", steps: ["Sube la foto", "Elige la escena", "Descarga y publica"] },
+  how: { kicker: "02 — CÓMO FUNCIONA", steps: ["Envía la foto", "Elige dónde vas a usar", "Revisa y descarga"] },
   tool: { kicker: "DENTRO DE LA HERRAMIENTA", h2: "Eres tú en control, de principio a fin", shots: ["Subes la foto del producto", "Eliges la escena y cuántas fotos", "Revisas y descargas las versiones listas"] },
   fidelity: { kicker: "03 — FIDELIDAD", h2a: "Tu producto, fiel.", h2b: "Revisas antes de publicar", body: "Etiqueta, color y forma preservados a partir de tu foto. Cambia el escenario y la luz — y eliges qué fotos usar antes de publicar. Dirección de arte de una productora audiovisual.", labels: ["COSMÉTICO", "CALZADO", "ROPA"] },
   modes: { kicker: "04 — DOS MODOS", productT: "Producto", productD: "1 foto del celular → 4 variaciones de campaña.", personT: "Persona", personD: "3 selfies → 8 fotos de sesión editorial." },
@@ -136,7 +138,7 @@ const es: Content = {
     { q: "¿Cómo funcionan los créditos?", a: "1 foto = 1 imagen generada. Son 35 en el Simple, 80 en el Medio y 180 en el Grande, al mes. Si una generación falla, el crédito se devuelve automáticamente. Los créditos valen en el mes — no se acumulan para el siguiente." },
     { q: "¿La prueba es gratis de verdad?", a: "Sí: 5 fotos, sin tarjeta. Después eliges un plan si quieres continuar." },
   ] },
-  finalCta: { h2a: "Tu producto merece", h2b: "buena foto", cta: "Probar gratis", sub: "5 FOTOS · SIN TARJETA" },
+  finalCta: { h2a: "Tu producto", h2b: "listo para anunciar", cta: "Probar con mi producto", sub: "PRUEBA GRATIS · SIN TARJETA" },
   modal: { kicker: "PRUEBA GRATIS", title: "5 fotos, sin tarjeta.", body: "Deja tu e-mail — te enviamos un enlace para liberar.", placeholder: "tu@email.com", cta: "Quiero probar", nospam: "SIN SPAM · CANCELA CUANDO QUIERAS" },
   sticky: "Probar gratis — 5 fotos, sin tarjeta",
 };
@@ -145,13 +147,14 @@ const en: Content = {
   docTitle: "Swell Studio — Studio photos, from your phone",
   nav: { login: "Log in", tryFree: "Try free" },
   hero: {
-    kicker: "HIGH-CONVERSION IMAGES",
-    h1a: "Is your image", h1b: "selling for you",
-    subPre: "Your phone photo becomes an ", subStrong: "image built to sell", subPost: " — in minutes.",
+    kicker: "PHOTOS FOR ONLINE SELLERS",
+    h1a: "Your product,", h1b: "ready to sell",
+    subPre: "Send your phone photo and get an ", subStrong: "image kit ready to post", subPost: ".",
     emailPlaceholder: "Your best email",
-    cta: "Start creating now", reassure: "Free trial · no card", consent: "By continuing, you agree to the Terms and Privacy Policy.",
-    processPre: "Upload your photo", processStrong: "4 versions in ~2 min", processPost: ", no card.",
-    urgency: "Every day with weak photos is a sale slipping away — try today.",
+    cta: "Try with my product", reassure: "Free trial · no card", consent: "By continuing, you agree to the Terms and Privacy Policy.",
+    kitFrom: "1 PHOTO", kitItems: ["COVER", "DETAIL", "CONTEXT", "AD"],
+    processPre: "Send the photo", processStrong: "kit ready in minutes", processPost: ", no card.",
+    urgency: "List today — no photoshoot needed.",
   },
   ba: { before: "BEFORE · PHONE", after: "AFTER · SWELL", drag: "DRAG TO SEE", beforeShort: "BEFORE", afterShort: "AFTER" },
   sent: { title: "Check your email.", body: (e: string) => <>We sent a link to <strong style={{ color: SW.text }}>{e}</strong> — click it to unlock your 5 photos.</>, spam: "SOMETIMES LANDS IN PROMOTIONS / SPAM" },
@@ -165,7 +168,7 @@ const en: Content = {
     { text: "Got chills… look at this", via: "CLIENT · WHATSAPP" },
   ] },
   caseStudy: { kicker: "REAL CASE", brand: "Eclesyart · Fashion", quote: "I needed varied creatives and the photography budget didn't fit. I made 20+ validated creatives with Swell Studio, ran the ads — and stock sold out in 3 weeks.", stats: [{ big: "20+", small: "VALIDATED CREATIVES" }, { big: "3 weeks", small: "SOLD OUT" }, { big: "R$0", small: "ON PHOTO SHOOTS" }] },
-  how: { kicker: "02 — HOW IT WORKS", steps: ["Upload the photo", "Pick the scene", "Download & post"] },
+  how: { kicker: "02 — HOW IT WORKS", steps: ["Send the photo", "Pick where you'll use it", "Review & download"] },
   tool: { kicker: "INSIDE THE TOOL", h2: "You're in control, start to finish", shots: ["Upload the product photo", "Pick the scene and how many", "Review and download the ready versions"] },
   fidelity: { kicker: "03 — FIDELITY", h2a: "Your product, faithful.", h2b: "You review before posting", body: "Label, color and shape preserved from your photo. The scene and lighting change — and you choose which shots to use before posting. Art direction from a film studio.", labels: ["COSMETIC", "FOOTWEAR", "APPAREL"] },
   modes: { kicker: "04 — TWO MODES", productT: "Product", productD: "1 phone photo → 4 campaign variations.", personT: "Person", personD: "3 selfies → 8 editorial shoot photos." },
@@ -182,7 +185,7 @@ const en: Content = {
     { q: "How do credits work?", a: "1 photo = 1 generated image. That's 35 on Simple, 80 on Medium and 180 on Large, per month. If a generation fails, the credit is refunded automatically. Credits are monthly — they don't roll over." },
     { q: "Is the trial really free?", a: "Yes: 5 photos, no card. Then you pick a plan if you want to continue." },
   ] },
-  finalCta: { h2a: "Your product deserves", h2b: "a good photo", cta: "Try free", sub: "5 PHOTOS · NO CARD" },
+  finalCta: { h2a: "Your product,", h2b: "ready to sell", cta: "Try with my product", sub: "FREE TRIAL · NO CARD" },
   modal: { kicker: "FREE TRIAL", title: "5 photos, no card.", body: "Leave your email — we'll send a link to unlock.", placeholder: "you@email.com", cta: "I want to try", nospam: "NO SPAM · CANCEL ANYTIME" },
   sticky: "Try free — 5 photos, no card",
 };
@@ -547,7 +550,7 @@ export default function LandingPage() {
         <div ref={heroRef} className="swl-rise" style={{ maxWidth: 560, margin: "0 auto", display: "flex", flexDirection: "column", gap: "clamp(22px, 4vw, 30px)" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 14, textAlign: "center" }}>
             <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.24em", color: SW.t42 }}>{t.hero.kicker}</div>
-            <h1 style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: "clamp(28px, 7.5vw, 46px)", lineHeight: 1.06, letterSpacing: "-0.015em", margin: 0 }}>{t.hero.h1a}<br />{t.hero.h1b}<span style={{ color: SW.ember }}>?</span></h1>
+            <h1 style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: "clamp(28px, 7.5vw, 46px)", lineHeight: 1.06, letterSpacing: "-0.015em", margin: 0 }}>{t.hero.h1a}<br />{t.hero.h1b}<span style={{ color: SW.ember }}>.</span></h1>
             <p style={{ fontSize: "clamp(16px, 4.5vw, 19px)", lineHeight: 1.4, color: SW.t72, margin: 0, textWrap: "balance" }}>{t.hero.subPre}<strong style={{ color: SW.text, fontWeight: 700 }}>{t.hero.subStrong}</strong>{t.hero.subPost}</p>
           </div>
 
@@ -585,6 +588,15 @@ export default function LandingPage() {
               <a href="#planos" className="swl-cta" style={{ width: "100%", textAlign: "center", background: EMBER_GRAD, color: "#0A0908", borderRadius: 4, padding: 15, fontFamily: FONT.body, fontSize: 15, fontWeight: 800, textDecoration: "none", marginTop: 2 }}>{t.blocked.seePlans}</a>
             </div>
           )}
+
+          {/* Selo do kit: uma foto vira um conjunto pronto pra anunciar */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+            <span style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.12em", color: SW.t45 }}>{t.hero.kitFrom}</span>
+            <span style={{ color: SW.ember }}>→</span>
+            {t.hero.kitItems.map((k) => (
+              <span key={k} style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.08em", color: SW.t72, border: `1px solid ${SW.line2}`, borderRadius: 999, padding: "5px 10px" }}>{k}</span>
+            ))}
+          </div>
 
           <BeforeAfter t={t.ba} />
 
