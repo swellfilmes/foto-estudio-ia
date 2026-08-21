@@ -52,18 +52,18 @@ const pt = {
   docTitle: "Swell Studio — Foto de estúdio, do seu celular",
   nav: { login: "Entrar", tryFree: "Testar grátis" },
   hero: {
-    kicker: "FOTO DE PRODUTO COM IA",
-    h1a: "Cansado de foto feia", h1b: "travando sua venda",
-    subPre: "Sua foto de celular vira ", subStrong: "foto de estúdio em poucos minutos", subPost: ".",
+    kicker: "IMAGENS DE ALTA CONVERSÃO",
+    h1a: "Sua imagem está", h1b: "vendendo por você",
+    subPre: "A foto do seu celular vira ", subStrong: "imagem feita pra vender", subPost: " — em minutos.",
     emailPlaceholder: "Seu melhor e-mail",
-    cta: "Comece a criar agora", reassure: "5 fotos grátis · sem cartão",
+    cta: "Comece a criar agora", reassure: "Teste grátis · sem cartão", consent: "Concordo em receber contato e com a Política de Privacidade.",
     processPre: "Sobe a foto", processStrong: "4 versões em ~2 min", processPost: ", sem cartão.",
     urgency: "Cada dia de foto fraca é venda que escapa — testa hoje.",
   },
   ba: { before: "ANTES · CELULAR", after: "DEPOIS · SWELL", drag: "ARRASTA PRA VER", beforeShort: "ANTES", afterShort: "DEPOIS" },
   sent: { title: "Confira seu e-mail.", body: (e: string) => <>Mandamos um link pra <strong style={{ color: SW.text }}>{e}</strong> — clica nele pra liberar suas 5 fotos.</>, spam: "ÀS VEZES CAI EM PROMOÇÕES / SPAM" },
   blocked: { title: "Teste já usado.", used: "Você já testou com esse e-mail. Pra continuar, escolha um plano — a partir de R$79,90.", device: "Este aparelho já usou o teste grátis. Entre com o e-mail que você usou, ou escolha um plano.", seePlans: "Ver planos", alreadyHave: "JÁ TENHO ACESSO — ENTRAR" },
-  err: { invalid: "Ops — digite um e-mail válido (ex.: voce@suamarca.com).", send: "Não conseguimos enviar agora. Tenta de novo em instantes.", conn: "Sem conexão. Tenta de novo em instantes." },
+  err: { invalid: "Ops — digite um e-mail válido (ex.: voce@suamarca.com).", send: "Não conseguimos enviar agora. Tenta de novo em instantes.", conn: "Sem conexão. Tenta de novo em instantes.", lgpd: "Marque a opção de consentimento pra continuar." },
   proof: { kicker: "01 — PROVA", h2a: "Tirei no celular.", h2b: "Virou isso", labels: ["BEBIDA", "CALÇADO", "ACESSÓRIO", "VESTUÁRIO"], disclaimer: "MENSAGENS REAIS DE CLIENTES" },
   reactions: { kicker: "QUEM VIU, FALOU", h2: "Reação de quem recebeu", items: [
     { text: "A arte ficou cachorrada", via: "CLIENTE · WHATSAPP" },
@@ -99,18 +99,18 @@ const es: Content = {
   docTitle: "Swell Studio — Foto de estudio, desde tu celular",
   nav: { login: "Entrar", tryFree: "Probar gratis" },
   hero: {
-    kicker: "FOTOS DE PRODUCTO CON IA",
-    h1a: "¿Cansada de fotos feas", h1b: "que frenan tus ventas",
-    subPre: "Tu foto de celular se vuelve ", subStrong: "foto de estudio en pocos minutos", subPost: ".",
+    kicker: "IMÁGENES DE ALTA CONVERSIÓN",
+    h1a: "¿Tu imagen está", h1b: "vendiendo por ti",
+    subPre: "La foto de tu celular se vuelve ", subStrong: "imagen hecha para vender", subPost: " — en minutos.",
     emailPlaceholder: "Tu mejor e-mail",
-    cta: "Empieza a crear ahora", reassure: "5 fotos gratis · sin tarjeta",
+    cta: "Empieza a crear ahora", reassure: "Prueba gratis · sin tarjeta", consent: "Acepto recibir contacto y la Política de Privacidad.",
     processPre: "Sube la foto", processStrong: "4 versiones en ~2 min", processPost: ", sin tarjeta.",
     urgency: "Cada día con fotos flojas es una venta que se escapa — prueba hoy.",
   },
   ba: { before: "ANTES · CELULAR", after: "DESPUÉS · SWELL", drag: "ARRASTRA PARA VER", beforeShort: "ANTES", afterShort: "DESPUÉS" },
   sent: { title: "Revisa tu e-mail.", body: (e: string) => <>Enviamos un enlace a <strong style={{ color: SW.text }}>{e}</strong> — haz clic para liberar tus 5 fotos.</>, spam: "A VECES CAE EN PROMOCIONES / SPAM" },
   blocked: { title: "Prueba ya usada.", used: "Ya probaste con este e-mail. Para seguir, elige un plan — desde R$79,90.", device: "Este dispositivo ya usó la prueba gratis. Entra con el e-mail que usaste, o elige un plan.", seePlans: "Ver planes", alreadyHave: "YA TENGO ACCESO — ENTRAR" },
-  err: { invalid: "Ups — escribe un e-mail válido (ej.: tu@tumarca.com).", send: "No pudimos enviar ahora. Inténtalo de nuevo en un momento.", conn: "Sin conexión. Inténtalo de nuevo en un momento." },
+  err: { invalid: "Ups — escribe un e-mail válido (ej.: tu@tumarca.com).", send: "No pudimos enviar ahora. Inténtalo de nuevo en un momento.", conn: "Sin conexión. Inténtalo de nuevo en un momento.", lgpd: "Marca la casilla de consentimiento para continuar." },
   proof: { kicker: "01 — PRUEBA", h2a: "Foto del celular.", h2b: "Se volvió esto", labels: ["BEBIDA", "CALZADO", "ACCESORIO", "ROPA"], disclaimer: "MENSAJES REALES DE CLIENTES" },
   reactions: { kicker: "QUIEN LO VIO, LO DIJO", h2: "Reacción de quien recibió", items: [
     { text: "El arte quedó brutal", via: "CLIENTE · WHATSAPP" },
@@ -145,18 +145,18 @@ const en: Content = {
   docTitle: "Swell Studio — Studio photos, from your phone",
   nav: { login: "Log in", tryFree: "Try free" },
   hero: {
-    kicker: "AI PRODUCT PHOTOGRAPHY",
-    h1a: "Ugly photos", h1b: "killing your sales",
-    subPre: "Your phone photo becomes a ", subStrong: "studio photo in minutes", subPost: ".",
+    kicker: "HIGH-CONVERSION IMAGES",
+    h1a: "Is your image", h1b: "selling for you",
+    subPre: "Your phone photo becomes an ", subStrong: "image built to sell", subPost: " — in minutes.",
     emailPlaceholder: "Your best email",
-    cta: "Start creating now", reassure: "5 free photos · no card",
+    cta: "Start creating now", reassure: "Free trial · no card", consent: "I agree to be contacted and to the Privacy Policy.",
     processPre: "Upload your photo", processStrong: "4 versions in ~2 min", processPost: ", no card.",
     urgency: "Every day with weak photos is a sale slipping away — try today.",
   },
   ba: { before: "BEFORE · PHONE", after: "AFTER · SWELL", drag: "DRAG TO SEE", beforeShort: "BEFORE", afterShort: "AFTER" },
   sent: { title: "Check your email.", body: (e: string) => <>We sent a link to <strong style={{ color: SW.text }}>{e}</strong> — click it to unlock your 5 photos.</>, spam: "SOMETIMES LANDS IN PROMOTIONS / SPAM" },
   blocked: { title: "Trial already used.", used: "You already tried with this email. To continue, pick a plan — from R$79.90.", device: "This device already used the free trial. Log in with the email you used, or pick a plan.", seePlans: "See plans", alreadyHave: "I ALREADY HAVE ACCESS — LOG IN" },
-  err: { invalid: "Oops — enter a valid email (e.g. you@yourbrand.com).", send: "We couldn't send right now. Try again in a moment.", conn: "No connection. Try again in a moment." },
+  err: { invalid: "Oops — enter a valid email (e.g. you@yourbrand.com).", send: "We couldn't send right now. Try again in a moment.", conn: "No connection. Try again in a moment.", lgpd: "Please check the consent box to continue." },
   proof: { kicker: "01 — PROOF", h2a: "Shot on a phone.", h2b: "Became this", labels: ["DRINK", "FOOTWEAR", "ACCESSORY", "APPAREL"], disclaimer: "REAL MESSAGES FROM CLIENTS" },
   reactions: { kicker: "PEOPLE WHO SAW IT", h2: "What people said", items: [
     { text: "The art came out killer", via: "CLIENT · WHATSAPP" },
@@ -407,7 +407,7 @@ export default function LandingPage() {
   const [leadStatus, setLeadStatus] = useState<"idle" | "sent" | "blocked">("idle");
   const [leadMsg, setLeadMsg] = useState("");
   const [leadError, setLeadError] = useState("");
-  const [showSticky, setShowSticky] = useState(false);
+  const [lgpdOk, setLgpdOk] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
@@ -435,19 +435,14 @@ export default function LandingPage() {
     return () => document.removeEventListener("mouseout", onMouseOut);
   }, [showLead, leadStatus]);
 
-  // Barra fixa só aparece quando o herói (com o formulário) sai da tela.
-  useEffect(() => {
-    const el = heroRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") { setShowSticky(true); return; }
-    const io = new IntersectionObserver(([e]) => setShowSticky(!e.isIntersecting), { threshold: 0 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
   const submitLead = async () => {
     const email = leadEmail.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setLeadError(t.err.invalid);
+      return;
+    }
+    if (!lgpdOk) {
+      setLeadError(t.err.lgpd);
       return;
     }
     setLeadError("");
@@ -573,6 +568,10 @@ export default function LandingPage() {
                   {t.hero.cta}<Arrow />
                 </button>
               </div>
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer", textAlign: "left", padding: "0 2px" }}>
+                <input type="checkbox" checked={lgpdOk} onChange={(e) => { setLgpdOk(e.target.checked); if (leadError) setLeadError(""); }} style={{ marginTop: 2, accentColor: SW.ember, width: 15, height: 15, flex: "none", cursor: "pointer" }} aria-label="consentimento" />
+                <span style={{ fontSize: 11.5, lineHeight: 1.45, color: SW.t55 }}>{t.hero.consent}</span>
+              </label>
               {leadError && <div style={{ color: "#E8836F", fontSize: 13, lineHeight: 1.4, textAlign: "center" }}>{leadError}</div>}
               <div style={{ fontFamily: FONT.mono, fontSize: 10.5, letterSpacing: "0.16em", color: SW.t45, textAlign: "center", marginTop: 2 }}>{t.hero.reassure}</div>
             </form>
@@ -764,18 +763,6 @@ export default function LandingPage() {
         <span>SWELL STUDIO · UMA MARCA SWELL FILMES</span>
         <span>SALVADOR · BAHIA</span>
       </footer>
-
-      {/* espaço pra barra fixa não cobrir o rodapé no celular */}
-      <div className="swl-stickypad" style={{ height: 76 }} aria-hidden />
-
-      {/* ============ BARRA FIXA (mobile) — só depois que o herói sai da tela ============ */}
-      {showSticky && (
-        <div className="swl-sticky" style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 70, padding: "8px 14px calc(8px + env(safe-area-inset-bottom))", background: "rgba(10,9,8,0.94)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderTop: `1px solid ${SW.line2}` }}>
-          <button onClick={openLead} className="swl-cta" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 4, padding: "13px 18px", fontFamily: FONT.body, fontSize: 14.5, fontWeight: 800, letterSpacing: "-0.01em", cursor: "pointer", boxShadow: "0 -6px 30px rgba(224,116,47,0.28)" }}>
-            {t.sticky}<Arrow size={16} />
-          </button>
-        </div>
-      )}
 
       {/* ============ LIGHTBOX (clicar pra ampliar em alta) ============ */}
       {lightbox && (
