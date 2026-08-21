@@ -56,7 +56,7 @@ const pt = {
     h1a: "Sua imagem está", h1b: "vendendo por você",
     subPre: "A foto do seu celular vira ", subStrong: "imagem feita pra vender", subPost: " — em minutos.",
     emailPlaceholder: "Seu melhor e-mail",
-    cta: "Comece a criar agora", reassure: "Teste grátis · sem cartão", consent: "Concordo em receber contato e com a Política de Privacidade.",
+    cta: "Comece a criar agora", reassure: "Teste grátis · sem cartão", consent: "Ao continuar, você concorda com os Termos e a Política de Privacidade.",
     processPre: "Sobe a foto", processStrong: "4 versões em ~2 min", processPost: ", sem cartão.",
     urgency: "Cada dia de foto fraca é venda que escapa — testa hoje.",
   },
@@ -103,7 +103,7 @@ const es: Content = {
     h1a: "¿Tu imagen está", h1b: "vendiendo por ti",
     subPre: "La foto de tu celular se vuelve ", subStrong: "imagen hecha para vender", subPost: " — en minutos.",
     emailPlaceholder: "Tu mejor e-mail",
-    cta: "Empieza a crear ahora", reassure: "Prueba gratis · sin tarjeta", consent: "Acepto recibir contacto y la Política de Privacidad.",
+    cta: "Empieza a crear ahora", reassure: "Prueba gratis · sin tarjeta", consent: "Al continuar, aceptas los Términos y la Política de Privacidad.",
     processPre: "Sube la foto", processStrong: "4 versiones en ~2 min", processPost: ", sin tarjeta.",
     urgency: "Cada día con fotos flojas es una venta que se escapa — prueba hoy.",
   },
@@ -149,7 +149,7 @@ const en: Content = {
     h1a: "Is your image", h1b: "selling for you",
     subPre: "Your phone photo becomes an ", subStrong: "image built to sell", subPost: " — in minutes.",
     emailPlaceholder: "Your best email",
-    cta: "Start creating now", reassure: "Free trial · no card", consent: "I agree to be contacted and to the Privacy Policy.",
+    cta: "Start creating now", reassure: "Free trial · no card", consent: "By continuing, you agree to the Terms and Privacy Policy.",
     processPre: "Upload your photo", processStrong: "4 versions in ~2 min", processPost: ", no card.",
     urgency: "Every day with weak photos is a sale slipping away — try today.",
   },
@@ -407,7 +407,6 @@ export default function LandingPage() {
   const [leadStatus, setLeadStatus] = useState<"idle" | "sent" | "blocked">("idle");
   const [leadMsg, setLeadMsg] = useState("");
   const [leadError, setLeadError] = useState("");
-  const [lgpdOk, setLgpdOk] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
@@ -439,10 +438,6 @@ export default function LandingPage() {
     const email = leadEmail.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setLeadError(t.err.invalid);
-      return;
-    }
-    if (!lgpdOk) {
-      setLeadError(t.err.lgpd);
       return;
     }
     setLeadError("");
@@ -568,12 +563,9 @@ export default function LandingPage() {
                   {t.hero.cta}<Arrow />
                 </button>
               </div>
-              <label style={{ display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer", textAlign: "left", padding: "0 2px" }}>
-                <input type="checkbox" checked={lgpdOk} onChange={(e) => { setLgpdOk(e.target.checked); if (leadError) setLeadError(""); }} style={{ marginTop: 2, accentColor: SW.ember, width: 15, height: 15, flex: "none", cursor: "pointer" }} aria-label="consentimento" />
-                <span style={{ fontSize: 11.5, lineHeight: 1.45, color: SW.t55 }}>{t.hero.consent}</span>
-              </label>
               {leadError && <div style={{ color: "#E8836F", fontSize: 13, lineHeight: 1.4, textAlign: "center" }}>{leadError}</div>}
               <div style={{ fontFamily: FONT.mono, fontSize: 10.5, letterSpacing: "0.16em", color: SW.t45, textAlign: "center", marginTop: 2 }}>{t.hero.reassure}</div>
+              <div style={{ fontSize: 10.5, lineHeight: 1.4, color: SW.t35, textAlign: "center" }}>{t.hero.consent}</div>
             </form>
           ) : leadStatus === "sent" ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center", textAlign: "center", background: SW.surface, border: "1px solid rgba(224,116,47,0.4)", borderRadius: 4, padding: "24px 20px" }}>
