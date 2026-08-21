@@ -3,6 +3,11 @@
 import { useState, useEffect } from "react";
 import PromptGenerator from "./PromptGenerator";
 import EnsaioStudio from "./EnsaioStudio";
+import { isSandbox, installSandbox } from "@/lib/sandbox";
+
+// Modo teste (preview): mocka /api/* no cliente ANTES de qualquer fetch dos filhos.
+// Roda no import do módulo (client), então já está de pé quando o estúdio monta.
+if (typeof window !== "undefined" && isSandbox()) installSandbox();
 
 const EMBER = "#E0742F";
 const INTRO_MSGS = ["Olá.", "Bem-vindo ao Estúdio Swell.", "Comece pela foto do seu produto."];

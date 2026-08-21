@@ -30,7 +30,7 @@ function GoogleG() {
 }
 
 export default function ComecarPage() {
-  const [step, setStep] = useState<"idle" | "login" | "done">("idle");
+  const [step, setStep] = useState<"idle" | "login">("idle");
   const [preview, setPreview] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -41,7 +41,8 @@ export default function ComecarPage() {
     if (f) setPreview(URL.createObjectURL(f));
     setStep("login"); // ← o momento do upload dispara o login
   };
-  const finish = () => setStep("done");
+  // "Loga" (simulado) e entra no ESTÚDIO REAL em modo teste (sandbox, custo zero).
+  const enter = () => { window.location.href = "/studio?sandbox=1"; };
 
   return (
     <main style={{ minHeight: "100dvh", background: C.abyss, color: C.text, fontFamily: BODY, display: "flex", flexDirection: "column" }}>
@@ -125,7 +126,7 @@ export default function ComecarPage() {
             </div>
 
             {/* Google (mock) */}
-            <button onClick={finish} className="gbtn" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: "#FFFFFF", color: "#1F1F1F", border: "none", borderRadius: 10, padding: "15px", fontFamily: BODY, fontSize: 15.5, fontWeight: 700, cursor: "pointer" }}>
+            <button onClick={enter} className="gbtn" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: "#FFFFFF", color: "#1F1F1F", border: "none", borderRadius: 10, padding: "15px", fontFamily: BODY, fontSize: 15.5, fontWeight: 700, cursor: "pointer" }}>
               <GoogleG /> Continuar com Google
             </button>
 
@@ -137,7 +138,7 @@ export default function ComecarPage() {
             </div>
 
             {/* e-mail (mock) */}
-            <form onSubmit={(e) => { e.preventDefault(); if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) finish(); }} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <form onSubmit={(e) => { e.preventDefault(); if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) enter(); }} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <input
                 value={email} onChange={(e) => setEmail(e.target.value)}
                 type="email" inputMode="email" autoComplete="email" placeholder="seu@email.com" aria-label="e-mail"
@@ -155,22 +156,6 @@ export default function ComecarPage() {
         </div>
       )}
 
-      {/* ── SUCESSO (mock) ── */}
-      {step === "done" && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 110, background: "rgba(6,5,4,0.92)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <div className="fu" style={{ width: "min(400px,100%)", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-            <div style={{ width: 60, height: 60, borderRadius: 999, background: "rgba(224,116,47,0.14)", border: `1px solid rgba(224,116,47,0.5)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width={30} height={30} viewBox="0 0 24 24" fill="none" stroke={C.ember} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-            </div>
-            <div style={{ fontFamily: ARCHIVO, fontWeight: 800, fontSize: 24, letterSpacing: "-0.02em" }}>Tudo certo!</div>
-            <p style={{ fontSize: 15, lineHeight: 1.5, color: C.t72, margin: 0 }}>Login feito. Aqui a plataforma abriria com sua foto pra montar o kit.</p>
-            <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: "0.14em", color: C.t30 }}>FIM DA SIMULAÇÃO</div>
-            <button onClick={() => { setStep("idle"); setEmail(""); setPreview(null); }} style={{ marginTop: 6, background: "transparent", color: C.t72, border: `1px solid ${C.line2}`, borderRadius: 999, padding: "10px 20px", fontFamily: BODY, fontSize: 13.5, fontWeight: 700, cursor: "pointer" }}>
-              Rodar de novo
-            </button>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
