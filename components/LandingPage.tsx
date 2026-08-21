@@ -62,7 +62,7 @@ const pt = {
   },
   ba: { before: "ANTES · CELULAR", after: "DEPOIS · SWELL", drag: "ARRASTA PRA VER", beforeShort: "ANTES", afterShort: "DEPOIS" },
   sent: { title: "Confira seu e-mail.", body: (e: string) => <>Mandamos um link pra <strong style={{ color: SW.text }}>{e}</strong> — clica nele pra liberar suas 5 fotos.</>, spam: "ÀS VEZES CAI EM PROMOÇÕES / SPAM" },
-  blocked: { title: "Teste já usado.", used: "Você já testou com esse e-mail. Pra continuar, escolha um plano — a partir de R$79,90.", device: "Este aparelho já usou o teste grátis. Entre com o e-mail que você usou, ou escolha um plano.", seePlans: "Ver planos", alreadyHave: "JÁ TENHO ACESSO — ENTRAR" },
+  blocked: { title: "E-mail já cadastrado.", used: "Esse e-mail já foi cadastrado. Pra continuar, escolha um plano — a partir de R$79,90.", device: "Este aparelho já usou o teste grátis. Entre com o e-mail que você usou, ou escolha um plano.", seePlans: "Ver planos", alreadyHave: "JÁ TENHO ACESSO — ENTRAR" },
   err: { invalid: "Ops — digite um e-mail válido (ex.: voce@suamarca.com).", send: "Não conseguimos enviar agora. Tenta de novo em instantes.", conn: "Sem conexão. Tenta de novo em instantes.", lgpd: "Marque a opção de consentimento pra continuar." },
   proof: { kicker: "01 — PROVA", h2a: "Tirei no celular.", h2b: "Virou isso", labels: ["BEBIDA", "CALÇADO", "ACESSÓRIO", "VESTUÁRIO"], disclaimer: "MENSAGENS REAIS DE CLIENTES" },
   reactions: { kicker: "QUEM VIU, FALOU", h2: "Reação de quem recebeu", items: [
@@ -459,26 +459,28 @@ export default function LandingPage() {
         created_at: new Date().toISOString(),
       }),
     }).catch(() => {});
-    // Confirma o e-mail e libera o teste: cria o trial e manda o link mágico (Resend).
+    // Login instantâneo: cria o teste e JÁ ENTRA (sem link mágico). Vai direto pro estúdio.
+    // "exists" = e-mail já cadastrado (teste esgotado) → mostra o bloqueio e empurra pro plano.
     try {
       const leadEventId = newEventId("lead");
-      const r = await fetch("/api/lead", {
+      const r = await fetch("/api/trial-start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, source: "landing-swell-studio", eventId: leadEventId }),
       });
       const data = await r.json().catch(() => ({}));
-      if (!r.ok) {
+      if (data?.status === "exists") {
+        setLeadMsg(t.blocked.used);
+        setLeadStatus("blocked");
+        return;
+      }
+      if (!r.ok || data?.status !== "ok") {
         setLeadError(typeof data?.error === "string" ? data.error : t.err.send);
         return;
       }
-      if (data?.status === "blocked") {
-        setLeadMsg(data?.reason === "device" ? t.blocked.device : t.blocked.used);
-        setLeadStatus("blocked");
-      } else {
-        setLeadStatus("sent");
-        track("Lead", { content_name: "teste-gratis" }, leadEventId);
-      }
+      vaTrack("signup_complete", { lang });
+      track("Lead", { content_name: "teste-gratis" }, leadEventId);
+      window.location.href = "/studio";
     } catch {
       setLeadError(t.err.conn);
     }

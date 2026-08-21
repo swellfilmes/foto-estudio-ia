@@ -84,6 +84,9 @@ function match(url: string, method: string, body: Record<string, unknown> | unde
   if (u.endsWith("/api/generate-prompt")) {
     return { promptEN: "Studio product photograph, clean seamless background, soft cinematic lighting, label kept faithful, premium campaign look", resumoPT: "Foto de estúdio do produto, fundo limpo, luz suave de cinema, rótulo fiel — cara de campanha." };
   }
+  if (u.endsWith("/api/trial-start")) {
+    return { status: "ok" }; // login instantâneo simulado
+  }
   if (u.endsWith("/api/generate-images")) {
     return { task_id: `sandbox-${++genCounter}`, raw: {} };
   }

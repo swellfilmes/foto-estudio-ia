@@ -29,6 +29,9 @@ export async function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
+// /studio saiu do portão: agora é a PORTA DE ENTRADA pública (deslogado vê a tela;
+// o login vira modal e as APIs de gerar continuam exigindo sessão no servidor).
+// /galeria segue trancada (é o acervo do usuário).
 export const config = {
-  matcher: ["/studio/:path*", "/galeria/:path*"],
+  matcher: ["/galeria/:path*"],
 };

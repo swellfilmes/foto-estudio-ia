@@ -55,7 +55,7 @@ function Intro({ onDone }: { onDone: () => void }) {
 
 const INTRO_KEY = "swell-intro-visto";
 
-export default function StudioShell({ initialProjectId }: { initialProjectId?: string } = {}) {
+export default function StudioShell({ initialProjectId, initialLoggedIn }: { initialProjectId?: string; initialLoggedIn?: boolean } = {}) {
   // A abertura é boas-vindas, não ritual: roda UMA vez por navegador.
   // Antes ela tocava a cada entrada — ~8s de espera pra quem usa o estúdio todo dia.
   // Ao reabrir um projeto salvo também pula, como já era.
@@ -84,7 +84,7 @@ export default function StudioShell({ initialProjectId }: { initialProjectId?: s
   return (
     <>
       {intro && <Intro onDone={fecharIntro} />}
-      <PromptGenerator initialProjectId={initialProjectId} />
+      <PromptGenerator initialProjectId={initialProjectId} initialLoggedIn={initialLoggedIn} />
     </>
   );
 }

@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import { track as vaTrack } from "@vercel/analytics";
 import { ProductInfo, PhotoType, ProductCategory } from "@/lib/types";
 import { assembleScene, BrandDirection } from "@/lib/scene-blocks";
-import { isSandbox } from "@/lib/sandbox";
 import {
   ArrowRight, ArrowUp, Camera, Check, Clapperboard, Coffee, Download, Film, Gem, Hand,
   Image as ImageIcon, Layers, LayoutGrid, Lock, LogOut, Plus, Search, Smartphone,
@@ -144,7 +143,7 @@ function formatWhen(iso: string): string {
   }
 }
 
-export default function PromptGenerator({ initialProjectId }: { initialProjectId?: string } = {}) {
+export default function PromptGenerator({ initialProjectId, initialLoggedIn }: { initialProjectId?: string; initialLoggedIn?: boolean } = {}) {
   const [phase, setPhase] = useState<Phase>(initialProjectId ? "analyzing" : "upload");
   const [stage, setStage] = useState<Stage>("category");
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -182,12 +181,13 @@ export default function PromptGenerator({ initialProjectId }: { initialProjectId
   // um modal que aparece ao tentar gerar, abrir Conta ou "Criar minha marca".
   // Em produção quem chega no /studio já tem sessão (proxy) → começa logado.
   // No modo teste (sandbox/preview) começa DESLOGADO, pra demonstrar o login.
-  // Começa logado (produção: quem chega no /studio já tem sessão via proxy). No modo
-  // teste (preview) vira DESLOGADO após montar — no efeito, pra não dar mismatch de SSR.
-  const [loggedIn, setLoggedIn] = useState(true);
+  // O servidor (StudioPage) já sabe se há sessão válida e manda em initialLoggedIn —
+  // sem piscar a tela. Deslogado vê o estúdio e o login vira modal.
+  const [loggedIn, setLoggedIn] = useState(initialLoggedIn ?? true);
   const [loginOpen, setLoginOpen] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
-  useEffect(() => { if (isSandbox()) setLoggedIn(false); }, []);
+  const [loginErr, setLoginErr] = useState("");
+  const [loginBusy, setLoginBusy] = useState(false);
   const [lightbox, setLightbox] = useState<{ items: { src: string; name: string }[]; index: number } | null>(null);
   const [compare, setCompare] = useState<string | null>(null); // #6 comparar resultado × referência
   // "Adicionar": pedir algo em cima de uma foto que já saiu, sem começar do zero
@@ -275,6 +275,26 @@ export default function PromptGenerator({ initialProjectId }: { initialProjectId
 
   function refreshUsage() {
     fetch("/api/usage").then((r) => r.json()).then(setUsage).catch(() => { /* silencioso */ });
+  }
+
+  // Login instantâneo por e-mail: digitou, entra na hora (sem link mágico).
+  // "exists" = e-mail já cadastrado (teste esgotado) → empurra pro plano.
+  async function doEmailLogin() {
+    const email = loginEmail.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setLoginErr("Digite um e-mail válido."); return; }
+    setLoginErr(""); setLoginBusy(true);
+    try {
+      const r = await fetch("/api/trial-start", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, source: "studio" }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (data?.status === "exists") { setLoginBusy(false); setLoginErr("Esse e-mail já foi cadastrado. Pra continuar, escolha um plano."); return; }
+      if (!r.ok || data?.status !== "ok") { setLoginBusy(false); setLoginErr(typeof data?.error === "string" ? data.error : "Não deu certo. Tenta de novo."); return; }
+      vaTrack("signup_complete", { plan: "trial" });
+      setLoggedIn(true); setLoginOpen(false); setLoginEmail(""); setLoginBusy(false);
+      refreshUsage();
+    } catch { setLoginBusy(false); setLoginErr("Sem conexão. Tenta de novo."); }
   }
 
   // Carrega o histórico permanente (por e-mail) quando a Galeria abre
@@ -1309,33 +1329,18 @@ export default function PromptGenerator({ initialProjectId }: { initialProjectId
           <div onClick={(e) => e.stopPropagation()} style={{ width: "min(420px, 100%)", background: "rgba(20,17,15,0.94)", backdropFilter: "blur(30px)", WebkitBackdropFilter: "blur(30px)", border: `1px solid ${foam(0.12)}`, borderRadius: 22, padding: 28, boxShadow: "0 50px 140px rgba(0,0,0,0.7)", boxSizing: "border-box", display: "flex", flexDirection: "column", gap: 16 }}>
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
               <div>
-                <div style={{ ...mono(10, 0.24), color: foam(0.45), marginBottom: 8 }}>FAZER LOGIN</div>
-                <div style={{ ...display, fontSize: 26, lineHeight: 1 }}>Entre pra continuar<span style={{ color: EMBER }}>.</span></div>
+                <div style={{ ...mono(10, 0.24), color: foam(0.45), marginBottom: 8 }}>ENTRAR</div>
+                <div style={{ ...display, fontSize: 26, lineHeight: 1 }}>Comece agora<span style={{ color: EMBER }}>.</span></div>
+                <div style={{ fontSize: 13, color: foam(0.5), marginTop: 8 }}>Digite seu e-mail e já pode usar — sem senha.</div>
               </div>
               <button onClick={() => setLoginOpen(false)} style={closeBtn}><X size={15} /></button>
             </div>
-            <button
-              onClick={() => { setLoggedIn(true); setLoginOpen(false); setLoginEmail(""); }}
-              style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: "#FFFFFF", color: "#1F1F1F", border: "none", borderRadius: 12, padding: "14px", fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 15, fontWeight: 700, cursor: "pointer" }}
-            >
-              <svg width={18} height={18} viewBox="0 0 48 48" aria-hidden>
-                <path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z" />
-                <path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z" />
-                <path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24s.85 6.91 2.34 9.88l7.35-5.7z" />
-                <path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z" />
-              </svg>
-              Continuar com Google
-            </button>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, color: foam(0.3) }}>
-              <div style={{ flex: 1, height: 1, background: foam(0.1) }} />
-              <span style={{ ...mono(9.5, 0.14) }}>OU COM E-MAIL</span>
-              <div style={{ flex: 1, height: 1, background: foam(0.1) }} />
-            </div>
-            <form onSubmit={(e) => { e.preventDefault(); if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail)) { setLoggedIn(true); setLoginOpen(false); setLoginEmail(""); } }} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <input value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} type="email" inputMode="email" autoComplete="email" placeholder="seu@email.com" aria-label="e-mail"
-                style={{ width: "100%", background: foam(0.06), border: `1px solid ${foam(0.16)}`, borderRadius: 12, padding: "13px 16px", color: FOAM, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 15, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
-              <button type="submit" style={{ ...gradientBtn, width: "100%", padding: "14px", fontSize: 14.5 }}>Continuar com e-mail</button>
+            <form onSubmit={(e) => { e.preventDefault(); doEmailLogin(); }} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <input value={loginEmail} onChange={(e) => { setLoginEmail(e.target.value); if (loginErr) setLoginErr(""); }} type="email" inputMode="email" autoComplete="email" placeholder="seu@email.com" aria-label="e-mail" autoFocus
+                style={{ width: "100%", background: foam(0.06), border: `1px solid ${loginErr ? "rgba(232,131,111,0.7)" : foam(0.16)}`, borderRadius: 12, padding: "14px 16px", color: FOAM, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 16, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
+              <button type="submit" disabled={loginBusy} style={{ ...gradientBtn, width: "100%", padding: "15px", fontSize: 15, opacity: loginBusy ? 0.7 : 1, cursor: loginBusy ? "default" : "pointer" }}>{loginBusy ? "Entrando…" : "Entrar e usar"}</button>
             </form>
+            {loginErr && <div style={{ color: "#E8836F", fontSize: 13, lineHeight: 1.45, textAlign: "center" }}>{loginErr}</div>}
             <div style={{ fontSize: 10.5, lineHeight: 1.5, color: foam(0.3), textAlign: "center" }}>Ao continuar, você concorda com os Termos e a Política de Privacidade.</div>
           </div>
         </div>
