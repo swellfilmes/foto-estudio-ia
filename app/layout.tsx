@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 // Pixel do Meta Ads (Swell Studio). O mesmo id vai em META_PIXEL_ID (servidor) para a
 // API de Conversões — os dois lados precisam apontar pro MESMO conjunto de dados.
-const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || "1040385058861312";
+const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || "1456425956335846";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
