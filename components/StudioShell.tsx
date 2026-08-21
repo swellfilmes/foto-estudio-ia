@@ -9,8 +9,8 @@ import { isSandbox, installSandbox } from "@/lib/sandbox";
 if (typeof window !== "undefined" && isSandbox()) installSandbox();
 
 const EMBER = "#E0742F";
-const INTRO_MSGS = ["Olá.", "Bem-vindo ao Estúdio Swell.", "Comece pela foto do seu produto."];
-const PER = 2300; // duração de cada mensagem (mais lenta, respira melhor)
+const INTRO_MSGS = ["Swell Studio.", "Comece pela foto do seu produto."];
+const PER = 1500; // duração de cada mensagem (curta — é a porta de entrada)
 
 // Abertura cinematográfica ao entrar no estúdio (do protótipo Claude Design).
 function Intro({ onDone }: { onDone: () => void }) {
