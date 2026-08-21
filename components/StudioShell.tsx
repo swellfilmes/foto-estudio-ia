@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import PromptGenerator from "./PromptGenerator";
-import EnsaioStudio from "./EnsaioStudio";
 import { isSandbox, installSandbox } from "@/lib/sandbox";
 
 // Modo teste (preview): mocka /api/* no cliente ANTES de qualquer fetch dos filhos.
@@ -61,7 +60,6 @@ export default function StudioShell({ initialProjectId }: { initialProjectId?: s
   // Antes ela tocava a cada entrada — ~8s de espera pra quem usa o estúdio todo dia.
   // Ao reabrir um projeto salvo também pula, como já era.
   const [intro, setIntro] = useState(false);
-  const [ensaio, setEnsaio] = useState(false);
 
   useEffect(() => {
     if (initialProjectId) return;
@@ -86,11 +84,7 @@ export default function StudioShell({ initialProjectId }: { initialProjectId?: s
   return (
     <>
       {intro && <Intro onDone={fecharIntro} />}
-      {ensaio ? (
-        <EnsaioStudio onBack={() => setEnsaio(false)} />
-      ) : (
-        <PromptGenerator onEnsaio={() => setEnsaio(true)} initialProjectId={initialProjectId} />
-      )}
+      <PromptGenerator initialProjectId={initialProjectId} />
     </>
   );
 }

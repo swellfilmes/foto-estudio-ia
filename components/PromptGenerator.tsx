@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { track as vaTrack } from "@vercel/analytics";
 import { ProductInfo, PhotoType, ProductCategory } from "@/lib/types";
 import { assembleScene, BrandDirection } from "@/lib/scene-blocks";
+import { isSandbox } from "@/lib/sandbox";
 import {
   ArrowRight, ArrowUp, Camera, Check, Clapperboard, Coffee, Download, Film, Gem, Hand,
   Image as ImageIcon, Layers, LayoutGrid, Lock, LogOut, Plus, Search, Smartphone,
@@ -143,7 +144,7 @@ function formatWhen(iso: string): string {
   }
 }
 
-export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsaio?: () => void; initialProjectId?: string } = {}) {
+export default function PromptGenerator({ initialProjectId }: { initialProjectId?: string } = {}) {
   const [phase, setPhase] = useState<Phase>(initialProjectId ? "analyzing" : "upload");
   const [stage, setStage] = useState<Stage>("category");
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -177,6 +178,16 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
   const [usage, setUsage] = useState<{ email?: string | null; plan: string | null; quota: number | null; used: number; remaining: number | null } | null>(null);
   const [upsellOpen, setUpsellOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  // Porta de entrada: quem NÃO está logado vê a mesma tela do estúdio; o login é
+  // um modal que aparece ao tentar gerar, abrir Conta ou "Criar minha marca".
+  // Em produção quem chega no /studio já tem sessão (proxy) → começa logado.
+  // No modo teste (sandbox/preview) começa DESLOGADO, pra demonstrar o login.
+  // Começa logado (produção: quem chega no /studio já tem sessão via proxy). No modo
+  // teste (preview) vira DESLOGADO após montar — no efeito, pra não dar mismatch de SSR.
+  const [loggedIn, setLoggedIn] = useState(true);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  useEffect(() => { if (isSandbox()) setLoggedIn(false); }, []);
   const [lightbox, setLightbox] = useState<{ items: { src: string; name: string }[]; index: number } | null>(null);
   const [compare, setCompare] = useState<string | null>(null); // #6 comparar resultado × referência
   // "Adicionar": pedir algo em cima de uma foto que já saiu, sem começar do zero
@@ -707,16 +718,17 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         <nav style={{ display: "flex", alignItems: "center", gap: 2, marginRight: 8 }}>
           <button onClick={reset} style={navBtn}>Criar fotos</button>
-          <button onClick={() => setGalleryOpen(true)} style={navBtn}>Galeria</button>
+          <button onClick={() => (loggedIn ? setGalleryOpen(true) : setLoginOpen(true))} style={navBtn}>Galeria</button>
           <a href="/marca" title="Configure sua marca — logo, paleta, cenário e o que nunca deve aparecer"
+            onClick={(e) => { if (!loggedIn) { e.preventDefault(); setLoginOpen(true); } }}
             style={{ display: "inline-flex", alignItems: "center", gap: 7, textDecoration: "none", background: ember(0.14), border: `1px solid ${ember(0.5)}`, color: EMBER, borderRadius: 999, padding: "8px 15px", fontSize: 13, fontWeight: 700, fontFamily: "'Hanken Grotesk', sans-serif" }}>
-            <Sparkles size={13} />{brand.name ? brand.name : "Criar minha marca"}
+            <Sparkles size={13} />{loggedIn && brand.name ? brand.name : "Criar minha marca"}
           </a>
-          <button onClick={() => setProfileOpen(true)} style={navBtn}>Conta</button>
+          <button onClick={() => (loggedIn ? setProfileOpen(true) : setLoginOpen(true))} style={navBtn}>Conta</button>
         </nav>
         <button
-          onClick={() => (quotaLow ? setUpsellOpen(true) : setPricingOpen(true))}
-          title="Suas fotos e planos"
+          onClick={() => (!loggedIn ? setLoginOpen(true) : quotaLow ? setUpsellOpen(true) : setPricingOpen(true))}
+          title={loggedIn ? "Suas fotos e planos" : "Entrar"}
           style={{
             display: "flex", alignItems: "center", gap: 9,
             background: quotaLow ? "rgba(178,59,46,0.14)" : ember(0.1),
@@ -724,11 +736,13 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
             color: quotaLow ? "#E8836F" : EMBER, borderRadius: 999, padding: "7px 14px", ...mono(11, 0.12), cursor: "pointer",
           }}
         >
-          {hasQuota
-            ? `${usage!.remaining} DE ${usage!.quota} FOTOS`
-            : `${usedTotal} FOTO${usedTotal === 1 ? "" : "S"} GERADA${usedTotal === 1 ? "" : "S"}`}
+          {!loggedIn
+            ? "ENTRAR"
+            : hasQuota
+              ? `${Math.round(((usage!.remaining ?? 0) / (usage!.quota || 1)) * 100)}%`
+              : `${usedTotal} FOTO${usedTotal === 1 ? "" : "S"} GERADA${usedTotal === 1 ? "" : "S"}`}
         </button>
-        <button onClick={() => setProfileOpen(true)} title="Sua conta" style={{
+        <button onClick={() => (loggedIn ? setProfileOpen(true) : setLoginOpen(true))} title="Sua conta" style={{
           display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34,
           border: `1px solid ${foam(0.14)}`, background: foam(0.04), color: foam(0.65), borderRadius: "50%", cursor: "pointer",
         }}>
@@ -754,9 +768,9 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
           </p>
 
           <div
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => (loggedIn ? fileInputRef.current?.click() : setLoginOpen(true))}
             onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => { e.preventDefault(); addFiles(Array.from(e.dataTransfer.files)); }}
+            onDrop={(e) => { e.preventDefault(); if (!loggedIn) { setLoginOpen(true); return; } addFiles(Array.from(e.dataTransfer.files)); }}
             style={{ ...glass, display: "flex", alignItems: "center", gap: "clamp(20px, 3vw, 36px)", flexWrap: "wrap", borderRadius: 24, padding: "clamp(28px, 4vw, 46px)", cursor: "pointer", transition: "border-color 300ms" }}
           >
             <div style={{ width: 58, height: 58, borderRadius: 16, background: ember(0.12), border: `1px solid ${ember(0.3)}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -783,15 +797,6 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
           )}
 
           {badges}
-
-          {onEnsaio && (
-            <p style={{ textAlign: "center", marginTop: 40, fontSize: 13, color: foam(0.4) }}>
-              Quer fotos suas, não de produto?{" "}
-              <button onClick={onEnsaio} style={{ background: "none", border: "none", color: EMBER, cursor: "pointer", fontSize: 13, padding: 0 }}>
-                Ensaio de Pessoa →
-              </button>
-            </p>
-          )}
         </main>
       )}
 
@@ -1296,6 +1301,44 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
         <Drawer kicker="SUA CONTA" title="Perfil" onClose={() => setProfileOpen(false)}>
           <ProfilePanel usage={usage} />
         </Drawer>
+      )}
+
+      {/* ── FAZER LOGIN (mock no preview) — depois de entrar, segue na geração ── */}
+      {loginOpen && (
+        <div onClick={() => setLoginOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 80, background: "rgba(6,5,4,0.82)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, animation: "riseIn 320ms ease both" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "min(420px, 100%)", background: "rgba(20,17,15,0.94)", backdropFilter: "blur(30px)", WebkitBackdropFilter: "blur(30px)", border: `1px solid ${foam(0.12)}`, borderRadius: 22, padding: 28, boxShadow: "0 50px 140px rgba(0,0,0,0.7)", boxSizing: "border-box", display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+              <div>
+                <div style={{ ...mono(10, 0.24), color: foam(0.45), marginBottom: 8 }}>FAZER LOGIN</div>
+                <div style={{ ...display, fontSize: 26, lineHeight: 1 }}>Entre pra continuar<span style={{ color: EMBER }}>.</span></div>
+              </div>
+              <button onClick={() => setLoginOpen(false)} style={closeBtn}><X size={15} /></button>
+            </div>
+            <button
+              onClick={() => { setLoggedIn(true); setLoginOpen(false); setLoginEmail(""); }}
+              style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: "#FFFFFF", color: "#1F1F1F", border: "none", borderRadius: 12, padding: "14px", fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 15, fontWeight: 700, cursor: "pointer" }}
+            >
+              <svg width={18} height={18} viewBox="0 0 48 48" aria-hidden>
+                <path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z" />
+                <path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z" />
+                <path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24s.85 6.91 2.34 9.88l7.35-5.7z" />
+                <path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z" />
+              </svg>
+              Continuar com Google
+            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, color: foam(0.3) }}>
+              <div style={{ flex: 1, height: 1, background: foam(0.1) }} />
+              <span style={{ ...mono(9.5, 0.14) }}>OU COM E-MAIL</span>
+              <div style={{ flex: 1, height: 1, background: foam(0.1) }} />
+            </div>
+            <form onSubmit={(e) => { e.preventDefault(); if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail)) { setLoggedIn(true); setLoginOpen(false); setLoginEmail(""); } }} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <input value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} type="email" inputMode="email" autoComplete="email" placeholder="seu@email.com" aria-label="e-mail"
+                style={{ width: "100%", background: foam(0.06), border: `1px solid ${foam(0.16)}`, borderRadius: 12, padding: "13px 16px", color: FOAM, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 15, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
+              <button type="submit" style={{ ...gradientBtn, width: "100%", padding: "14px", fontSize: 14.5 }}>Continuar com e-mail</button>
+            </form>
+            <div style={{ fontSize: 10.5, lineHeight: 1.5, color: foam(0.3), textAlign: "center" }}>Ao continuar, você concorda com os Termos e a Política de Privacidade.</div>
+          </div>
+        </div>
       )}
 
       {pricingOpen && (
