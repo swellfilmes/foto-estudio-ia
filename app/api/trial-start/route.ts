@@ -1,7 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
+import { promises as dnsp } from "dns";
 import { getSubscriber, hasActiveAccess, isOwner, upsertSubscriber } from "@/lib/db";
 import { signSessionToken } from "@/lib/access-token";
 import { track } from "@vercel/analytics/server";
+
+// Domínios de e-mail descartável/temporário — não valem pra teste grátis.
+const DISPOSABLE = new Set([
+  "mailinator.com", "tempmail.com", "temp-mail.org", "10minutemail.com", "guerrillamail.com",
+  "yopmail.com", "trashmail.com", "getnada.com", "sharklasers.com", "throwawaymail.com",
+  "maildrop.cc", "fakeinbox.com", "dispostable.com", "mailnesia.com", "mytemp.email",
+  "moakt.com", "tempr.email", "emailondeck.com", "mohmal.com", "mailcatch.com",
+  "spam4.me", "grr.la", "guerrillamail.info", "tempmailo.com", "luxusmail.org",
+]);
+
+// Corre uma promessa com prazo. No estouro, devolve o fallback (fail-open: não
+// bloqueia usuário real por causa de DNS lento).
+function withTimeout<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([p, new Promise<T>((res) => setTimeout(() => res(fallback), ms))]);
+}
+
+// O domínio consegue RECEBER e-mail? true = tem MX (ou A) → existe.
+// false = domínio claramente inexistente (NXDOMAIN/sem registro). Erro transitório → libera.
+async function domainCanReceiveMail(domain: string): Promise<boolean> {
+  try {
+    const mx = await dnsp.resolveMx(domain);
+    if (mx && mx.length) return true;
+  } catch (e) {
+    const code = (e as NodeJS.ErrnoException)?.code;
+    if (code !== "ENOTFOUND" && code !== "ENODATA") return true; // transitório → não bloqueia
+  }
+  try {
+    const a = await dnsp.resolve(domain); // alguns domínios recebem sem MX
+    return !!(a && a.length);
+  } catch (e) {
+    const code = (e as NodeJS.ErrnoException)?.code;
+    if (code === "ENOTFOUND" || code === "ENODATA") return false; // não existe
+    return true; // transitório → libera
+  }
+}
 
 // ── LOGIN INSTANTÂNEO (sem link mágico, sem trava de aparelho) ──
 // Decisão de crescimento: menos atrito pra ter gente acessando. Digitou e-mail,
@@ -53,6 +89,17 @@ export async function POST(req: NextRequest) {
       if (hasActiveAccess(existing)) return loginResponse(email);
       // Teste esgotado/expirado → "já cadastrado", sem novo teste.
       return NextResponse.json({ status: "exists" });
+    }
+
+    // E-mail novo → antes de liberar, confere que o e-mail é PLAUSÍVEL (sem mandar nada):
+    // barra descartáveis e domínios que não existem de verdade.
+    const domain = email.split("@")[1] || "";
+    if (DISPOSABLE.has(domain)) {
+      return NextResponse.json({ error: "Use um e-mail pessoal ou da empresa — e-mail temporário não vale." }, { status: 400 });
+    }
+    const reachable = await withTimeout(domainCanReceiveMail(domain), 3000, true);
+    if (!reachable) {
+      return NextResponse.json({ error: "Esse e-mail parece inválido. Confira o endereço e tente de novo." }, { status: 400 });
     }
 
     // E-mail novo → cria o teste (7 dias) e já entra.
