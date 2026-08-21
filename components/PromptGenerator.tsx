@@ -828,23 +828,23 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                     <div style={{ ...mono(9, 0.16), color: foam(0.35), marginLeft: 6 }}>{photos.length} DE {MAX_PHOTOS}</div>
                   </div>
 
-                  {/* #5 — Detalhes que não podem mudar (fidelidade) */}
-                  {(product.labelText || product.color || product.material || product.size) && (
-                    <div style={{ marginTop: 18, border: `1px solid ${ember(0.3)}`, background: ember(0.05), borderRadius: 14, padding: "14px 16px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 11 }}>
-                        <Lock size={13} color={EMBER} />
-                        <span style={{ ...mono(9, 0.18), color: EMBER }}>DETALHES QUE NÃO PODEM MUDAR</span>
-                      </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                        {([["Rótulo", product.labelText], ["Cor", product.color], ["Material", product.material], ["Formato", product.size]] as const).filter(([, v]) => v).map(([k, v]) => (
-                          <span key={k} style={{ display: "inline-flex", alignItems: "center", gap: 7, background: foam(0.05), border: `1px solid ${foam(0.12)}`, borderRadius: 999, padding: "6px 12px", fontSize: 12.5, color: foam(0.88) }}>
-                            <span style={{ ...mono(8, 0.14), color: foam(0.45) }}>{k.toUpperCase()}</span>{v}
-                          </span>
-                        ))}
-                      </div>
-                      <div style={{ fontSize: 11.5, lineHeight: 1.5, color: foam(0.5), marginTop: 11 }}>A gente preserva isto fiel à sua foto. Está certo? Se algo estiver errado, corrija nos campos abaixo antes de gerar.</div>
+                  {/* #5 — Detalhes que não podem mudar (EDITÁVEL) */}
+                  <div style={{ marginTop: 18, border: `1px solid ${ember(0.3)}`, background: ember(0.05), borderRadius: 14, padding: "16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 13 }}>
+                      <Lock size={13} color={EMBER} />
+                      <span style={{ ...mono(9, 0.18), color: EMBER }}>DETALHES QUE NÃO PODEM MUDAR</span>
                     </div>
-                  )}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10 }}>
+                      {([["Rótulo / texto", "labelText", "Ex.: Wella Invigo"], ["Cor", "color", "Ex.: laranja salmão"], ["Material", "material", "Ex.: plástico"], ["Formato", "size", "Ex.: 1 litro"]] as const).map(([label, field, ph]) => (
+                        <label key={field} style={{ display: "block" }}>
+                          <span style={{ display: "block", ...mono(8, 0.14), color: foam(0.5), marginBottom: 6 }}>{label.toUpperCase()}</span>
+                          <input value={(product[field] as string) || ""} onChange={(e) => setProduct((p) => ({ ...p, [field]: e.target.value }))} placeholder={ph}
+                            style={{ width: "100%", background: foam(0.06), border: `1px solid ${foam(0.14)}`, borderRadius: 9, padding: "9px 11px", color: FOAM, fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "'Hanken Grotesk', sans-serif" }} />
+                        </label>
+                      ))}
+                    </div>
+                    <div style={{ fontSize: 11.5, lineHeight: 1.5, color: foam(0.5), marginTop: 12 }}>A gente preserva isto fiel à sua foto. Confira e corrija aqui se algo estiver errado antes de gerar.</div>
+                  </div>
                 </div>
 
                 <div style={{ padding: "clamp(24px, 3vw, 36px)" }}>
