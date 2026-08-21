@@ -179,6 +179,9 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
   const [profileOpen, setProfileOpen] = useState(false);
   const [lightbox, setLightbox] = useState<{ items: { src: string; name: string }[]; index: number } | null>(null);
   const [compare, setCompare] = useState<string | null>(null); // #6 comparar resultado × referência
+  // "Adicionar": pedir algo em cima de uma foto que já saiu, sem começar do zero
+  const [addTarget, setAddTarget] = useState<{ batchId: number; src: string; index: number } | null>(null);
+  const [addText, setAddText] = useState("");
   const [gallerySearch, setGallerySearch] = useState(""); // busca na galeria
   const firstGenRef = useRef(false); // dispara o evento first_generation uma vez por sessão
   // #3 — baixar todas as fotos da sessão de uma vez
@@ -463,7 +466,9 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
     return { promptEN: d.promptEN, resumoPT: d.resumoPT || "" };
   }
 
-  async function generateStyle(style: StyleOption, note?: string, prebuiltPrompt?: string, isBase = false) {
+  // continuarDe = URL de uma foto JÁ GERADA. Quando vem preenchido, esta geração não
+  // monta uma cena nova: ela mantém a cena da foto e aplica só o pedido ("Adicionar").
+  async function generateStyle(style: StyleOption, note?: string, prebuiltPrompt?: string, isBase = false, continuarDe?: string) {
     // Paywall (pré-checagem): se a cota já zerou, mostra o upsell e nem começa a gerar
     if (usage?.quota != null && (usage.remaining ?? 0) <= 0) { setUpsellOpen(true); return; }
     if (!firstGenRef.current) { firstGenRef.current = true; vaTrack("first_generation", { style: style.key }); }
@@ -472,7 +477,9 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
     setBatches((prev) => [...prev, { id, style, images: [], loading: true, note, review: asm.needsReview, isBase, startedAt: Date.now() }]);
     void ensureProject(); // começa a salvar as referências em paralelo (não trava a geração)
     // quantas fotos: o que a pessoa pediu, mas no máximo o que resta da cota
-    const count = usage?.quota != null ? Math.min(variations, Math.max(1, usage.remaining ?? variations)) : variations;
+    const count = continuarDe
+      ? 1 // ajuste em cima de uma foto existente: sempre 1 por vez
+      : usage?.quota != null ? Math.min(variations, Math.max(1, usage.remaining ?? variations)) : variations;
     const chosenAspect = aspect;       // proporção escolhida (ou "auto")
     try {
       let prompts: string[];
@@ -492,15 +499,23 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             prompt: promptEN,
-            referenceImagesBase64: refs,
-            photoType: style.photoType,
-            negativePrompt: asm.negative,
-            styleStrength: asm.styleStrength,
+            ...(continuarDe
+              ? { referenceImageUrls: [continuarDe], keepScene: true }
+              : {
+                  referenceImagesBase64: refs,
+                  photoType: style.photoType,
+                  negativePrompt: asm.negative,
+                  styleStrength: asm.styleStrength,
+                }),
             aspectRatio: chosenAspect !== "auto" ? chosenAspect : undefined,
           }),
         }).then((r) => r.json())
       );
       const tasks = await Promise.all(reqs);
+      if (tasks.some((t) => t?.error === "sem_sessao")) {
+        updateBatch(id, { loading: false, error: "Sua sessão expirou. Entre com seu e-mail para continuar gerando." });
+        return;
+      }
       const limited = tasks.some((t) => t?.error === "limite_atingido");
       if (limited) { setUpsellOpen(true); refreshUsage(); }
       const taskIds = tasks.map((t) => t?.task_id).filter(Boolean) as string[];
@@ -553,6 +568,38 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
   // Vai pra tela de geração SEM gastar crédito — nada é gerado até escolher um estilo.
   function goToGeneration() {
     setStage("results");
+  }
+
+  // "Adicionar" — continua em cima de uma foto já gerada, tipo conversa:
+  // "coloca uma folha ao lado", "deixa o fundo mais escuro", "tira a sombra da direita".
+  // A cena é preservada; o pedido entra por cima. Custa 1 foto da cota, como qualquer geração.
+  async function adicionarNaFoto() {
+    const alvo = addTarget;
+    const pedido = addText.trim();
+    if (!alvo || !pedido) return;
+    if (usage?.quota != null && (usage.remaining ?? 0) <= 0) { setAddTarget(null); setUpsellOpen(true); return; }
+    const base = batches.find((b) => b.id === alvo.batchId);
+    const style = base?.style ?? styles[0];
+    setAddTarget(null);
+    setAddText("");
+
+    // Traduz/estrutura o pedido em inglês. Se o serviço falhar, manda o texto cru —
+    // é pior, mas nunca deixa a pessoa sem resposta.
+    let promptEN = `Keep the reference image exactly as it is. Apply only this change: ${pedido}`;
+    try {
+      const r = await fetch("/api/generate-prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          basePrompt: "Keep the scene of the reference image exactly as it is — same composition, framing, lighting, colour and background.",
+          clientRequest: pedido,
+        }),
+      });
+      const d = await r.json();
+      if (d?.promptEN) promptEN = d.promptEN;
+    } catch { /* segue com o texto cru */ }
+
+    void generateStyle(style, pedido, promptEN, false, alvo.src);
   }
 
   function retryBatch(batch: Batch) {
@@ -1134,6 +1181,7 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
                   onPrepareRedo={() => prepareRedo(batch)} onConfirmRedo={() => confirmRedo(batch)}
                   onEditRedo={() => updateBatch(batch.id, { redo: undefined })}
                   onCompare={(src) => setCompare(src)}
+                  onAdd={(src, index) => { setAddText(""); setAddTarget({ batchId: batch.id, src, index }); }}
                   onExpand={(src) => {
                     const items = batches.flatMap((b) => b.images.map((s, i) => ({ src: s, name: `swell-${b.style.key}-${i + 1}.jpg` })));
                     const idx = items.findIndex((it) => it.src === src);
@@ -1303,6 +1351,43 @@ export default function PromptGenerator({ onEnsaio, initialProjectId }: { onEnsa
       })()}
 
       {/* #6 — Comparar: sua foto × resultado gerado, lado a lado */}
+      {/* "Adicionar" — pede algo em cima de uma foto que já saiu */}
+      {addTarget && (
+        <div onClick={() => setAddTarget(null)} style={{ position: "fixed", inset: 0, zIndex: 82, background: "rgba(6,5,4,0.92)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "clamp(16px, 4vw, 40px)", animation: "riseIn 250ms ease both" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "rgba(22,18,15,0.92)", border: `1px solid ${ember(0.35)}`, borderRadius: 20, padding: "clamp(20px, 3vw, 30px)", width: "min(760px, 96vw)", boxShadow: "0 30px 90px rgba(0,0,0,0.55)" }}>
+            <button onClick={() => setAddTarget(null)} title="Fechar" style={{ position: "absolute", top: 18, right: 18, ...closeBtn }}><X size={16} /></button>
+            <div style={{ ...mono(10, 0.22), color: EMBER, marginBottom: 16 }}>ADICIONAR NESTA FOTO</div>
+            <div style={{ display: "flex", gap: 18, alignItems: "flex-start", flexWrap: "wrap" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={addTarget.src} alt="" style={{ width: "min(220px, 40vw)", borderRadius: 12, border: `1px solid ${foam(0.14)}`, display: "block" }} />
+              <div style={{ flex: 1, minWidth: 260 }}>
+                <div style={{ fontSize: 13, color: foam(0.6), lineHeight: 1.55, marginBottom: 12 }}>
+                  A cena continua igual — mesma luz, mesmo fundo, mesmo enquadramento. Escreva só o que muda.
+                </div>
+                <textarea
+                  value={addText}
+                  onChange={(e) => setAddText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void adicionarNaFoto(); }}
+                  autoFocus
+                  placeholder="Ex.: coloca uma folha de eucalipto encostada na base — ou — tira a sombra da direita"
+                  style={{ width: "100%", minHeight: 96, background: foam(0.05), border: `1px solid ${foam(0.14)}`, borderRadius: 12, color: FOAM, padding: "12px 14px", fontSize: 14, fontFamily: "'Hanken Grotesk', sans-serif", resize: "vertical", boxSizing: "border-box" }}
+                />
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 14, flexWrap: "wrap" }}>
+                  <span style={{ ...mono(9, 0.16), color: foam(0.4) }}>CUSTA 1 FOTO DA SUA COTA</span>
+                  <button
+                    onClick={() => void adicionarNaFoto()}
+                    disabled={!addText.trim()}
+                    style={{ background: addText.trim() ? EMBER : foam(0.12), color: addText.trim() ? "#0A0908" : foam(0.35), border: "none", borderRadius: 10, padding: "11px 20px", fontSize: 14, fontWeight: 700, cursor: addText.trim() ? "pointer" : "default", fontFamily: "'Hanken Grotesk', sans-serif" }}
+                  >
+                    Gerar ajuste
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {compare && (
         <div onClick={() => setCompare(null)} style={{ position: "fixed", inset: 0, zIndex: 80, background: "rgba(6,5,4,0.94)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "clamp(16px, 4vw, 48px)", gap: 18, animation: "riseIn 250ms ease both" }}>
           <button onClick={() => setCompare(null)} title="Fechar" style={{ position: "absolute", top: 18, right: 18, ...closeBtn }}><X size={16} /></button>
@@ -1385,7 +1470,7 @@ function StyleThumb({ styleKey, Icon }: { styleKey: string; Icon: LucideIcon }) 
 }
 
 // ── Lote de geração (grid + feedback) ────────────────────────────────────────
-function BatchBlock({ batch, msgIdx, progressPct, onRetry, onYes, onNo, onFeedbackText, onPrepareRedo, onConfirmRedo, onEditRedo, onCompare, onExpand }: {
+function BatchBlock({ batch, msgIdx, progressPct, onRetry, onYes, onNo, onFeedbackText, onPrepareRedo, onConfirmRedo, onEditRedo, onCompare, onExpand, onAdd }: {
   batch: Batch;
   msgIdx: number;
   progressPct: (b?: { startedAt: number }) => string;
@@ -1398,6 +1483,7 @@ function BatchBlock({ batch, msgIdx, progressPct, onRetry, onYes, onNo, onFeedba
   onEditRedo: () => void;
   onCompare: (src: string) => void;
   onExpand: (src: string, name: string) => void;
+  onAdd: (src: string, index: number) => void;
 }) {
   const BIcon = batch.style.icon;
   const showFeedback = !batch.loading && !batch.error && batch.images.length > 0 && batch.feedback !== "redone";
@@ -1429,6 +1515,10 @@ function BatchBlock({ batch, msgIdx, progressPct, onRetry, onYes, onNo, onFeedba
               <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", background: "linear-gradient(180deg, rgba(10,9,8,0) 0%, rgba(10,9,8,0.85) 100%)" }}>
                 <span style={{ ...mono(9, 0.16), color: foam(0.75) }}>VAR {String(i + 1).padStart(2, "0")}</span>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <button onClick={() => onAdd(src, i)} title="Pedir algo a mais nesta foto"
+                    style={{ display: "flex", alignItems: "center", gap: 5, background: ember(0.9), color: "#0A0908", borderRadius: 8, padding: "5px 10px", fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>
+                    + Adicionar
+                  </button>
                   <button onClick={() => onCompare(src)} title="Comparar com sua foto"
                     style={{ display: "flex", alignItems: "center", gap: 5, background: foam(0.12), backdropFilter: "blur(8px)", color: FOAM, borderRadius: 8, padding: "5px 10px", fontSize: 11, fontWeight: 600, border: "none", cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>
                     ⇆ Comparar

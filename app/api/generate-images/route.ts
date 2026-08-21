@@ -26,6 +26,18 @@ export async function POST(req: NextRequest) {
   const payEmail = await getSessionEmail(req);
   let debited = false;
 
+  // SEM SESSAO = SEM GERACAO.
+  // Antes isso era fail-open e virou o buraco do trial: quem abria /studio sem
+  // login nunca era debitado (o debito e por e-mail), e o contador da tela era
+  // so estado do React — recarregar a pagina zerava e a pessoa gerava de novo,
+  // infinitamente. A cota so existe se houver identidade pra amarrar nela.
+  if (!payEmail) {
+    return NextResponse.json(
+      { error: "sem_sessao", message: "Entre com seu e-mail para gerar fotos." },
+      { status: 401 }
+    );
+  }
+
   try {
     const {
       prompt,
@@ -36,12 +48,15 @@ export async function POST(req: NextRequest) {
       negativePrompt,
       styleStrength,
       referenceText,             // customiza a mensagem da referência ("keep the person...")
+      referenceImageUrls,        // "Adicionar": a foto JÁ GERADA volta como referência (por URL)
+      keepScene,                 // "Adicionar": manter a cena e mexer só no que foi pedido
     } = await req.json();
 
     if (!prompt) return NextResponse.json({ error: "Prompt obrigatório" }, { status: 400 });
 
     // ── Paywall: debita 1 foto da cota do usuário, de forma atômica ──
-    // Sem sessão ou cota null (ativo ainda sem plano) = libera (fail-open). Erro de banco também libera.
+    // Cota null (assinante ativo ainda sem plano mapeado) = libera. Erro de banco também
+    // libera, pra não travar pagante — mas SEM SESSÃO já foi barrado lá em cima.
     if (payEmail) {
       try {
         const usage = await getUsageContext(payEmail);
@@ -88,13 +103,42 @@ export async function POST(req: NextRequest) {
         ? [referenceImageBase64]
         : [];
 
+    // "Adicionar": a imagem gerada chega como URL. Baixamos aqui no servidor em vez
+    // de no navegador porque a URL do Magnific é de outro domínio — no cliente o
+    // CORS barraria a leitura dos bytes.
+    if (Array.isArray(referenceImageUrls) && referenceImageUrls.length) {
+      const baixadas = await Promise.all(
+        referenceImageUrls.slice(0, 3).map(async (u: string) => {
+          try {
+            const r = await fetch(u);
+            if (!r.ok) return null;
+            return Buffer.from(await r.arrayBuffer()).toString("base64");
+          } catch { return null; }
+        })
+      );
+      const ok = baixadas.filter(Boolean) as string[];
+      if (ok.length === 0 && refs.length === 0) {
+        if (debited) { try { await refundPhoto(payEmail); } catch { /* ignora */ } }
+        return NextResponse.json({ error: "Não consegui carregar a imagem original" }, { status: 400 });
+      }
+      refs.unshift(...ok);
+    }
+
+    // Duas leituras opostas da mesma referência:
+    //   padrão      → copie SÓ o produto, ignore o cenário (é uma cena nova)
+    //   keepScene   → mantenha a cena inteira, mexa só no que o pedido diz
+    const TEXTO_CONTINUAR =
+      "This image is the scene to continue from. Keep its exact composition, camera angle, framing, lighting, colour grade, background and every existing element. Apply ONLY the change described in the prompt. Do not restyle, re-render or reinterpret the rest of the frame.";
+
     if (refs.length > 0) {
       const total = refs.length;
       body.reference_images = refs.map((b64: string, i: number) => ({
         image: `data:image/jpeg;base64,${b64}`,
-        text: referenceText || (total > 1
-          ? `Product reference ${i + 1} of ${total} — same physical product from another angle. Use ALL references only to reproduce the product's exact shape, color, label and materials. IGNORE the background/scene of every reference; the new scene is defined by the prompt, not by these photos.`
-          : "Use this image only to reproduce the product's exact shape, color, label and materials. IGNORE its background/scene entirely; the new scene is defined by the prompt."),
+        text: referenceText || (keepScene
+          ? TEXTO_CONTINUAR
+          : total > 1
+            ? `Product reference ${i + 1} of ${total} — same physical product from another angle. Use ALL references only to reproduce the product's exact shape, color, label and materials. IGNORE the background/scene of every reference; the new scene is defined by the prompt, not by these photos.`
+            : "Use this image only to reproduce the product's exact shape, color, label and materials. IGNORE its background/scene entirely; the new scene is defined by the prompt."),
         mime_type: "image/jpeg",
       }));
     }

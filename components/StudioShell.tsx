@@ -49,14 +49,38 @@ function Intro({ onDone }: { onDone: () => void }) {
   );
 }
 
+const INTRO_KEY = "swell-intro-visto";
+
 export default function StudioShell({ initialProjectId }: { initialProjectId?: string } = {}) {
-  // Ao reabrir um projeto, pula a animação de abertura e vai direto pro estúdio.
-  const [intro, setIntro] = useState(!initialProjectId);
+  // A abertura é boas-vindas, não ritual: roda UMA vez por navegador.
+  // Antes ela tocava a cada entrada — ~8s de espera pra quem usa o estúdio todo dia.
+  // Ao reabrir um projeto salvo também pula, como já era.
+  const [intro, setIntro] = useState(false);
   const [ensaio, setEnsaio] = useState(false);
+
+  useEffect(() => {
+    if (initialProjectId) return;
+    try {
+      if (localStorage.getItem(INTRO_KEY)) return;
+      localStorage.setItem(INTRO_KEY, "1");
+      // setState no efeito é intencional aqui: só o navegador sabe se a pessoa já viu
+      // a abertura. Ler no render quebraria o SSR (não existe localStorage no servidor)
+      // e renderizar a intro no HTML do servidor daria mismatch de hidratação.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIntro(true);
+    } catch {
+      // navegação anônima / storage bloqueado: segue sem abertura.
+    }
+  }, [initialProjectId]);
+
+  function fecharIntro() {
+    setIntro(false);
+    try { localStorage.setItem(INTRO_KEY, "1"); } catch { /* ignora */ }
+  }
 
   return (
     <>
-      {intro && <Intro onDone={() => setIntro(false)} />}
+      {intro && <Intro onDone={fecharIntro} />}
       {ensaio ? (
         <EnsaioStudio onBack={() => setEnsaio(false)} />
       ) : (
