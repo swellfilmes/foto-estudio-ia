@@ -94,6 +94,12 @@ function match(url: string, method: string, body: Record<string, unknown> | unde
   if (u.endsWith("/api/trial-start")) {
     return { status: "ok" }; // login instantâneo simulado
   }
+  if (u.endsWith("/api/otp/request")) {
+    return { status: "sent", token: "sandbox" }; // "manda" o código (fake)
+  }
+  if (u.endsWith("/api/otp/verify")) {
+    return { status: "ok" }; // qualquer código entra no preview
+  }
   if (u.endsWith("/api/generate-images")) {
     return { task_id: `sandbox-${++genCounter}`, raw: {} };
   }

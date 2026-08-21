@@ -206,3 +206,35 @@ export function buildTrialAccessEmail(params: { link: string; name?: string | nu
 export async function sendTrialAccessLink(params: { email: string; link: string; name?: string | null }) {
   await deliver({ email: params.email, ...buildTrialAccessEmail(params) });
 }
+
+// ── 5) Código de acesso (OTP de 6 dígitos) ────────────────────────────────────
+export async function sendOtpCode(params: { email: string; code: string; name?: string | null }) {
+  const { email, code, name } = params;
+  const fn = firstName(name);
+  const greet = fn ? `Oi, ${fn}!` : "Oi!";
+  const html = `<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"></head>
+<body style="margin:0;padding:0;background:${C.bg};font-family:${FONT};color:${C.text}">
+  <span style="display:none!important;opacity:0;color:transparent;height:0;width:0;overflow:hidden">Seu código do Swell Studio: ${code}</span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.bg};padding:40px 16px">
+    <tr><td align="center">
+      <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;background:${C.card};border:1px solid ${C.line};border-radius:16px;padding:36px">
+        <tr><td style="padding-bottom:24px">
+          <span style="font-size:20px;font-weight:800;letter-spacing:-.02em;color:${C.text}">Swell<span style="color:${C.ember}">.</span></span>
+          <span style="font-family:${MONO};font-size:10px;letter-spacing:.22em;color:${C.muted};margin-left:10px">SWELL STUDIO</span>
+        </td></tr>
+        <tr><td style="font-family:${MONO};font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:${C.ember};padding-bottom:14px">Código de acesso</td></tr>
+        <tr><td style="font-size:26px;font-weight:800;letter-spacing:-.02em;color:${C.text};line-height:1.15;padding-bottom:16px">${greet} Seu código:</td></tr>
+        <tr><td align="center" style="padding:8px 0 22px">
+          <div style="display:inline-block;background:${C.bg};border:1px solid ${C.line};border-radius:12px;padding:18px 26px;font-family:${MONO};font-size:38px;font-weight:700;letter-spacing:.34em;color:${C.text}">${code}</div>
+        </td></tr>
+        <tr><td style="font-size:15px;line-height:1.65;color:${C.muted};padding-bottom:24px">Digite este código na tela pra entrar. Ele vale por <strong style="color:${C.text}">10 minutos</strong>.</td></tr>
+        <tr><td style="border-top:1px solid ${C.line};padding-top:18px;font-size:12px;color:${C.muted};line-height:1.6">Não pediu esse código? Pode ignorar este e-mail — sem ele ninguém entra.</td></tr>
+      </table>
+      <div style="font-size:11px;color:#6B655C;margin-top:16px;font-family:${FONT}">Swell Filmes &middot; <a href="mailto:${REPLY_TO}" style="color:#8A847A">${REPLY_TO}</a></div>
+    </td></tr>
+  </table>
+</body></html>`;
+  const text = `${greet}\n\nSeu código de acesso ao Swell Studio: ${code}\n\nVale 10 minutos. Não pediu? Ignore este e-mail.\n\nSwell Filmes`;
+  await deliver({ email, subject: `${code} é o seu código do Swell Studio`, html, text });
+}

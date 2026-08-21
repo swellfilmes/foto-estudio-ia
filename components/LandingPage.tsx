@@ -407,7 +407,9 @@ export default function LandingPage() {
   const [open, setOpen] = useState<number>(-1);
   const [showLead, setShowLead] = useState(false);
   const [leadEmail, setLeadEmail] = useState("");
-  const [leadStatus, setLeadStatus] = useState<"idle" | "sent" | "blocked">("idle");
+  const [leadStatus, setLeadStatus] = useState<"idle" | "code" | "blocked">("idle");
+  const [leadToken, setLeadToken] = useState("");
+  const [leadCode, setLeadCode] = useState("");
   const [leadMsg, setLeadMsg] = useState("");
   const [leadError, setLeadError] = useState("");
   const [lightbox, setLightbox] = useState<string | null>(null);
@@ -462,14 +464,13 @@ export default function LandingPage() {
         created_at: new Date().toISOString(),
       }),
     }).catch(() => {});
-    // Login instantâneo: cria o teste e JÁ ENTRA (sem link mágico). Vai direto pro estúdio.
-    // "exists" = e-mail já cadastrado (teste esgotado) → mostra o bloqueio e empurra pro plano.
+    // Passo 1: manda o código de 6 dígitos pro e-mail (garante e-mail válido e da pessoa).
+    // "exists" = e-mail já cadastrado (teste esgotado) → bloqueio e empurra pro plano.
     try {
-      const leadEventId = newEventId("lead");
-      const r = await fetch("/api/trial-start", {
+      const r = await fetch("/api/otp/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, source: "landing-swell-studio", eventId: leadEventId }),
+        body: JSON.stringify({ name, email, source: "landing-swell-studio" }),
       });
       const data = await r.json().catch(() => ({}));
       if (data?.status === "exists") {
@@ -477,10 +478,33 @@ export default function LandingPage() {
         setLeadStatus("blocked");
         return;
       }
-      if (!r.ok || data?.status !== "ok") {
+      if (!r.ok || data?.status !== "sent") {
         setLeadError(typeof data?.error === "string" ? data.error : t.err.send);
         return;
       }
+      setLeadToken(data.token || "");
+      setLeadCode("");
+      setLeadStatus("code");
+    } catch {
+      setLeadError(t.err.conn);
+    }
+  };
+
+  // Passo 2: confere o código e entra direto no estúdio.
+  const verifyLeadCode = async () => {
+    const code = leadCode.trim();
+    if (!/^\d{6}$/.test(code)) { setLeadError("Digite os 6 dígitos do código."); return; }
+    setLeadError("");
+    try {
+      const leadEventId = newEventId("lead");
+      const r = await fetch("/api/otp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: leadToken, code }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (data?.status === "exists") { setLeadMsg(t.blocked.used); setLeadStatus("blocked"); return; }
+      if (!r.ok || data?.status !== "ok") { setLeadError(typeof data?.error === "string" ? data.error : "Código incorreto."); return; }
       vaTrack("signup_complete", { lang });
       track("Lead", { content_name: "teste-gratis" }, leadEventId);
       window.location.href = "/studio";
@@ -572,15 +596,19 @@ export default function LandingPage() {
               <div style={{ fontFamily: FONT.mono, fontSize: 10.5, letterSpacing: "0.16em", color: SW.t45, textAlign: "center", marginTop: 2 }}>{t.hero.reassure}</div>
               <div style={{ fontSize: 10.5, lineHeight: 1.4, color: SW.t35, textAlign: "center" }}>{t.hero.consent}</div>
             </form>
-          ) : leadStatus === "sent" ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center", textAlign: "center", background: SW.surface, border: "1px solid rgba(224,116,47,0.4)", borderRadius: 4, padding: "24px 20px" }}>
-              <div style={{ width: 48, height: 48, borderRadius: 999, background: "rgba(224,116,47,0.12)", border: "1px solid rgba(224,116,47,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={SW.ember} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><polyline points="22 6 12 13 2 6" /></svg>
+          ) : leadStatus === "code" ? (
+            <form onSubmit={(e) => { e.preventDefault(); verifyLeadCode(); }} style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center", textAlign: "center", background: SW.surface, border: "1px solid rgba(224,116,47,0.4)", borderRadius: 4, padding: "22px 20px" }}>
+              <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 21, letterSpacing: "-0.02em" }}>Confirme o código.</div>
+              <p style={{ fontSize: 13.5, lineHeight: 1.5, color: SW.t55, margin: 0 }}>Enviamos um código de 6 dígitos pra <strong style={{ color: SW.text }}>{leadEmail.trim()}</strong>.</p>
+              <input value={leadCode} onChange={(e) => { setLeadCode(e.target.value.replace(/\D/g, "").slice(0, 6)); if (leadError) setLeadError(""); }} inputMode="numeric" autoComplete="one-time-code" placeholder="000000" aria-label="código" maxLength={6} autoFocus
+                style={{ width: "100%", background: "rgba(244,239,230,0.06)", border: `1.5px solid ${leadError ? "rgba(232,131,111,0.85)" : "rgba(224,116,47,0.55)"}`, borderRadius: 4, padding: "16px", color: SW.text, fontFamily: FONT.mono, fontSize: 26, letterSpacing: "0.34em", outline: "none", textAlign: "center" }} />
+              <button type="submit" className="swl-cta" style={{ width: "100%", background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 4, padding: "18px", fontFamily: FONT.body, fontSize: 16, fontWeight: 800, cursor: "pointer" }}>Entrar</button>
+              {leadError && <div style={{ color: "#E8836F", fontSize: 13, lineHeight: 1.4 }}>{leadError}</div>}
+              <div style={{ display: "flex", gap: 14, justifyContent: "center" }}>
+                <button type="button" onClick={() => { setLeadStatus("idle"); setLeadError(""); setLeadCode(""); }} style={{ background: "none", border: "none", color: SW.t55, fontSize: 12.5, cursor: "pointer", padding: 0 }}>← trocar e-mail</button>
+                <button type="button" onClick={submitLead} style={{ background: "none", border: "none", color: SW.ember, fontSize: 12.5, cursor: "pointer", padding: 0 }}>reenviar</button>
               </div>
-              <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 23, letterSpacing: "-0.02em" }}>{t.sent.title}</div>
-              <p style={{ fontSize: 14.5, lineHeight: 1.5, color: SW.t55, margin: 0 }}>{t.sent.body(leadEmail)}</p>
-              <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: "0.14em", color: SW.t35 }}>{t.sent.spam}</div>
-            </div>
+            </form>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center", textAlign: "center", background: SW.surface, border: `1px solid ${SW.line2}`, borderRadius: 4, padding: "24px 20px" }}>
               <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 21, letterSpacing: "-0.02em" }}>{t.blocked.title}</div>
@@ -801,15 +829,20 @@ export default function LandingPage() {
                 <button onClick={submitLead} className="swl-cta" style={{ width: "100%", background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 3, padding: 17, fontFamily: FONT.body, fontSize: 16, fontWeight: 800, cursor: "pointer" }}>{t.modal.cta}</button>
                 <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: "0.14em", color: SW.t35, textAlign: "center" }}>{t.modal.nospam}</div>
               </div>
-            ) : leadStatus === "sent" ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 14, alignItems: "center", textAlign: "center", padding: "12px 0" }}>
-                <div style={{ width: 52, height: 52, borderRadius: 999, background: "rgba(224,116,47,0.12)", border: "1px solid rgba(224,116,47,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <svg width={26} height={26} viewBox="0 0 24 24" fill="none" stroke={SW.ember} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><polyline points="22 6 12 13 2 6" /></svg>
+            ) : leadStatus === "code" ? (
+              <form onSubmit={(e) => { e.preventDefault(); verifyLeadCode(); }} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ fontFamily: FONT.mono, fontSize: 10, letterSpacing: "0.22em", color: SW.ember }}>CÓDIGO</div>
+                <h3 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: "clamp(24px, 7vw, 30px)", lineHeight: 0.95, letterSpacing: "-0.03em", margin: 0 }}>Confirme o código.</h3>
+                <p style={{ fontSize: 14, lineHeight: 1.5, color: SW.t55, margin: 0 }}>Enviamos 6 dígitos pra <strong style={{ color: SW.text }}>{leadEmail.trim()}</strong>.</p>
+                <input value={leadCode} onChange={(e) => { setLeadCode(e.target.value.replace(/\D/g, "").slice(0, 6)); if (leadError) setLeadError(""); }} inputMode="numeric" autoComplete="one-time-code" placeholder="000000" maxLength={6} autoFocus
+                  style={{ width: "100%", background: SW.bg, border: `1px solid ${leadError ? "rgba(232,131,111,0.7)" : "rgba(224,116,47,0.55)"}`, borderRadius: 3, padding: "15px 16px", color: SW.text, fontFamily: FONT.mono, fontSize: 24, letterSpacing: "0.32em", textAlign: "center", outline: "none", boxSizing: "border-box" }} />
+                {leadError && <div style={{ color: "#E8836F", fontSize: 12.5, lineHeight: 1.4 }}>{leadError}</div>}
+                <button type="submit" className="swl-cta" style={{ width: "100%", background: EMBER_GRAD, color: "#0A0908", border: "none", borderRadius: 3, padding: 16, fontFamily: FONT.body, fontSize: 16, fontWeight: 800, cursor: "pointer" }}>Entrar</button>
+                <div style={{ display: "flex", gap: 14, justifyContent: "center" }}>
+                  <button type="button" onClick={() => { setLeadStatus("idle"); setLeadError(""); setLeadCode(""); }} style={{ background: "none", border: "none", color: SW.t55, fontSize: 12, cursor: "pointer", padding: 0 }}>← trocar e-mail</button>
+                  <button type="button" onClick={submitLead} style={{ background: "none", border: "none", color: SW.ember, fontSize: 12, cursor: "pointer", padding: 0 }}>reenviar</button>
                 </div>
-                <h3 style={{ fontFamily: FONT.archivo, fontWeight: 900, fontSize: 26, letterSpacing: "-0.03em", margin: 0 }}>{t.sent.title}</h3>
-                <p style={{ fontSize: 15, lineHeight: 1.55, color: SW.t55, margin: 0 }}>{t.sent.body(leadEmail)}</p>
-                <div style={{ fontFamily: FONT.mono, fontSize: 9, letterSpacing: "0.14em", color: SW.t35 }}>{t.sent.spam}</div>
-              </div>
+              </form>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 14, alignItems: "center", textAlign: "center", padding: "12px 0" }}>
                 <div style={{ width: 52, height: 52, borderRadius: 999, background: "rgba(244,239,230,0.06)", border: `1px solid ${SW.line2}`, display: "flex", alignItems: "center", justifyContent: "center" }}>

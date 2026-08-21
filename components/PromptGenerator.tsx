@@ -185,7 +185,10 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
   // sem piscar a tela. Deslogado vê o estúdio e o login vira modal.
   const [loggedIn, setLoggedIn] = useState(initialLoggedIn ?? true);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [loginStep, setLoginStep] = useState<"email" | "code">("email");
   const [loginEmail, setLoginEmail] = useState("");
+  const [loginCode, setLoginCode] = useState("");
+  const [loginToken, setLoginToken] = useState("");
   const [loginErr, setLoginErr] = useState("");
   const [loginBusy, setLoginBusy] = useState(false);
   const [lightbox, setLightbox] = useState<{ items: { src: string; name: string }[]; index: number } | null>(null);
@@ -277,23 +280,45 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
     fetch("/api/usage").then((r) => r.json()).then(setUsage).catch(() => { /* silencioso */ });
   }
 
-  // Login instantâneo por e-mail: digitou, entra na hora (sem link mágico).
+  function closeLogin() {
+    setLoginOpen(false); setLoginStep("email"); setLoginCode(""); setLoginToken(""); setLoginErr(""); setLoginBusy(false);
+  }
+
+  // Passo 1: manda um código de 6 dígitos pro e-mail (garante que é válido e da pessoa).
   // "exists" = e-mail já cadastrado (teste esgotado) → empurra pro plano.
-  async function doEmailLogin() {
+  async function doOtpRequest() {
     const email = loginEmail.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setLoginErr("Digite um e-mail válido."); return; }
     setLoginErr(""); setLoginBusy(true);
     try {
-      const r = await fetch("/api/trial-start", {
+      const r = await fetch("/api/otp/request", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, source: "studio" }),
       });
       const data = await r.json().catch(() => ({}));
-      if (data?.status === "exists") { setLoginBusy(false); setLoginErr("Esse e-mail já foi cadastrado. Pra continuar, escolha um plano."); return; }
-      if (!r.ok || data?.status !== "ok") { setLoginBusy(false); setLoginErr(typeof data?.error === "string" ? data.error : "Não deu certo. Tenta de novo."); return; }
+      setLoginBusy(false);
+      if (data?.status === "exists") { setLoginErr("Esse e-mail já foi cadastrado. Pra continuar, escolha um plano."); return; }
+      if (!r.ok || data?.status !== "sent") { setLoginErr(typeof data?.error === "string" ? data.error : "Não deu certo. Tenta de novo."); return; }
+      setLoginToken(data.token || ""); setLoginCode(""); setLoginErr(""); setLoginStep("code");
+    } catch { setLoginBusy(false); setLoginErr("Sem conexão. Tenta de novo."); }
+  }
+
+  // Passo 2: confere o código e entra.
+  async function doOtpVerify() {
+    const code = loginCode.trim();
+    if (!/^\d{6}$/.test(code)) { setLoginErr("Digite os 6 dígitos do código."); return; }
+    setLoginErr(""); setLoginBusy(true);
+    try {
+      const r = await fetch("/api/otp/verify", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: loginToken, code }),
+      });
+      const data = await r.json().catch(() => ({}));
+      setLoginBusy(false);
+      if (data?.status === "exists") { setLoginErr("Esse e-mail já foi cadastrado. Escolha um plano."); return; }
+      if (!r.ok || data?.status !== "ok") { setLoginErr(typeof data?.error === "string" ? data.error : "Código incorreto."); return; }
       vaTrack("signup_complete", { plan: "trial" });
-      setLoggedIn(true); setLoginOpen(false); setLoginEmail(""); setLoginBusy(false);
-      refreshUsage();
+      setLoggedIn(true); refreshUsage(); closeLogin();
     } catch { setLoginBusy(false); setLoginErr("Sem conexão. Tenta de novo."); }
   }
 
@@ -1325,21 +1350,36 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
 
       {/* ── FAZER LOGIN (mock no preview) — depois de entrar, segue na geração ── */}
       {loginOpen && (
-        <div onClick={() => setLoginOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 80, background: "rgba(6,5,4,0.82)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, animation: "riseIn 320ms ease both" }}>
+        <div onClick={closeLogin} style={{ position: "fixed", inset: 0, zIndex: 80, background: "rgba(6,5,4,0.82)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, animation: "riseIn 320ms ease both" }}>
           <div onClick={(e) => e.stopPropagation()} style={{ width: "min(420px, 100%)", background: "rgba(20,17,15,0.94)", backdropFilter: "blur(30px)", WebkitBackdropFilter: "blur(30px)", border: `1px solid ${foam(0.12)}`, borderRadius: 22, padding: 28, boxShadow: "0 50px 140px rgba(0,0,0,0.7)", boxSizing: "border-box", display: "flex", flexDirection: "column", gap: 16 }}>
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
               <div>
                 <div style={{ ...mono(10, 0.24), color: foam(0.45), marginBottom: 8 }}>ENTRAR</div>
-                <div style={{ ...display, fontSize: 26, lineHeight: 1 }}>Comece agora<span style={{ color: EMBER }}>.</span></div>
-                <div style={{ fontSize: 13, color: foam(0.5), marginTop: 8 }}>Digite seu e-mail e já pode usar — sem senha.</div>
+                <div style={{ ...display, fontSize: 26, lineHeight: 1 }}>{loginStep === "email" ? "Comece agora" : "Confirme o código"}<span style={{ color: EMBER }}>.</span></div>
+                <div style={{ fontSize: 13, color: foam(0.5), marginTop: 8 }}>
+                  {loginStep === "email" ? "Seu e-mail — a gente manda um código de 6 dígitos." : <>Enviamos um código pra <strong style={{ color: FOAM }}>{loginEmail.trim()}</strong>.</>}
+                </div>
               </div>
-              <button onClick={() => setLoginOpen(false)} style={closeBtn}><X size={15} /></button>
+              <button onClick={closeLogin} style={closeBtn}><X size={15} /></button>
             </div>
-            <form onSubmit={(e) => { e.preventDefault(); doEmailLogin(); }} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <input value={loginEmail} onChange={(e) => { setLoginEmail(e.target.value); if (loginErr) setLoginErr(""); }} type="email" inputMode="email" autoComplete="email" placeholder="seu@email.com" aria-label="e-mail" autoFocus
-                style={{ width: "100%", background: foam(0.06), border: `1px solid ${loginErr ? "rgba(232,131,111,0.7)" : foam(0.16)}`, borderRadius: 12, padding: "14px 16px", color: FOAM, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 16, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
-              <button type="submit" disabled={loginBusy} style={{ ...gradientBtn, width: "100%", padding: "15px", fontSize: 15, opacity: loginBusy ? 0.7 : 1, cursor: loginBusy ? "default" : "pointer" }}>{loginBusy ? "Entrando…" : "Entrar e usar"}</button>
-            </form>
+
+            {loginStep === "email" ? (
+              <form onSubmit={(e) => { e.preventDefault(); doOtpRequest(); }} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <input value={loginEmail} onChange={(e) => { setLoginEmail(e.target.value); if (loginErr) setLoginErr(""); }} type="email" inputMode="email" autoComplete="email" placeholder="seu@email.com" aria-label="e-mail" autoFocus
+                  style={{ width: "100%", background: foam(0.06), border: `1px solid ${loginErr ? "rgba(232,131,111,0.7)" : foam(0.16)}`, borderRadius: 12, padding: "14px 16px", color: FOAM, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 16, outline: "none", textAlign: "center", boxSizing: "border-box" }} />
+                <button type="submit" disabled={loginBusy} style={{ ...gradientBtn, width: "100%", padding: "15px", fontSize: 15, opacity: loginBusy ? 0.7 : 1, cursor: loginBusy ? "default" : "pointer" }}>{loginBusy ? "Enviando…" : "Enviar código"}</button>
+              </form>
+            ) : (
+              <form onSubmit={(e) => { e.preventDefault(); doOtpVerify(); }} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <input value={loginCode} onChange={(e) => { setLoginCode(e.target.value.replace(/\D/g, "").slice(0, 6)); if (loginErr) setLoginErr(""); }} inputMode="numeric" autoComplete="one-time-code" placeholder="000000" aria-label="código" autoFocus maxLength={6}
+                  style={{ width: "100%", background: foam(0.06), border: `1px solid ${loginErr ? "rgba(232,131,111,0.7)" : foam(0.16)}`, borderRadius: 12, padding: "14px 16px", color: FOAM, fontFamily: "'IBM Plex Mono', monospace", fontSize: 26, letterSpacing: "0.34em", outline: "none", textAlign: "center", boxSizing: "border-box" }} />
+                <button type="submit" disabled={loginBusy} style={{ ...gradientBtn, width: "100%", padding: "15px", fontSize: 15, opacity: loginBusy ? 0.7 : 1, cursor: loginBusy ? "default" : "pointer" }}>{loginBusy ? "Entrando…" : "Entrar"}</button>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                  <button type="button" onClick={() => { setLoginStep("email"); setLoginErr(""); setLoginCode(""); }} style={{ background: "none", border: "none", color: foam(0.5), fontSize: 12.5, cursor: "pointer", padding: 0 }}>← trocar e-mail</button>
+                  <button type="button" onClick={doOtpRequest} disabled={loginBusy} style={{ background: "none", border: "none", color: EMBER, fontSize: 12.5, cursor: loginBusy ? "default" : "pointer", padding: 0 }}>reenviar código</button>
+                </div>
+              </form>
+            )}
             {loginErr && <div style={{ color: "#E8836F", fontSize: 13, lineHeight: 1.45, textAlign: "center" }}>{loginErr}</div>}
             <div style={{ fontSize: 10.5, lineHeight: 1.5, color: foam(0.3), textAlign: "center" }}>Ao continuar, você concorda com os Termos e a Política de Privacidade.</div>
           </div>
