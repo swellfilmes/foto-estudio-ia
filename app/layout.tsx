@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
+import { Contentsquare } from "./contentsquare";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -40,6 +41,7 @@ fbq('track', 'PageView');`}
       </head>
       <body className="min-h-screen">
         {children}
+        <Contentsquare />
         <Analytics />
         {/* Meta Pixel — fallback sem JS */}
         <noscript>
