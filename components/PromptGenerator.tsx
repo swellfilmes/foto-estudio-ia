@@ -47,24 +47,27 @@ interface StyleOption {
   sub: string;
   icon: LucideIcon;
   photoType: PhotoType;
+  example: string; // foto-exemplo (galeria de estilos). Placeholder do acervo por ora.
 }
+
+const EX = (n: string) => `/assets/opt/${n}-depois.jpg`;
 
 // Ordem do funil Riverflow: identificar → inspecionar → entender → desejar
 const STYLES_PRODUCT: StyleOption[] = [
-  { key: "fundo-branco", label: "Fundo Branco", sub: "e-commerce · marketplace", icon: ImageIcon, photoType: "fundo-limpo" },
-  { key: "detalhe", label: "Detalhe", sub: "close · inspeção", icon: Search, photoType: "macro" },
-  { key: "na-mao", label: "Na Mão", sub: "escala real", icon: Hand, photoType: "segurando" },
-  { key: "flat-lay", label: "Visto de cima", sub: "flat lay · kit/props", icon: LayoutGrid, photoType: "flat-lay" },
-  { key: "lifestyle", label: "Em cena real", sub: "lifestyle · desejo", icon: Coffee, photoType: "lifestyle" },
-  { key: "hero", label: "Foto de campanha", sub: "principal · máximo impacto", icon: Sparkles, photoType: "lifestyle" },
-  { key: "cg", label: "Visual 3D premium", sub: "render digital", icon: Gem, photoType: "fundo-limpo" },
+  { key: "fundo-branco", label: "Fundo Branco", sub: "e-commerce · marketplace", icon: ImageIcon, photoType: "fundo-limpo", example: EX("roupa") },
+  { key: "detalhe", label: "Detalhe", sub: "close · inspeção", icon: Search, photoType: "macro", example: EX("relogio") },
+  { key: "na-mao", label: "Na Mão", sub: "escala real", icon: Hand, photoType: "segurando", example: EX("mochila") },
+  { key: "flat-lay", label: "Visto de cima", sub: "flat lay · kit/props", icon: LayoutGrid, photoType: "flat-lay", example: EX("camisa") },
+  { key: "lifestyle", label: "Em cena real", sub: "lifestyle · desejo", icon: Coffee, photoType: "lifestyle", example: EX("gelato") },
+  { key: "hero", label: "Foto de campanha", sub: "principal · máximo impacto", icon: Sparkles, photoType: "lifestyle", example: EX("luminaria") },
+  { key: "cg", label: "Visual 3D premium", sub: "render digital", icon: Gem, photoType: "fundo-limpo", example: EX("chaveiro") },
 ];
 
 const STYLES_WITH_MODEL: StyleOption[] = [
-  { key: "estudio-modelo", label: "No Corpo", sub: "escala real · vestindo", icon: Gem, photoType: "segurando" },
-  { key: "mostruario-modelo", label: "Em Uso", sub: "mãos · rotina", icon: Hand, photoType: "segurando" },
-  { key: "influencia", label: "Cliente Real", sub: "UGC · como um cliente postaria", icon: Smartphone, photoType: "segurando" },
-  { key: "comercial-modelo", label: "Campanha", sub: "modelo · alto impacto", icon: Clapperboard, photoType: "lifestyle" },
+  { key: "estudio-modelo", label: "No Corpo", sub: "escala real · vestindo", icon: Gem, photoType: "segurando", example: EX("pessoa") },
+  { key: "mostruario-modelo", label: "Em Uso", sub: "mãos · rotina", icon: Hand, photoType: "segurando", example: EX("mochila") },
+  { key: "influencia", label: "Cliente Real", sub: "UGC · como um cliente postaria", icon: Smartphone, photoType: "segurando", example: EX("pizza") },
+  { key: "comercial-modelo", label: "Campanha", sub: "modelo · alto impacto", icon: Clapperboard, photoType: "lifestyle", example: EX("luminaria") },
 ];
 
 const VARIATIONS_PER_CLICK = 2;
@@ -1112,17 +1115,25 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
 
               {modelToggle}
 
-              {/* Chips compactos: ícone + nome, no alcance do dedo (some o card gigante). */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
+              {/* Galeria de estilos: você escolhe VENDO o resultado (inspirado na Higgsfield). */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 10, marginBottom: 20 }}>
                 {styles.map((s) => {
                   const isSel = selected?.key === s.key;
-                  const SIcon = s.icon;
                   return (
                     <button key={s.key} onClick={() => setSelected((cur) => (cur?.key === s.key ? null : s))} title={s.sub}
-                      style={{ display: "inline-flex", alignItems: "center", gap: 8, background: isSel ? ember(0.16) : "rgba(22,18,15,0.65)", border: `1px solid ${isSel ? ember(0.7) : foam(0.12)}`, color: isSel ? EMBER : FOAM, borderRadius: 999, padding: "10px 15px", cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 13.5, fontWeight: 600, lineHeight: 1, transition: "border-color 200ms, background 200ms" }}>
-                      <SIcon size={15} color={isSel ? EMBER : foam(0.55)} />
-                      {s.label}
-                      {isSel && <Check size={14} color={EMBER} />}
+                      style={{ position: "relative", aspectRatio: "4 / 5", borderRadius: 14, overflow: "hidden", border: "none", padding: 0, cursor: "pointer", background: "#1B1714", outline: isSel ? `2px solid ${EMBER}` : "none", outlineOffset: -2, boxShadow: isSel ? `0 0 0 4px ${ember(0.18)}` : "none" }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={s.example} alt="" loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0) 42%, rgba(0,0,0,0.82) 100%)" }} />
+                      {isSel && (
+                        <div style={{ position: "absolute", top: 8, right: 8, width: 22, height: 22, borderRadius: "50%", background: EMBER, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Check size={12} color={INK} />
+                        </div>
+                      )}
+                      <div style={{ position: "absolute", left: 10, right: 10, bottom: 9, textAlign: "left" }}>
+                        <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 13.5, color: "#fff", lineHeight: 1.05 }}>{s.label}</div>
+                        <div style={{ ...mono(8, 0.12), color: "rgba(255,255,255,0.7)", marginTop: 3, textTransform: "uppercase" }}>{s.sub}</div>
+                      </div>
                     </button>
                   );
                 })}
