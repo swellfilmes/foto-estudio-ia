@@ -1168,9 +1168,11 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
               {/* Painel de confirmação */}
               {selected && (
                 <>
-                <div style={{ position: "fixed", inset: 0, zIndex: 70, background: "rgba(14,11,10,0.98)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", overflowY: "auto", padding: "clamp(16px,4vw,26px) clamp(16px,4vw,26px) calc(40px + env(safe-area-inset-bottom))", boxSizing: "border-box", animation: "sheetUp 340ms cubic-bezier(0.22,1,0.36,1) both" }}>
+                <div onClick={() => { setSelected(null); setPending(null); }} style={{ position: "fixed", inset: 0, zIndex: 69, background: "rgba(6,5,4,0.5)" }} />
+                <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, height: "85vh", zIndex: 70, background: "rgba(20,17,15,0.98)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderTop: `1px solid ${ember(0.4)}`, borderRadius: "22px 22px 0 0", boxShadow: "0 -20px 60px rgba(0,0,0,0.6)", padding: "10px 18px calc(24px + env(safe-area-inset-bottom))", overflowY: "auto", boxSizing: "border-box", animation: "sheetUp 320ms cubic-bezier(0.22,1,0.36,1) both" }}>
+                <div style={{ width: 40, height: 4, borderRadius: 999, background: foam(0.25), margin: "0 auto 12px" }} />
                 <div style={{ maxWidth: 640, margin: "0 auto" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                     <button onClick={() => { setSelected(null); setPending(null); }} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", color: foam(0.6), fontSize: 14, fontFamily: "'Hanken Grotesk', sans-serif", cursor: "pointer", padding: 0 }}>
                       <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
                       Voltar
