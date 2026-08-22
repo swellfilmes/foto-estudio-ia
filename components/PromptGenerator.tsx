@@ -754,7 +754,7 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
   );
 
   const header = (
-    <header style={{
+    <header className="st-header" style={{
       position: "sticky", top: 0, zIndex: 40, display: "flex", alignItems: "center", justifyContent: "space-between",
       padding: "14px clamp(20px, 4vw, 48px)", background: "rgba(10,9,8,0.72)",
       backdropFilter: "blur(22px) saturate(140%)", WebkitBackdropFilter: "blur(22px) saturate(140%)",
@@ -762,18 +762,19 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
     }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
         <button onClick={reset} title="Voltar ao início" style={{ ...display, fontSize: 19, letterSpacing: "-0.02em", background: "none", border: "none", color: FOAM, cursor: "pointer", padding: 0 }}>Swell<span style={{ color: EMBER }}>.</span></button>
-        <div style={{ ...mono(10, 0.22), color: foam(0.45) }}>FOTO ESTÚDIO IA</div>
+        <div className="st-tagline" style={{ ...mono(10, 0.22), color: foam(0.45) }}>FOTO ESTÚDIO IA</div>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         <nav style={{ display: "flex", alignItems: "center", gap: 2, marginRight: 8 }}>
-          <button onClick={reset} style={navBtn}>Criar fotos</button>
-          <button onClick={() => (loggedIn ? setGalleryOpen(true) : setLoginOpen(true))} style={navBtn}>Galeria</button>
+          <button onClick={reset} className="st-hide-sm" style={navBtn}>Criar fotos</button>
+          <button onClick={() => (loggedIn ? setGalleryOpen(true) : setLoginOpen(true))} className="st-hide-sm" style={navBtn}>Galeria</button>
           <a href="/marca" title="Configure sua marca — logo, paleta, cenário e o que nunca deve aparecer"
             onClick={(e) => { if (!loggedIn) { e.preventDefault(); setLoginOpen(true); } }}
+            className="st-brand-pill"
             style={{ display: "inline-flex", alignItems: "center", gap: 7, textDecoration: "none", background: ember(0.14), border: `1px solid ${ember(0.5)}`, color: EMBER, borderRadius: 999, padding: "8px 15px", fontSize: 13, fontWeight: 700, fontFamily: "'Hanken Grotesk', sans-serif" }}>
-            <Sparkles size={13} />{loggedIn && brand.name ? brand.name : "Criar minha marca"}
+            <Sparkles size={13} /><span className="st-brand-text">{loggedIn && brand.name ? brand.name : "Criar minha marca"}</span>
           </a>
-          <button onClick={() => (loggedIn ? setProfileOpen(true) : setLoginOpen(true))} style={navBtn}>Conta</button>
+          <button onClick={() => (loggedIn ? setProfileOpen(true) : setLoginOpen(true))} className="st-hide-sm" style={navBtn}>Conta</button>
         </nav>
         <button
           onClick={() => (!loggedIn ? setLoginOpen(true) : quotaLow ? setUpsellOpen(true) : setPricingOpen(true))}
@@ -809,7 +810,7 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
       {phase === "upload" && (
         <main style={{ flex: 1, width: "100%", maxWidth: 1180, margin: "0 auto", padding: "clamp(40px, 7vh, 90px) clamp(20px, 4vw, 48px) 80px", boxSizing: "border-box", animation: "riseIn 800ms cubic-bezier(0.22,1,0.36,1) both" }}>
           <div style={{ ...mono(11, 0.24), color: EMBER, marginBottom: 22 }}>01 · NOVO ENSAIO</div>
-          <h1 style={{ ...display, fontSize: "clamp(44px, 5.6vw, 76px)", lineHeight: 0.95, margin: "0 0 20px" }}>
+          <h1 style={{ ...display, fontSize: "clamp(32px, 8vw, 76px)", lineHeight: 0.98, margin: "0 0 20px", overflowWrap: "break-word" }}>
             Seu produto.<br /><span style={{ color: foam(0.4) }}>Pronto para vender.</span>
           </h1>
           <p style={{ fontSize: 16, lineHeight: 1.65, color: foam(0.55), margin: "0 0 44px", maxWidth: "52ch" }}>

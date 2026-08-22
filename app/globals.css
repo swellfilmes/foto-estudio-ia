@@ -77,6 +77,16 @@
 @keyframes sw-breathe { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.12); opacity: 0.9; } }
 @media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
 
+/* Cabeçalho do estúdio no mobile: some com o que é redundante e encolhe o resto,
+   pra não estourar a linha (o que sumia pro lado deixava a tela "quebrada"). */
+@media (max-width: 640px) {
+  .st-header { padding-left: 14px !important; padding-right: 14px !important; gap: 8px !important; }
+  .st-tagline { display: none !important; }   /* "FOTO ESTÚDIO IA" */
+  .st-hide-sm { display: none !important; }    /* Criar fotos / Galeria / Conta (texto) */
+  .st-brand-text { display: none !important; } /* "Criar minha marca" vira só o ícone */
+  .st-brand-pill { padding: 9px !important; }
+}
+
 body {
   background: var(--bg);
   color: var(--text);
