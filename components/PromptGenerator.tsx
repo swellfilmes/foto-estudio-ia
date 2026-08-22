@@ -33,12 +33,14 @@ const glass: React.CSSProperties = {
 const gradientBtn: React.CSSProperties = {
   background: "linear-gradient(180deg, #EE8440 0%, #D96A24 100%)",
   border: "none",
-  color: INK,
-  borderRadius: 12,
-  fontWeight: 700,
+  color: "#FFFFFF",
+  borderRadius: 14,
+  fontWeight: 800,
+  letterSpacing: "-0.01em",
   cursor: "pointer",
   fontFamily: "'Hanken Grotesk', sans-serif",
-  boxShadow: "0 12px 36px rgba(224,116,47,0.25)",
+  textShadow: "0 1px 2px rgba(0,0,0,0.15)",
+  boxShadow: "0 12px 36px rgba(224,116,47,0.25), inset 0 1px 0 rgba(255,255,255,0.18)",
 };
 
 interface StyleOption {
@@ -840,32 +842,23 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
       {/* ── UPLOAD ── */}
       {phase === "upload" && (
         <main style={{ flex: 1, width: "100%", maxWidth: 1180, margin: "0 auto", padding: "clamp(40px, 7vh, 90px) clamp(20px, 4vw, 48px) 80px", boxSizing: "border-box", animation: "riseIn 800ms cubic-bezier(0.22,1,0.36,1) both" }}>
-          <div style={{ ...mono(11, 0.24), color: EMBER, marginBottom: 22 }}>01 · NOVO ENSAIO</div>
-          <h1 style={{ ...display, fontSize: "clamp(32px, 8vw, 76px)", lineHeight: 0.98, margin: "0 0 20px", overflowWrap: "break-word" }}>
-            Seu produto.<br /><span style={{ color: foam(0.4) }}>Pronto para vender.</span>
-          </h1>
-          <p style={{ fontSize: 16, lineHeight: 1.65, color: foam(0.55), margin: "0 0 44px", maxWidth: "52ch" }}>
-            Envie fotos do celular. A gente preserva cada detalhe e cria o ensaio por você.
-          </p>
+          <div style={{ maxWidth: 460, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+            <div style={{ ...mono(11, 0.24), color: EMBER, marginBottom: 16 }}>NOVO ENSAIO</div>
+            <h1 style={{ ...display, fontSize: "clamp(30px, 8vw, 50px)", lineHeight: 1.0, margin: "0 0 28px", overflowWrap: "break-word" }}>
+              Comece pela foto<br /><span style={{ color: foam(0.4) }}>do seu produto.</span>
+            </h1>
 
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => { e.preventDefault(); addFiles(Array.from(e.dataTransfer.files)); }}
-            style={{ ...glass, display: "flex", alignItems: "center", gap: "clamp(20px, 3vw, 36px)", flexWrap: "wrap", borderRadius: 24, padding: "clamp(28px, 4vw, 46px)", cursor: "pointer", transition: "border-color 300ms" }}
-          >
-            <div style={{ width: 58, height: 58, borderRadius: 16, background: ember(0.12), border: `1px solid ${ember(0.3)}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <ArrowUp size={22} color={EMBER} />
-            </div>
-            <div style={{ flex: 1, minWidth: 260 }}>
-              <div style={{ fontSize: 21, fontWeight: 700, marginBottom: 7 }}>Comece pelas fotos do produto</div>
-              <div style={{ fontSize: 14, color: foam(0.55), lineHeight: 1.55 }}>Para manter rótulo, textura e formato fiéis, envie de 3 a 6 ângulos.</div>
-              <div style={{ display: "flex", gap: 22, flexWrap: "wrap", marginTop: 20, ...mono(9, 0.16), color: foam(0.4) }}>
-                <span>JPG OU PNG</span><span>ATÉ 12 MB POR FOTO</span><span>CTRL+V FUNCIONA</span>
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); addFiles(Array.from(e.dataTransfer.files)); }}
+              style={{ ...glass, width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 16, borderRadius: 24, padding: "clamp(28px, 6vw, 40px) clamp(20px, 5vw, 30px)", cursor: "pointer", transition: "border-color 300ms" }}
+            >
+              <div style={{ width: 62, height: 62, borderRadius: 18, background: ember(0.12), border: `1px solid ${ember(0.3)}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <ArrowUp size={26} color={EMBER} />
               </div>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 12 }}>
-              <button style={{ ...gradientBtn, padding: "14px 26px", fontSize: 14 }}>Escolher fotos</button>
+              <button style={{ ...gradientBtn, padding: "15px 32px", fontSize: 16 }}>Enviar foto</button>
+              <div style={{ ...mono(9, 0.16), color: foam(0.4) }}>JPG OU PNG · ATÉ 12 MB</div>
             </div>
           </div>
           <input ref={fileInputRef} type="file" accept="image/*" multiple style={{ display: "none" }}
