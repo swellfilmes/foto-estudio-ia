@@ -1112,28 +1112,17 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
 
               {modelToggle}
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 14, marginBottom: 20 }}>
+              {/* Chips compactos: ícone + nome, no alcance do dedo (some o card gigante). */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
                 {styles.map((s) => {
                   const isSel = selected?.key === s.key;
                   const SIcon = s.icon;
                   return (
-                    <button key={s.key} onClick={() => setSelected((cur) => (cur?.key === s.key ? null : s))}
-                      style={{ background: "rgba(22,18,15,0.65)", border: `1px solid ${isSel ? ember(0.6) : foam(0.09)}`, borderRadius: 16, padding: 0, cursor: "pointer", textAlign: "left", overflow: "hidden", fontFamily: "'Hanken Grotesk', sans-serif", boxShadow: isSel ? `0 0 0 1px ${ember(0.4)}` : "none", transition: "border-color 300ms" }}>
-                      <div style={{ aspectRatio: "16 / 10", background: "#1B1714", position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <StyleThumb styleKey={s.key} Icon={SIcon} />
-                        {isSel && (
-                          <div style={{ position: "absolute", right: 10, top: 10, width: 24, height: 24, borderRadius: "50%", background: EMBER, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <Check size={13} color={INK} />
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ padding: "13px 15px" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginBottom: 3 }}>
-                          <span style={{ fontSize: 14, fontWeight: 700, color: FOAM }}>{s.label}</span>
-                          <span style={{ fontSize: 11, color: EMBER, whiteSpace: "nowrap" }}>{isSel ? "Selecionado" : "Escolher →"}</span>
-                        </div>
-                        <div style={{ fontSize: 12, color: foam(0.5) }}>{s.sub}</div>
-                      </div>
+                    <button key={s.key} onClick={() => setSelected((cur) => (cur?.key === s.key ? null : s))} title={s.sub}
+                      style={{ display: "inline-flex", alignItems: "center", gap: 8, background: isSel ? ember(0.16) : "rgba(22,18,15,0.65)", border: `1px solid ${isSel ? ember(0.7) : foam(0.12)}`, color: isSel ? EMBER : FOAM, borderRadius: 999, padding: "10px 15px", cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 13.5, fontWeight: 600, lineHeight: 1, transition: "border-color 200ms, background 200ms" }}>
+                      <SIcon size={15} color={isSel ? EMBER : foam(0.55)} />
+                      {s.label}
+                      {isSel && <Check size={14} color={EMBER} />}
                     </button>
                   );
                 })}
@@ -1546,22 +1535,6 @@ const closeBtn: React.CSSProperties = {
 };
 
 // ── Thumbnail do card de estilo: foto de exemplo com fallback pra ícone ──────
-function StyleThumb({ styleKey, Icon }: { styleKey: string; Icon: LucideIcon }) {
-  const [imgOk, setImgOk] = useState(true);
-  if (imgOk) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={`/exemplos/${styleKey}.jpg`} alt="" onError={() => setImgOk(false)}
-        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-    );
-  }
-  return (
-    <div style={{ width: 44, height: 44, borderRadius: 12, background: ember(0.1), border: `1px solid ${ember(0.25)}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <Icon size={18} color={EMBER} />
-    </div>
-  );
-}
-
 // ── Lote de geração (grid + feedback) ────────────────────────────────────────
 function BatchBlock({ batch, msgIdx, progressPct, onRetry, onYes, onNo, onFeedbackText, onPrepareRedo, onConfirmRedo, onEditRedo, onCompare, onExpand, onAdd }: {
   batch: Batch;
