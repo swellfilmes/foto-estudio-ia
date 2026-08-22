@@ -841,8 +841,7 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", fontFamily: "'Hanken Grotesk', sans-serif" }}>
       {header}
-      {/* Some com a nav quando o painel de gerar sobe — senão ela tampa o botão Gerar. */}
-      {!selected && bottomBar}
+      {bottomBar}
 
       {/* ── UPLOAD ── */}
       {phase === "upload" && (
@@ -1130,6 +1129,7 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
                 </div>
               )}
 
+              {!selected && (<>
               {/* Próximo melhor passo */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 14, flexWrap: "wrap", marginBottom: 20 }}>
                 <div>
@@ -1144,7 +1144,7 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
               {/* Galeria de estilos: você escolhe VENDO o resultado (inspirado na Higgsfield). */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 10, marginBottom: 20 }}>
                 {styles.map((s) => {
-                  const isSel = selected?.key === s.key;
+                  const isSel = false; // na galeria nada fica selecionado (ao escolher, vai pra tela de gerar)
                   return (
                     <button key={s.key} onClick={() => setSelected((cur) => (cur?.key === s.key ? null : s))} title={s.sub}
                       style={{ position: "relative", aspectRatio: "4 / 5", borderRadius: 14, overflow: "hidden", border: "none", padding: 0, cursor: "pointer", background: "#1B1714", outline: isSel ? `2px solid ${EMBER}` : "none", outlineOffset: -2, boxShadow: isSel ? `0 0 0 4px ${ember(0.18)}` : "none" }}>
@@ -1164,14 +1164,11 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
                   );
                 })}
               </div>
+              </>)}
 
-              {/* Painel de confirmação */}
+              {/* Etapa de GERAR — tela separada, em fluxo normal (sem flutuar) */}
               {selected && (
-                <>
-                <div onClick={() => { setSelected(null); setPending(null); }} style={{ position: "fixed", inset: 0, zIndex: 69, background: "rgba(6,5,4,0.5)" }} />
-                <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, maxHeight: "90vh", zIndex: 70, background: "rgba(20,17,15,0.98)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderTop: `1px solid ${ember(0.4)}`, borderRadius: "22px 22px 0 0", boxShadow: "0 -20px 60px rgba(0,0,0,0.6)", padding: "10px 18px calc(24px + env(safe-area-inset-bottom))", overflowY: "auto", boxSizing: "border-box", animation: "sheetUp 320ms cubic-bezier(0.22,1,0.36,1) both" }}>
-                <div style={{ width: 40, height: 4, borderRadius: 999, background: foam(0.25), margin: "0 auto 12px" }} />
-                <div style={{ maxWidth: 640, margin: "0 auto" }}>
+                <div style={{ maxWidth: 640, margin: "0 auto", animation: "riseIn 300ms cubic-bezier(0.22,1,0.36,1) both" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                     <button onClick={() => { setSelected(null); setPending(null); }} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", color: foam(0.6), fontSize: 14, fontFamily: "'Hanken Grotesk', sans-serif", cursor: "pointer", padding: 0 }}>
                       <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
@@ -1259,8 +1256,6 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
                     </>
                   )}
                 </div>
-                </div>
-                </>
               )}
 
               {/* Gerações desta sessão */}
