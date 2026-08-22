@@ -773,7 +773,7 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
           <button onClick={() => (loggedIn ? setGalleryOpen(true) : setLoginOpen(true))} className="st-hide-sm" style={navBtn}>Galeria</button>
           <a href="/marca" title="Configure sua marca — logo, paleta, cenário e o que nunca deve aparecer"
             onClick={(e) => { if (!loggedIn) { e.preventDefault(); setLoginOpen(true); } }}
-            className="st-brand-pill"
+            className="st-brand-pill st-hide-sm"
             style={{ display: "inline-flex", alignItems: "center", gap: 7, textDecoration: "none", background: ember(0.14), border: `1px solid ${ember(0.5)}`, color: EMBER, borderRadius: 999, padding: "8px 15px", fontSize: 13, fontWeight: 700, fontFamily: "'Hanken Grotesk', sans-serif" }}>
             <Sparkles size={13} /><span className="st-brand-text">{loggedIn && brand.name ? brand.name : "Criar minha marca"}</span>
           </a>
@@ -795,7 +795,7 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
               ? `${Math.round(((usage!.remaining ?? 0) / (usage!.quota || 1)) * 100)}%`
               : `${usedTotal} FOTO${usedTotal === 1 ? "" : "S"} GERADA${usedTotal === 1 ? "" : "S"}`}
         </button>
-        <button onClick={() => (loggedIn ? setProfileOpen(true) : setLoginOpen(true))} title="Sua conta" style={{
+        <button onClick={() => (loggedIn ? setProfileOpen(true) : setLoginOpen(true))} title="Sua conta" className="st-hide-sm" style={{
           display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34,
           border: `1px solid ${foam(0.14)}`, background: foam(0.04), color: foam(0.65), borderRadius: "50%", cursor: "pointer",
         }}>
@@ -805,9 +805,37 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
     </header>
   );
 
+  const tabBtn: React.CSSProperties = { display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", color: foam(0.5), fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9.5, cursor: "pointer", padding: 0, textDecoration: "none", flex: 1 };
+
+  // Barra inferior (mobile) — estilo Higgsfield: abas + botão central de criar.
+  const bottomBar = (
+    <nav className="st-tabbar" style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 50, alignItems: "flex-end", justifyContent: "space-between", gap: 4, padding: "9px 22px calc(9px + env(safe-area-inset-bottom))", background: "rgba(10,9,8,0.92)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", borderTop: `1px solid ${foam(0.1)}` }}>
+      <button onClick={reset} style={tabBtn}>
+        <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M3 10l9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" /></svg>
+        Início
+      </button>
+      <button onClick={() => (loggedIn ? setGalleryOpen(true) : setLoginOpen(true))} style={tabBtn}>
+        <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 15l5-4 4 3 4-5 5 6" /></svg>
+        Galeria
+      </button>
+      <button onClick={reset} aria-label="Criar" style={{ flex: "none", width: 54, height: 44, marginBottom: 8, borderRadius: 16, border: "none", background: "linear-gradient(180deg, #FF7A1F 0%, #D96A24 100%)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 10px 26px rgba(224,116,47,0.45)" }}>
+        <Sparkles size={21} color={INK} />
+      </button>
+      <a href="/marca" onClick={(e) => { if (!loggedIn) { e.preventDefault(); setLoginOpen(true); } }} style={tabBtn}>
+        <Sparkles size={18} />
+        Marca
+      </a>
+      <button onClick={() => (loggedIn ? setProfileOpen(true) : setLoginOpen(true))} style={tabBtn}>
+        <User size={19} />
+        Conta
+      </button>
+    </nav>
+  );
+
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", fontFamily: "'Hanken Grotesk', sans-serif" }}>
       {header}
+      {bottomBar}
 
       {/* ── UPLOAD ── */}
       {phase === "upload" && (

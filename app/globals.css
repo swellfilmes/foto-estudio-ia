@@ -79,12 +79,13 @@
 
 /* Cabeçalho do estúdio no mobile: some com o que é redundante e encolhe o resto,
    pra não estourar a linha (o que sumia pro lado deixava a tela "quebrada"). */
+.st-tabbar { display: none; }  /* barra inferior: só no mobile */
 @media (max-width: 640px) {
   .st-header { padding-left: 14px !important; padding-right: 14px !important; gap: 8px !important; }
   .st-tagline { display: none !important; }   /* "FOTO ESTÚDIO IA" */
-  .st-hide-sm { display: none !important; }    /* Criar fotos / Galeria / Conta (texto) */
-  .st-brand-text { display: none !important; } /* "Criar minha marca" vira só o ícone */
-  .st-brand-pill { padding: 9px !important; }
+  .st-hide-sm { display: none !important; }    /* itens do topo que descem pra barra de baixo */
+  .st-brand-text { display: none !important; }
+  .st-tabbar { display: flex !important; }      /* abas + botão central de criar */
 }
 
 body {
