@@ -36,7 +36,8 @@ const gradientBtn: React.CSSProperties = {
   color: "#FFFFFF",
   borderRadius: 14,
   fontWeight: 800,
-  letterSpacing: "-0.01em",
+  letterSpacing: "0.02em",
+  textTransform: "uppercase",
   cursor: "pointer",
   fontFamily: "'Hanken Grotesk', sans-serif",
   textShadow: "0 1px 2px rgba(0,0,0,0.15)",
@@ -816,17 +817,17 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
         <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M3 10l9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" /></svg>
         Início
       </button>
-      <button onClick={() => (loggedIn ? setGalleryOpen(true) : setLoginOpen(true))} style={tabBtn}>
-        <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 15l5-4 4 3 4-5 5 6" /></svg>
-        Galeria
-      </button>
-      <button onClick={reset} aria-label="Criar" style={{ flex: "none", width: 54, height: 44, marginBottom: 8, borderRadius: 16, border: "none", background: "linear-gradient(180deg, #FF7A1F 0%, #D96A24 100%)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 10px 26px rgba(224,116,47,0.45)" }}>
-        <Sparkles size={21} color={INK} />
-      </button>
       <a href="/marca" onClick={(e) => { if (!loggedIn) { e.preventDefault(); setLoginOpen(true); } }} style={tabBtn}>
         <Sparkles size={18} />
         Marca
       </a>
+      <button onClick={() => { reset(); setTimeout(() => fileInputRef.current?.click(), 80); }} aria-label="Enviar foto" style={{ flex: "none", width: 54, height: 44, marginBottom: 8, borderRadius: 16, border: "none", background: "linear-gradient(180deg, #FF7A1F 0%, #D96A24 100%)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 10px 26px rgba(224,116,47,0.45), inset 0 1px 0 rgba(255,255,255,0.25)" }}>
+        <ArrowUp size={22} color="#FFFFFF" />
+      </button>
+      <button onClick={() => (loggedIn ? setGalleryOpen(true) : setLoginOpen(true))} style={tabBtn}>
+        <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 15l5-4 4 3 4-5 5 6" /></svg>
+        Galeria
+      </button>
       <button onClick={() => (loggedIn ? setProfileOpen(true) : setLoginOpen(true))} style={tabBtn}>
         <User size={19} />
         Conta
@@ -1152,7 +1153,7 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
                         </div>
                       )}
                       <div style={{ position: "absolute", left: 10, right: 10, bottom: 9, textAlign: "left" }}>
-                        <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: 13.5, color: "#fff", lineHeight: 1.05 }}>{s.label}</div>
+                        <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 800, fontSize: 13.5, color: "#fff", lineHeight: 1.05, letterSpacing: "0.02em", textTransform: "uppercase", textShadow: "0 1px 3px rgba(0,0,0,0.4)" }}>{s.label}</div>
                         <div style={{ ...mono(8, 0.12), color: "rgba(255,255,255,0.7)", marginTop: 3, textTransform: "uppercase" }}>{s.sub}</div>
                       </div>
                     </button>
@@ -1293,7 +1294,7 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
       )}
 
       {galleryOpen && (
-        <Drawer kicker="SUAS GERAÇÕES" title="Galeria" onClose={() => setGalleryOpen(false)}>
+        <Drawer kicker="SUAS GERAÇÕES" title="Galeria" onClose={() => setGalleryOpen(false)} full>
           <a href="/galeria" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, background: foam(0.05), border: `1px solid ${foam(0.14)}`, color: FOAM, borderRadius: 8, padding: "10px", fontSize: 13, fontWeight: 600, textDecoration: "none", marginBottom: 16 }}>
             Abrir galeria completa ↗
           </a>
@@ -1703,19 +1704,24 @@ const fbBtn: React.CSSProperties = {
 };
 
 // ── Gaveta lateral (fila / galeria / marca) ──────────────────────────────────
-function Drawer({ kicker, title, onClose, children }: { kicker: string; title: string; onClose: () => void; children: React.ReactNode }) {
+function Drawer({ kicker, title, onClose, children, full }: { kicker: string; title: string; onClose: () => void; children: React.ReactNode; full?: boolean }) {
+  const panel: React.CSSProperties = full
+    ? { position: "fixed", inset: 0, zIndex: 61, background: "rgba(12,10,9,0.98)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", padding: "clamp(18px,4vw,36px) clamp(16px,4vw,40px) 96px", overflowY: "auto", boxSizing: "border-box", animation: "riseIn 350ms cubic-bezier(0.22,1,0.36,1) both" }
+    : { position: "fixed", top: 0, right: 0, bottom: 0, width: "min(400px, 92vw)", zIndex: 61, background: "rgba(18,15,13,0.85)", backdropFilter: "blur(30px) saturate(140%)", WebkitBackdropFilter: "blur(30px) saturate(140%)", borderLeft: `1px solid ${foam(0.1)}`, padding: "26px 24px", overflowY: "auto", boxSizing: "border-box", animation: "riseIn 450ms cubic-bezier(0.22,1,0.36,1) both" };
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(10,9,8,0.5)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", animation: "riseIn 300ms ease both" }} />
-      <aside style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(400px, 92vw)", zIndex: 61, background: "rgba(18,15,13,0.85)", backdropFilter: "blur(30px) saturate(140%)", WebkitBackdropFilter: "blur(30px) saturate(140%)", borderLeft: `1px solid ${foam(0.1)}`, padding: "26px 24px", overflowY: "auto", boxSizing: "border-box", animation: "riseIn 450ms cubic-bezier(0.22,1,0.36,1) both" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-          <div>
-            <div style={{ ...mono(10, 0.24), color: foam(0.45), marginBottom: 6 }}>{kicker}</div>
-            <div style={{ ...display, fontWeight: 800, fontSize: 22, letterSpacing: "-0.02em" }}>{title}<span style={{ color: EMBER }}>.</span></div>
+      {!full && <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(10,9,8,0.5)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", animation: "riseIn 300ms ease both" }} />}
+      <aside style={panel}>
+        <div style={{ maxWidth: full ? 1180 : "none", margin: full ? "0 auto" : undefined }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <div>
+              <div style={{ ...mono(10, 0.24), color: foam(0.45), marginBottom: 6 }}>{kicker}</div>
+              <div style={{ ...display, fontWeight: 800, fontSize: 22, letterSpacing: "-0.02em" }}>{title}<span style={{ color: EMBER }}>.</span></div>
+            </div>
+            <button onClick={onClose} style={closeBtn}><X size={15} /></button>
           </div>
-          <button onClick={onClose} style={closeBtn}><X size={15} /></button>
+          <div style={{ marginTop: 14 }}>{children}</div>
         </div>
-        <div style={{ marginTop: 14 }}>{children}</div>
       </aside>
     </>
   );
