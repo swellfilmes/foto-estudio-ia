@@ -26,16 +26,21 @@ export async function POST(req: NextRequest) {
   const payEmail = await getSessionEmail(req);
   let debited = false;
 
-  // SEM SESSAO = SEM GERACAO.
-  // Antes isso era fail-open e virou o buraco do trial: quem abria /studio sem
-  // login nunca era debitado (o debito e por e-mail), e o contador da tela era
-  // so estado do React — recarregar a pagina zerava e a pessoa gerava de novo,
-  // infinitamente. A cota so existe se houver identidade pra amarrar nela.
+  // GANCHO: quem NAO esta logado gera 1 foto gratis (marcada por cookie de aparelho).
+  // Da 2a em diante, precisa entrar com o e-mail (ai ganha +3 no teste). Depois, so plano.
+  // O cookie e forjavel/limpavel — de proposito: 1 foto e barata e serve de isca; o
+  // controle real (cota) vive no banco, por e-mail.
+  const FREE_COOKIE = "swl-free";
+  let grantFree = false;
   if (!payEmail) {
-    return NextResponse.json(
-      { error: "sem_sessao", message: "Entre com seu e-mail para gerar fotos." },
-      { status: 401 }
-    );
+    const usedFree = req.cookies.get(FREE_COOKIE)?.value === "1";
+    if (usedFree) {
+      return NextResponse.json(
+        { error: "precisa_login", message: "Entre com seu e-mail pra gerar mais 3 fotos grátis." },
+        { status: 401 }
+      );
+    }
+    grantFree = true;
   }
 
   try {
@@ -118,7 +123,7 @@ export async function POST(req: NextRequest) {
       );
       const ok = baixadas.filter(Boolean) as string[];
       if (ok.length === 0 && refs.length === 0) {
-        if (debited) { try { await refundPhoto(payEmail); } catch { /* ignora */ } }
+        if (debited && payEmail) { try { await refundPhoto(payEmail); } catch { /* ignora */ } }
         return NextResponse.json({ error: "Não consegui carregar a imagem original" }, { status: 400 });
       }
       refs.unshift(...ok);
@@ -165,7 +170,15 @@ export async function POST(req: NextRequest) {
     }
 
     const taskId = data?.data?.task_id || data?.task_id;
-    return NextResponse.json({ task_id: taskId, raw: data });
+    const okRes = NextResponse.json({ task_id: taskId, raw: data });
+    if (grantFree) {
+      // Este aparelho já usou a foto grátis (vale 180 dias).
+      okRes.cookies.set({
+        name: FREE_COOKIE, value: "1", httpOnly: true, sameSite: "lax",
+        secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 24 * 180,
+      });
+    }
+    return okRes;
   } catch (error) {
     console.error("Erro generate-images:", error);
     if (debited && payEmail) { try { await refundPhoto(payEmail); } catch { /* ignora */ } }

@@ -535,7 +535,9 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
     // quantas fotos: o que a pessoa pediu, mas no máximo o que resta da cota
     const count = continuarDe
       ? 1 // ajuste em cima de uma foto existente: sempre 1 por vez
-      : usage?.quota != null ? Math.min(variations, Math.max(1, usage.remaining ?? variations)) : variations;
+      : !loggedIn
+        ? 1 // anônimo (gancho): 1 foto grátis. Da 2ª em diante, pede o e-mail.
+        : usage?.quota != null ? Math.min(variations, Math.max(1, usage.remaining ?? variations)) : variations;
     const chosenAspect = aspect;       // proporção escolhida (ou "auto")
     try {
       let prompts: string[];
@@ -568,8 +570,10 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
         }).then((r) => r.json())
       );
       const tasks = await Promise.all(reqs);
-      if (tasks.some((t) => t?.error === "sem_sessao")) {
-        updateBatch(id, { loading: false, error: "Sua sessão expirou. Entre com seu e-mail para continuar gerando." });
+      const gate = tasks.find((t) => t?.error === "precisa_login" || t?.error === "sem_sessao");
+      if (gate) {
+        updateBatch(id, { loading: false, error: (gate as { message?: string }).message || "Entre com seu e-mail pra continuar." });
+        setLoginOpen(true);
         return;
       }
       const limited = tasks.some((t) => t?.error === "limite_atingido");
@@ -813,9 +817,9 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
           </p>
 
           <div
-            onClick={() => (loggedIn ? fileInputRef.current?.click() : setLoginOpen(true))}
+            onClick={() => fileInputRef.current?.click()}
             onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => { e.preventDefault(); if (!loggedIn) { setLoginOpen(true); return; } addFiles(Array.from(e.dataTransfer.files)); }}
+            onDrop={(e) => { e.preventDefault(); addFiles(Array.from(e.dataTransfer.files)); }}
             style={{ ...glass, display: "flex", alignItems: "center", gap: "clamp(20px, 3vw, 36px)", flexWrap: "wrap", borderRadius: 24, padding: "clamp(28px, 4vw, 46px)", cursor: "pointer", transition: "border-color 300ms" }}
           >
             <div style={{ width: 58, height: 58, borderRadius: 16, background: ember(0.12), border: `1px solid ${ember(0.3)}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>

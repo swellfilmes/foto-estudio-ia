@@ -35,8 +35,8 @@ export const PLAN_QUOTAS: Record<string, number> = {
   pro: 80,        // Médio
   marca: 180,     // Grande
 };
-// Teste grátis: fotos liberadas pra experimentar
-export const TRIAL_QUOTA = 5;
+// Teste grátis (após o e-mail): +3 fotos. Antes disso, 1 grátis anônima (gancho).
+export const TRIAL_QUOTA = 3;
 
 let schemaReady: Promise<void> | null = null;
 
