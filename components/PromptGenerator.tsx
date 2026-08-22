@@ -1425,13 +1425,13 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
 
       {pricingOpen && (
         <div onClick={() => setPricingOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 70, background: "rgba(10,9,8,0.6)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, animation: "riseIn 350ms ease both" }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ width: "min(720px, 100%)", background: "rgba(20,17,15,0.9)", backdropFilter: "blur(30px)", WebkitBackdropFilter: "blur(30px)", border: `1px solid ${foam(0.12)}`, borderRadius: 22, padding: 32, boxShadow: "0 50px 140px rgba(0,0,0,0.7)", boxSizing: "border-box" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "min(720px, 100%)", maxHeight: "90vh", overflowY: "auto", background: "rgba(20,17,15,0.95)", backdropFilter: "blur(30px)", WebkitBackdropFilter: "blur(30px)", border: `1px solid ${foam(0.12)}`, borderRadius: 22, padding: "clamp(20px, 5vw, 32px)", boxShadow: "0 50px 140px rgba(0,0,0,0.7)", boxSizing: "border-box" }}>
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24 }}>
               <div>
                 <div style={{ ...mono(10, 0.24), color: foam(0.45), marginBottom: 8 }}>PLANOS</div>
                 <div style={{ ...display, fontSize: "clamp(24px, 3.4vw, 32px)", lineHeight: 1 }}>Sua próxima onda<br />começa aqui<span style={{ color: EMBER }}>.</span></div>
               </div>
-              <button onClick={() => setPricingOpen(false)} style={closeBtn}><X size={15} /></button>
+              <button onClick={() => setPricingOpen(false)} aria-label="Fechar" style={{ ...closeBtn, flex: "none" }}><X size={15} /></button>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 14, marginBottom: 18 }}>
               <PlanCard kicker="SIMPLES" price="R$ 79,90" suffix="/mês" desc={<>35 fotos por mês<br />foto de produto + ensaio de pessoa</>} cta="Assinar Simples" />
@@ -1439,6 +1439,7 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
               <PlanCard kicker="GRANDE" price="R$ 299,90" suffix="/mês" desc={<>180 fotos por mês<br />direção de arte Swell · suporte direto</>} cta="Assinar Grande" />
             </div>
             <div style={{ ...mono(10, 0.16), color: foam(0.4), textAlign: "center" }}>VOCÊ JÁ GEROU {usedTotal} FOTO{usedTotal === 1 ? "" : "S"} NESTA CONTA</div>
+            <button onClick={() => setPricingOpen(false)} style={{ display: "block", margin: "18px auto 0", background: "none", border: "none", color: foam(0.5), fontSize: 13, cursor: "pointer", fontFamily: "'Hanken Grotesk', sans-serif" }}>Fechar</button>
           </div>
         </div>
       )}
