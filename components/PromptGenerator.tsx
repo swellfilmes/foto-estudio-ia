@@ -841,7 +841,8 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", fontFamily: "'Hanken Grotesk', sans-serif" }}>
       {header}
-      {bottomBar}
+      {/* Some com a nav quando o painel de gerar sobe — senão ela tampa o botão Gerar. */}
+      {!selected && bottomBar}
 
       {/* ── UPLOAD ── */}
       {phase === "upload" && (
