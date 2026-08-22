@@ -1166,7 +1166,11 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
 
               {/* Painel de confirmação */}
               {selected && (
-                <div style={{ background: "rgba(22,18,15,0.75)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", border: `1px solid ${ember(0.4)}`, borderRadius: 18, padding: 24, marginBottom: 40, boxShadow: "0 30px 90px rgba(0,0,0,0.5)", animation: "riseIn 450ms cubic-bezier(0.22,1,0.36,1) both" }}>
+                <>
+                <div onClick={() => { setSelected(null); setPending(null); }} style={{ position: "fixed", inset: 0, zIndex: 66, background: "rgba(6,5,4,0.5)" }} />
+                <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 70, background: "rgba(20,17,15,0.98)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderTop: `1px solid ${ember(0.4)}`, borderRadius: "22px 22px 0 0", boxShadow: "0 -20px 60px rgba(0,0,0,0.6)", padding: "10px 18px calc(20px + env(safe-area-inset-bottom))", maxHeight: "82vh", overflowY: "auto", animation: "sheetUp 320ms cubic-bezier(0.22,1,0.36,1) both" }}>
+                <div style={{ width: 40, height: 4, borderRadius: 999, background: foam(0.2), margin: "0 auto 14px" }} />
+                <div style={{ maxWidth: 640, margin: "0 auto" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
                     <selected.icon size={16} color={EMBER} />
                     <span style={{ fontSize: 15, fontWeight: 700 }}>{selected.label}</span>
@@ -1247,6 +1251,8 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
                     </>
                   )}
                 </div>
+                </div>
+                </>
               )}
 
               {/* Gerações desta sessão */}
