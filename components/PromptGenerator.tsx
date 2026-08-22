@@ -50,27 +50,29 @@ interface StyleOption {
   sub: string;
   icon: LucideIcon;
   photoType: PhotoType;
-  example: string; // foto-exemplo (galeria de estilos). Placeholder do acervo por ora.
+  example: string;  // exemplo REAL da categoria (/exemplos/<key>.jpg)
+  fallback: string; // se o exemplo faltar, cai num placeholder do acervo
 }
 
 const EX = (n: string) => `/assets/opt/${n}-depois.jpg`;
+const XP = (key: string) => `/exemplos/${key}.jpg`;
 
 // Ordem do funil Riverflow: identificar → inspecionar → entender → desejar
 const STYLES_PRODUCT: StyleOption[] = [
-  { key: "fundo-branco", label: "Fundo Branco", sub: "e-commerce · marketplace", icon: ImageIcon, photoType: "fundo-limpo", example: EX("roupa") },
-  { key: "detalhe", label: "Detalhe", sub: "close · inspeção", icon: Search, photoType: "macro", example: EX("relogio") },
-  { key: "na-mao", label: "Na Mão", sub: "escala real", icon: Hand, photoType: "segurando", example: EX("mochila") },
-  { key: "flat-lay", label: "Visto de cima", sub: "flat lay · kit/props", icon: LayoutGrid, photoType: "flat-lay", example: EX("camisa") },
-  { key: "lifestyle", label: "Em cena real", sub: "lifestyle · desejo", icon: Coffee, photoType: "lifestyle", example: EX("gelato") },
-  { key: "hero", label: "Foto de campanha", sub: "principal · máximo impacto", icon: Sparkles, photoType: "lifestyle", example: EX("luminaria") },
-  { key: "cg", label: "Visual 3D premium", sub: "render digital", icon: Gem, photoType: "fundo-limpo", example: EX("chaveiro") },
+  { key: "fundo-branco", label: "Fundo Branco", sub: "e-commerce · marketplace", icon: ImageIcon, photoType: "fundo-limpo", example: XP("fundo-branco"), fallback: EX("roupa") },
+  { key: "detalhe", label: "Detalhe", sub: "close · inspeção", icon: Search, photoType: "macro", example: XP("detalhe"), fallback: EX("relogio") },
+  { key: "na-mao", label: "Na Mão", sub: "escala real", icon: Hand, photoType: "segurando", example: XP("na-mao"), fallback: EX("mochila") },
+  { key: "flat-lay", label: "Visto de cima", sub: "flat lay · kit/props", icon: LayoutGrid, photoType: "flat-lay", example: XP("flat-lay"), fallback: EX("camisa") },
+  { key: "lifestyle", label: "Em cena real", sub: "lifestyle · desejo", icon: Coffee, photoType: "lifestyle", example: XP("lifestyle"), fallback: EX("gelato") },
+  { key: "hero", label: "Foto de campanha", sub: "principal · máximo impacto", icon: Sparkles, photoType: "lifestyle", example: XP("hero"), fallback: EX("luminaria") },
+  { key: "cg", label: "Visual 3D premium", sub: "render digital", icon: Gem, photoType: "fundo-limpo", example: XP("cg"), fallback: EX("limpador") },
 ];
 
 const STYLES_WITH_MODEL: StyleOption[] = [
-  { key: "estudio-modelo", label: "No Corpo", sub: "escala real · vestindo", icon: Gem, photoType: "segurando", example: EX("pessoa") },
-  { key: "mostruario-modelo", label: "Em Uso", sub: "mãos · rotina", icon: Hand, photoType: "segurando", example: EX("mochila") },
-  { key: "influencia", label: "Cliente Real", sub: "UGC · como um cliente postaria", icon: Smartphone, photoType: "segurando", example: EX("pizza") },
-  { key: "comercial-modelo", label: "Campanha", sub: "modelo · alto impacto", icon: Clapperboard, photoType: "lifestyle", example: EX("luminaria") },
+  { key: "estudio-modelo", label: "No Corpo", sub: "escala real · vestindo", icon: Gem, photoType: "segurando", example: XP("estudio-modelo"), fallback: EX("roupa") },
+  { key: "mostruario-modelo", label: "Em Uso", sub: "mãos · rotina", icon: Hand, photoType: "segurando", example: XP("mostruario-modelo"), fallback: EX("mochila") },
+  { key: "influencia", label: "Cliente Real", sub: "UGC · como um cliente postaria", icon: Smartphone, photoType: "segurando", example: XP("influencia"), fallback: EX("roupa") },
+  { key: "comercial-modelo", label: "Campanha", sub: "modelo · alto impacto", icon: Clapperboard, photoType: "lifestyle", example: XP("comercial-modelo"), fallback: EX("roupa") },
 ];
 
 const VARIATIONS_PER_CLICK = 2;
@@ -1149,7 +1151,7 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
                     <button key={s.key} onClick={() => setSelected((cur) => (cur?.key === s.key ? null : s))} title={s.sub}
                       style={{ position: "relative", aspectRatio: "4 / 5", borderRadius: 14, overflow: "hidden", border: "none", padding: 0, cursor: "pointer", background: "#1B1714", outline: isSel ? `2px solid ${EMBER}` : "none", outlineOffset: -2, boxShadow: isSel ? `0 0 0 4px ${ember(0.18)}` : "none" }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={s.example} alt="" loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                      <img src={s.example} alt="" loading="lazy" onError={(e) => { const el = e.currentTarget; if (!el.dataset.fb) { el.dataset.fb = "1"; el.src = s.fallback; } }} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0) 42%, rgba(0,0,0,0.82) 100%)" }} />
                       {isSel && (
                         <div style={{ position: "absolute", top: 8, right: 8, width: 22, height: 22, borderRadius: "50%", background: EMBER, display: "flex", alignItems: "center", justifyContent: "center" }}>
