@@ -810,25 +810,28 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
 
   const tabBtn: React.CSSProperties = { display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", color: foam(0.5), fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 9.5, cursor: "pointer", padding: 0, textDecoration: "none", flex: 1 };
 
-  // Barra inferior (mobile) — estilo Higgsfield: abas + botão central de criar.
+  // Menu de navegação fixo (mobile). Cada aba TROCA a página; sem X/voltar no topo.
+  const closeViews = () => { setGalleryOpen(false); setBrandOpen(false); setProfileOpen(false); setQueueOpen(false); };
+  const activeTab = galleryOpen ? "galeria" : brandOpen ? "marca" : profileOpen ? "conta" : "inicio";
+  const tabStyle = (on: boolean): React.CSSProperties => ({ ...tabBtn, color: on ? FOAM : foam(0.5) });
   const bottomBar = (
-    <nav className="st-tabbar" style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 50, alignItems: "flex-end", justifyContent: "space-between", gap: 4, padding: "9px 22px calc(9px + env(safe-area-inset-bottom))", background: "rgba(10,9,8,0.92)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", borderTop: `1px solid ${foam(0.1)}` }}>
-      <button onClick={reset} style={tabBtn}>
+    <nav className="st-tabbar" style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 65, alignItems: "flex-end", justifyContent: "space-between", gap: 4, padding: "9px 22px calc(9px + env(safe-area-inset-bottom))", background: "rgba(10,9,8,0.94)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", borderTop: `1px solid ${foam(0.1)}` }}>
+      <button onClick={() => { closeViews(); reset(); }} style={tabStyle(activeTab === "inicio")}>
         <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M3 10l9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" /></svg>
         Início
       </button>
-      <a href="/marca" onClick={(e) => { if (!loggedIn) { e.preventDefault(); setLoginOpen(true); } }} style={tabBtn}>
+      <button onClick={() => { if (!loggedIn) { setLoginOpen(true); return; } closeViews(); setBrandOpen(true); }} style={tabStyle(activeTab === "marca")}>
         <Sparkles size={18} />
         Marca
-      </a>
-      <button onClick={() => { reset(); setTimeout(() => fileInputRef.current?.click(), 80); }} aria-label="Enviar foto" style={{ flex: "none", width: 54, height: 44, marginBottom: 8, borderRadius: 16, border: "none", background: "linear-gradient(180deg, #FF7A1F 0%, #D96A24 100%)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 10px 26px rgba(224,116,47,0.45), inset 0 1px 0 rgba(255,255,255,0.25)" }}>
+      </button>
+      <button onClick={() => { closeViews(); reset(); setTimeout(() => fileInputRef.current?.click(), 80); }} aria-label="Enviar foto" style={{ flex: "none", width: 54, height: 44, marginBottom: 8, borderRadius: 16, border: "none", background: "linear-gradient(180deg, #FF7A1F 0%, #D96A24 100%)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 10px 26px rgba(224,116,47,0.45), inset 0 1px 0 rgba(255,255,255,0.25)" }}>
         <ArrowUp size={22} color="#FFFFFF" />
       </button>
-      <button onClick={() => (loggedIn ? setGalleryOpen(true) : setLoginOpen(true))} style={tabBtn}>
+      <button onClick={() => { if (!loggedIn) { setLoginOpen(true); return; } closeViews(); setGalleryOpen(true); }} style={tabStyle(activeTab === "galeria")}>
         <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 15l5-4 4 3 4-5 5 6" /></svg>
         Galeria
       </button>
-      <button onClick={() => (loggedIn ? setProfileOpen(true) : setLoginOpen(true))} style={tabBtn}>
+      <button onClick={() => { if (!loggedIn) { setLoginOpen(true); return; } closeViews(); setProfileOpen(true); }} style={tabStyle(activeTab === "conta")}>
         <User size={19} />
         Conta
       </button>
@@ -1364,13 +1367,13 @@ export default function PromptGenerator({ initialProjectId, initialLoggedIn }: {
       )}
 
       {brandOpen && (
-        <Drawer kicker="MINHA MARCA" title="Sua marca, no comando" onClose={() => setBrandOpen(false)}>
+        <Drawer kicker="MINHA MARCA" title="Sua marca, no comando" onClose={() => setBrandOpen(false)} full>
           <BrandForm brand={brand} onSave={saveBrand} />
         </Drawer>
       )}
 
       {profileOpen && (
-        <Drawer kicker="SUA CONTA" title="Perfil" onClose={() => setProfileOpen(false)}>
+        <Drawer kicker="SUA CONTA" title="Perfil" onClose={() => setProfileOpen(false)} full>
           <ProfilePanel usage={usage} />
         </Drawer>
       )}
@@ -1718,7 +1721,7 @@ function Drawer({ kicker, title, onClose, children, full }: { kicker: string; ti
               <div style={{ ...mono(10, 0.24), color: foam(0.45), marginBottom: 6 }}>{kicker}</div>
               <div style={{ ...display, fontWeight: 800, fontSize: 22, letterSpacing: "-0.02em" }}>{title}<span style={{ color: EMBER }}>.</span></div>
             </div>
-            <button onClick={onClose} style={closeBtn}><X size={15} /></button>
+            <button onClick={onClose} className={full ? "st-hide-sm" : undefined} style={closeBtn}><X size={15} /></button>
           </div>
           <div style={{ marginTop: 14 }}>{children}</div>
         </div>
