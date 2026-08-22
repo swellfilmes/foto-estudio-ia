@@ -469,6 +469,45 @@ export async function refundPhoto(email: string): Promise<void> {
   `;
 }
 
+// ── Limite por IP da foto grátis ANÔNIMA (rede de proteção anti-bot) ───────────
+let freeIpSchemaReady: Promise<void> | null = null;
+function ensureFreeIpSchema(): Promise<void> {
+  if (!freeIpSchemaReady) {
+    const sql = client();
+    freeIpSchemaReady = (async () => {
+      await sql`CREATE TABLE IF NOT EXISTS free_ip (ip TEXT NOT NULL, day TEXT NOT NULL, count INT NOT NULL DEFAULT 0, PRIMARY KEY (ip, day))`;
+    })().catch((e) => { freeIpSchemaReady = null; throw e; });
+  }
+  return freeIpSchemaReady;
+}
+
+function utcDay(d = new Date()): string {
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+}
+
+// Conta +1 foto grátis anônima deste IP hoje (de forma atômica). Retorna true se
+// AINDA está dentro do limite diário. Fail-open: sem IP ou erro de banco → libera
+// (rede de proteção contra bot, não pode travar usuário real).
+export async function bumpFreeIp(ip: string, dailyLimit: number): Promise<boolean> {
+  if (!ip) return true;
+  try {
+    await ensureFreeIpSchema();
+    const sql = client();
+    const rows = (await sql`
+      INSERT INTO free_ip (ip, day, count)
+      VALUES (${ip}, ${utcDay()}, 1)
+      ON CONFLICT (ip, day) DO UPDATE
+        SET count = free_ip.count + 1
+        WHERE free_ip.count < ${dailyLimit}
+      RETURNING count
+    `) as { count: number }[];
+    return rows.length > 0;
+  } catch (e) {
+    console.error("[bumpFreeIp] erro (liberando):", e);
+    return true;
+  }
+}
+
 // Usado por eventos de cancelamento/reembolso — precisa poder ZERAR datas.
 export async function markCanceled(
   email: string,

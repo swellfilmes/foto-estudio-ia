@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionEmail } from "@/lib/session";
-import { getUsageContext, debitPhoto, refundPhoto } from "@/lib/db";
+import { getUsageContext, debitPhoto, refundPhoto, bumpFreeIp } from "@/lib/db";
+
+// Limite diário de fotos grátis anônimas por IP (rede de proteção anti-bot).
+// Frouxo de propósito: várias pessoas podem dividir o mesmo IP (celular/escritório).
+const DAILY_IP_FREE_LIMIT = 8;
 
 // Modelo do Magnific. "nano-banana-pro" = qualidade máxima (mais créditos, ~mais lento).
 // Alternativa mais barata/rápida: "nano-banana-pro-flash".
@@ -37,6 +41,15 @@ export async function POST(req: NextRequest) {
     if (usedFree) {
       return NextResponse.json(
         { error: "precisa_login", message: "Entre com seu e-mail pra gerar mais 3 fotos grátis." },
+        { status: 401 }
+      );
+    }
+    // Rede de proteção: mesmo limpando o cookie, o IP tem um teto diário.
+    const ip = (req.headers.get("x-forwarded-for")?.split(",")[0] || req.headers.get("x-real-ip") || "").trim();
+    const underIp = await bumpFreeIp(ip, DAILY_IP_FREE_LIMIT);
+    if (!underIp) {
+      return NextResponse.json(
+        { error: "precisa_login", message: "Muitas fotos grátis nesta rede hoje. Entre com seu e-mail pra continuar." },
         { status: 401 }
       );
     }
